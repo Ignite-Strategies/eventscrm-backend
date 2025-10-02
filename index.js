@@ -5,11 +5,12 @@ import dotenv from 'dotenv';
 
 // Import routes
 import orgsRouter from './routes/orgs.js';
-import contactsRouter from './routes/contacts.js';
+import supportersRouter from './routes/supporters.js';
 import eventsRouter from './routes/events.js';
-import membershipsRouter from './routes/memberships.js';
+import eventPipelinesRouter from './routes/eventPipelines.js';
+import eventAttendeesRouter from './routes/eventAttendees.js';
+import eventPipelineActionsRouter from './routes/eventPipeline.js'; // Push actions
 import webhooksRouter from './routes/webhooks.js';
-import eventPipelineRouter from './routes/eventPipeline.js';
 
 dotenv.config();
 
@@ -28,12 +29,12 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/SUPPORTER
 
 // Routes
 app.use('/api/orgs', orgsRouter);
-app.use('/api/orgs', contactsRouter); // Nested under orgs
-app.use('/api/orgs', eventsRouter);   // Event creation nested under orgs
-app.use('/api/events', eventsRouter); // Event operations
-app.use('/api/events', membershipsRouter);
-app.use('/api/events', eventPipelineRouter); // Pipeline push operations
-app.use('/api/memberships', membershipsRouter);
+app.use('/api/orgs', supportersRouter);         // Supporters nested under orgs
+app.use('/api/orgs', eventsRouter);             // Event creation nested under orgs
+app.use('/api/events', eventsRouter);           // Event operations
+app.use('/api/events', eventPipelinesRouter);   // Pipeline records (GET/PATCH)
+app.use('/api/events', eventAttendeesRouter);   // Final attendees
+app.use('/api/events', eventPipelineActionsRouter); // Push actions
 app.use('/api/webhooks', webhooksRouter);
 
 // Health check
