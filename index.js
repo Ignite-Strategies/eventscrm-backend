@@ -9,6 +9,7 @@ import contactsRouter from './routes/contacts.js';
 import eventsRouter from './routes/events.js';
 import membershipsRouter from './routes/memberships.js';
 import webhooksRouter from './routes/webhooks.js';
+import eventPipelineRouter from './routes/eventPipeline.js';
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use('/api/orgs', contactsRouter); // Nested under orgs
 app.use('/api/orgs', eventsRouter);   // Event creation nested under orgs
 app.use('/api/events', eventsRouter); // Event operations
 app.use('/api/events', membershipsRouter);
+app.use('/api/events', eventPipelineRouter); // Pipeline push operations
 app.use('/api/memberships', membershipsRouter);
 app.use('/api/webhooks', webhooksRouter);
 
