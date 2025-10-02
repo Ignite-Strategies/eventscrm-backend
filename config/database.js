@@ -2,17 +2,18 @@ import mongoose from 'mongoose';
 
 /**
  * Database Configuration
- * Connects to SUPPORTER_DB
  * 
- * RENDER ENVIRONMENT VARIABLE:
- * MONGO_URI = mongodb+srv://user:pass@cluster.mongodb.net/SUPPORTER_DB
- * (Connection string INCLUDES /SUPPORTER_DB at the end)
+ * RENDER ENVIRONMENT VARIABLE NAME: SUPPORTER_DB
+ * ACTUAL MONGODB DATABASE: impact_events
+ * 
+ * On Render, set:
+ * SUPPORTER_DB = mongodb+srv://user:pass@cluster.mongodb.net/impact_events
  */
 
 export async function connectDatabase() {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log('✅ MongoDB connected to SUPPORTER_DB');
+    await mongoose.connect(process.env.SUPPORTER_DB);
+    console.log('✅ MongoDB connected');
     console.log('📊 Database:', mongoose.connection.db.databaseName);
   } catch (err) {
     console.error('❌ MongoDB connection error:', err);

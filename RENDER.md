@@ -4,11 +4,12 @@
 
 **REQUIRED** - Set these in Render dashboard under "Environment" tab:
 
-### MONGO_URI
+### SUPPORTER_DB
 ```
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/SUPPORTER_DB
+SUPPORTER_DB=mongodb+srv://username:password@cluster.mongodb.net/impact_events
 ```
-**IMPORTANT:** Connection string MUST end with `/SUPPORTER_DB`
+**Environment variable name:** `SUPPORTER_DB`  
+**Actual database name:** `impact_events`
 
 ### PAY_BACKEND_URL
 ```
