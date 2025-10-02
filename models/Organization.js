@@ -5,7 +5,12 @@ const OrganizationSchema = new mongoose.Schema({
   mission: String,
   website: String,
   socials: [String],
-  address: String,
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    zip: String
+  },
   pipelineDefaults: { 
     type: [String], 
     default: ["sop_entry", "rsvp", "paid", "attended", "champion"] 
