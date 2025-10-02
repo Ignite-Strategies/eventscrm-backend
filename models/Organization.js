@@ -4,7 +4,12 @@ const OrganizationSchema = new mongoose.Schema({
   name: { type: String, required: true },
   mission: String,
   website: String,
-  socials: [String],
+  socials: {
+    x: String,
+    instagram: String,
+    facebook: String,
+    linkedin: String
+  },
   address: {
     street: String,
     city: String,
