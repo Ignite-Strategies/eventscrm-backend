@@ -21,8 +21,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ignite-crm')
-  .then(() => console.log('✅ MongoDB connected'))
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/SUPPORTER_DB')
+  .then(() => console.log('✅ MongoDB connected to SUPPORTER_DB'))
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Routes
