@@ -1,7 +1,7 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import connectDatabase from './config/database.js';
 
 // Import routes
 import orgsRouter from './routes/orgs.js';
@@ -23,9 +23,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/SUPPORTER_DB')
-  .then(() => console.log('✅ MongoDB connected to SUPPORTER_DB'))
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+await connectDatabase();
 
 // Routes
 app.use('/api/orgs', orgsRouter);
