@@ -6,9 +6,9 @@
 
 ### MONGO_URI
 ```
-MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net
+MONGO_URI=mongodb+srv://username:password@cluster.mongodb.net/SUPPORTER_DB
 ```
-**Database name `SUPPORTER_DB` is set in code via `dbName` option**
+**IMPORTANT:** Connection string MUST end with `/SUPPORTER_DB`
 
 ### PAY_BACKEND_URL
 ```
