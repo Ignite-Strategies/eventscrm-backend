@@ -28,16 +28,24 @@ router.get('/:eventId/pipeline', async (req, res) => {
 // Push supporters into event pipeline
 router.post('/:eventId/pipeline/push', async (req, res) => {
   try {
+    console.log('📨 PUSH ROUTE: Received request');
+    console.log('📨 PUSH ROUTE: eventId:', req.params.eventId);
+    console.log('📨 PUSH ROUTE: Request body:', req.body);
+    
     const { eventId } = req.params;
     const { orgId, supporterIds, audienceType = "org_member", stage = "member", source = "admin_add" } = req.body;
     
     if (!orgId) {
+      console.log('❌ PUSH ROUTE: Missing orgId');
       return res.status(400).json({ error: 'orgId is required' });
     }
     
     if (!supporterIds || supporterIds.length === 0) {
+      console.log('❌ PUSH ROUTE: Missing supporterIds');
       return res.status(400).json({ error: 'supporterIds is required' });
     }
+    
+    console.log('✅ PUSH ROUTE: Calling pushSupportersToEvent service');
     
     const result = await pushSupportersToEvent({
       orgId,
@@ -48,8 +56,11 @@ router.post('/:eventId/pipeline/push', async (req, res) => {
       source
     });
     
+    console.log('📤 PUSH ROUTE: Sending response:', result);
     res.json(result);
   } catch (error) {
+    console.error('❌ PUSH ROUTE: Error:', error);
+    console.error('❌ PUSH ROUTE: Error stack:', error.stack);
     res.status(400).json({ error: error.message });
   }
 });

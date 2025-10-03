@@ -19,6 +19,14 @@ export async function pushSupportersToEvent({
   stage = "member",
   source = "admin_add"
 }) {
+  console.log('🚀 PUSH SUPPORTERS: Starting push operation');
+  console.log('🚀 PUSH SUPPORTERS: orgId:', orgId);
+  console.log('🚀 PUSH SUPPORTERS: eventId:', eventId);
+  console.log('🚀 PUSH SUPPORTERS: supporterIds:', supporterIds);
+  console.log('🚀 PUSH SUPPORTERS: audienceType:', audienceType);
+  console.log('🚀 PUSH SUPPORTERS: stage:', stage);
+  console.log('🚀 PUSH SUPPORTERS: source:', source);
+
   const results = {
     success: [],
     errors: [],
@@ -27,16 +35,27 @@ export async function pushSupportersToEvent({
 
   for (const supporterId of supporterIds) {
     try {
+      console.log(`🔍 PUSH SUPPORTERS: Processing supporter ${supporterId}`);
+      
       // Get supporter from master CRM
       const supporter = await Supporter.findById(supporterId);
       
       if (!supporter) {
+        console.log(`❌ PUSH SUPPORTERS: Supporter ${supporterId} not found`);
         results.errors.push({ 
           supporterId, 
           error: "Supporter not found" 
         });
         continue;
       }
+
+      console.log(`✅ PUSH SUPPORTERS: Found supporter:`, {
+        id: supporter._id,
+        firstName: supporter.firstName,
+        lastName: supporter.lastName,
+        email: supporter.email,
+        phone: supporter.phone
+      });
 
       // Check if already in pipeline
       const existing = await EventPipeline.findOne({
@@ -46,6 +65,7 @@ export async function pushSupportersToEvent({
       });
 
       if (existing) {
+        console.log(`⚠️ PUSH SUPPORTERS: Supporter ${supporter.email} already in pipeline`);
         results.skipped.push({
           supporterId,
           email: supporter.email,
@@ -54,12 +74,16 @@ export async function pushSupportersToEvent({
         continue;
       }
 
+      // Create full name from firstName and lastName
+      const fullName = `${supporter.firstName} ${supporter.lastName}`;
+      console.log(`📝 PUSH SUPPORTERS: Creating pipeline record with name: "${fullName}"`);
+
       // Create EventPipeline record (copy from Supporter)
       const pipelineRecord = new EventPipeline({
         orgId,
         eventId,
         supporterId,
-        name: supporter.name,
+        name: fullName, // Use constructed full name
         email: supporter.email,
         phone: supporter.phone,
         audienceType,
@@ -68,21 +92,39 @@ export async function pushSupportersToEvent({
         tags: [`source:${source}`, `audience:${audienceType}`]
       });
 
+      console.log(`💾 PUSH SUPPORTERS: Saving pipeline record:`, {
+        name: pipelineRecord.name,
+        email: pipelineRecord.email,
+        stage: pipelineRecord.stage,
+        audienceType: pipelineRecord.audienceType
+      });
+
       await pipelineRecord.save();
+
+      console.log(`✅ PUSH SUPPORTERS: Successfully saved pipeline record ${pipelineRecord._id}`);
 
       results.success.push({
         supporterId,
         pipelineId: pipelineRecord._id,
-        email: supporter.email
+        email: supporter.email,
+        name: fullName
       });
 
     } catch (error) {
+      console.error(`❌ PUSH SUPPORTERS: Error processing supporter ${supporterId}:`, error);
+      console.error(`❌ PUSH SUPPORTERS: Error stack:`, error.stack);
       results.errors.push({
         supporterId,
         error: error.message
       });
     }
   }
+
+  console.log('🏁 PUSH SUPPORTERS: Final results:', {
+    success: results.success.length,
+    errors: results.errors.length,
+    skipped: results.skipped.length
+  });
 
   return results;
 }
