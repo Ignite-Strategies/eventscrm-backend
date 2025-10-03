@@ -24,29 +24,20 @@ const SupporterSchema = new mongoose.Schema({
   employer: String,
   yearsWithOrganization: Number,
   
-  // Engagement Tracking
-  eventsAttended: { type: Number, default: 0 },
+  // Engagement Tracking (MVP1 - simplified)
   categoryOfEngagement: {
     type: String,
     enum: ["member", "donor", "volunteer", "sponsor", "partner", "general"],
     default: "general"
   },
   
-  // Pipeline (current stage in org relationship)
-  pipeline: {
-    type: String,
-    enum: ["prospect", "active", "champion", "inactive"],
-    default: "prospect"
-  },
-  
-  // Legacy fields
+  // Legacy fields (kept for existing data)
   donationHistory: [{
     amount: Number,
     date: Date,
     campaign: String
   }],
   totalDonated: { type: Number, default: 0 },
-  tags: [String],
   
   // Preferences
   communicationPreferences: {

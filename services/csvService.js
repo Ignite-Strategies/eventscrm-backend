@@ -1,7 +1,42 @@
 import { parse } from 'csv-parse/sync';
 
 /**
- * Parse CSV file and validate supporter data (HubSpot-style)
+ * Normalize field names from various formats to our schema
+ */
+function normalizeFieldName(fieldName) {
+  const normalized = fieldName.toLowerCase().trim();
+  
+  // Common variations
+  const fieldMap = {
+    'first name': 'firstName',
+    'firstname': 'firstName',
+    'fname': 'firstName',
+    'last name': 'lastName', 
+    'lastname': 'lastName',
+    'lname': 'lastName',
+    'email address': 'email',
+    'emailaddress': 'email',
+    'phone number': 'phone',
+    'phonenumber': 'phone',
+    'street address': 'street',
+    'streetaddress': 'street',
+    'zip code': 'zip',
+    'zipcode': 'zip',
+    'postal code': 'zip',
+    'postalcode': 'zip',
+    'company': 'employer',
+    'organization': 'employer',
+    'years with org': 'yearsWithOrganization',
+    'yearswithorg': 'yearsWithOrganization',
+    'category': 'categoryOfEngagement',
+    'engagement': 'categoryOfEngagement'
+  };
+  
+  return fieldMap[normalized] || normalized;
+}
+
+/**
+ * Parse CSV file and validate supporter data (MVP1 - simplified)
  */
 export function parseContactsCSV(csvBuffer) {
   const records = parse(csvBuffer, {
@@ -16,47 +51,43 @@ export function parseContactsCSV(csvBuffer) {
   records.forEach((record, index) => {
     const lineNum = index + 2; // +2 for header + 0-index
     
+    // Normalize all field names
+    const normalizedRecord = {};
+    Object.keys(record).forEach(key => {
+      const normalizedKey = normalizeFieldName(key);
+      normalizedRecord[normalizedKey] = record[key];
+    });
+    
     // Validate required fields
-    if (!record.email && !record.Email) {
+    if (!normalizedRecord.email) {
       errors.push({ line: lineNum, error: "Missing email" });
       return;
     }
     
-    if (!record.firstName && !record.FirstName) {
+    if (!normalizedRecord.firstname) {
       errors.push({ line: lineNum, error: "Missing firstName" });
       return;
     }
     
-    if (!record.lastName && !record.LastName) {
+    if (!normalizedRecord.lastname) {
       errors.push({ line: lineNum, error: "Missing lastName" });
       return;
     }
     
-    // Build supporter object
+    // Build supporter object (MVP1 - simplified)
     const supporter = {
-      firstName: record.firstName || record.FirstName,
-      lastName: record.lastName || record.LastName,
-      email: (record.email || record.Email).toLowerCase().trim(),
-      phone: record.phone || record.Phone || "",
-      street: record.street || record.Street || "",
-      city: record.city || record.City || "",
-      state: record.state || record.State || "",
-      zip: record.zip || record.Zip || "",
-      employer: record.employer || record.Employer || "",
-      yearsWithOrganization: parseInt(record.yearsWithOrganization || record.YearsWithOrganization || "0") || 0,
-      eventsAttended: parseInt(record.eventsAttended || record.EventsAttended || "0") || 0,
-      categoryOfEngagement: record.categoryOfEngagement || record.CategoryOfEngagement || "general",
-      pipeline: record.pipeline || record.Pipeline || "prospect",
-      tags: []
+      firstName: normalizedRecord.firstname,
+      lastName: normalizedRecord.lastname,
+      email: normalizedRecord.email.toLowerCase().trim(),
+      phone: normalizedRecord.phone || "",
+      street: normalizedRecord.street || "",
+      city: normalizedRecord.city || "",
+      state: normalizedRecord.state || "",
+      zip: normalizedRecord.zip || "",
+      employer: normalizedRecord.employer || "",
+      yearsWithOrganization: parseInt(normalizedRecord.yearswithorganization || "0") || 0,
+      categoryOfEngagement: normalizedRecord.categoryofengagement || "general"
     };
-    
-    // Parse tags if present
-    if (record.tags || record.Tags) {
-      const tagString = record.tags || record.Tags;
-      // Handle both quoted and unquoted formats
-      const cleanedTags = tagString.replace(/^"|"$/g, '').trim();
-      supporter.tags = cleanedTags.split(',').map(t => t.trim()).filter(t => t);
-    }
     
     contacts.push(supporter);
   });
