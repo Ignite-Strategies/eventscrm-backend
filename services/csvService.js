@@ -11,6 +11,10 @@ function normalizeFieldName(fieldName) {
     'first name': 'firstName',
     'firstname': 'firstName',
     'fname': 'firstName',
+    'goes by': 'goesBy',
+    'goesby': 'goesBy',
+    'nickname': 'goesBy',
+    'preferred name': 'goesBy',
     'last name': 'lastName', 
     'lastname': 'lastName',
     'lname': 'lastName',
@@ -79,6 +83,7 @@ export function parseContactsCSV(csvBuffer) {
     // Build supporter object (MVP1 - simplified)
     const supporter = {
       firstName: normalizedRecord.firstname,
+      goesBy: normalizedRecord.goesby || "",
       lastName: normalizedRecord.lastname,
       email: normalizedRecord.email.toLowerCase().trim(),
       phone: normalizedRecord.phone || "",

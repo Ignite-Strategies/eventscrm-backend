@@ -10,6 +10,7 @@ const SupporterSchema = new mongoose.Schema({
   
   // Contact Info (HubSpot-style)
   firstName: { type: String, required: true },
+  goesBy: String, // Nickname/preferred name
   lastName: { type: String, required: true },
   email: { type: String, required: true, index: true },
   phone: String,
