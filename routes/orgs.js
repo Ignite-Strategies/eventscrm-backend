@@ -3,6 +3,17 @@ import Organization from '../models/Organization.js';
 
 const router = express.Router();
 
+// Get first organization (for login check)
+router.get('/first', async (req, res) => {
+  try {
+    const org = await Organization.findOne().sort({ createdAt: 1 });
+    if (!org) return res.status(404).json({ error: 'No organization found' });
+    res.json(org);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Create organization
 router.post('/', async (req, res) => {
   try {
@@ -41,4 +52,3 @@ router.patch('/:orgId', async (req, res) => {
 });
 
 export default router;
-
