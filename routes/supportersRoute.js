@@ -1,25 +1,24 @@
 import express from 'express';
 import multer from 'multer';
-import Supporter from '../models/Supporter.js';
-import { parseContactsCSV } from '../services/csvService.js';
+import { readCSV } from '../services/csvReader.js';
+import { normalizeRecord } from '../services/csvNormalizer.js';
+import { validateBatch } from '../services/csvValidator.js';
+import { bulkUpsertSupporters, createSupporter, deleteSupporter, getSupportersByOrg } from '../services/supporterMutation.js';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// Upsert single supporter
+// Create single supporter
 router.post('/:orgId/supporters', async (req, res) => {
   try {
     const { orgId } = req.params;
-    const supporterData = { ...req.body, orgId };
+    const result = await createSupporter(orgId, req.body);
     
-    // Upsert by email
-    const supporter = await Supporter.findOneAndUpdate(
-      { orgId, email: supporterData.email },
-      supporterData,
-      { upsert: true, new: true, runValidators: true }
-    );
-    
-    res.json(supporter);
+    if (result.success) {
+      res.json(result.supporter);
+    } else {
+      res.status(400).json({ error: result.error });
+    }
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -36,32 +35,36 @@ router.post('/:orgId/supporters/csv', upload.single('file'), async (req, res) =>
       return res.status(400).json({ error: 'No file uploaded' });
     }
     
-    const { contacts, errors } = parseContactsCSV(req.file.buffer);
-    console.log('CSV Parse Results:', { contactsCount: contacts.length, errorsCount: errors.length });
-    
-    if (errors.length > 0) {
-      return res.status(400).json({ 
-        error: 'CSV parsing errors', 
-        details: errors 
-      });
+    // 1. Read CSV
+    const readResult = readCSV(req.file.buffer);
+    if (!readResult.success) {
+      return res.status(400).json({ error: readResult.error });
     }
     
-    // Bulk upsert supporters
-    const operations = contacts.map(c => ({
-      updateOne: {
-        filter: { orgId, email: c.email },
-        update: { ...c, orgId },
-        upsert: true
-      }
-    }));
+    // 2. Normalize field names
+    const normalizedRecords = readResult.records.map(record => normalizeRecord(record));
     
-    const result = await Supporter.bulkWrite(operations);
+    // 3. Validate records
+    const validationResult = validateBatch(normalizedRecords);
+    console.log('CSV Processing Results:', { 
+      total: validationResult.totalProcessed,
+      valid: validationResult.validCount,
+      errors: validationResult.errorCount 
+    });
+    
+    // 4. Database mutation
+    const mutationResult = await bulkUpsertSupporters(orgId, validationResult.validRecords);
+    
+    if (!mutationResult.success) {
+      return res.status(400).json({ error: mutationResult.error });
+    }
     
     res.json({
       success: true,
-      inserted: result.upsertedCount,
-      updated: result.modifiedCount,
-      total: contacts.length
+      inserted: mutationResult.inserted,
+      updated: mutationResult.updated,
+      total: validationResult.validCount,
+      errors: validationResult.errors
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -102,21 +105,17 @@ router.get('/:orgId/supporters', async (req, res) => {
 router.delete('/supporters/:supporterId', async (req, res) => {
   try {
     const { supporterId } = req.params;
+    const result = await deleteSupporter(supporterId);
     
-    const supporter = await Supporter.findByIdAndDelete(supporterId);
-    
-    if (!supporter) {
-      return res.status(404).json({ error: 'Supporter not found' });
+    if (result.success) {
+      res.json({ 
+        success: true, 
+        message: 'Supporter deleted',
+        deletedSupporter: result.deletedSupporter
+      });
+    } else {
+      res.status(404).json({ error: result.error });
     }
-    
-    // TODO: Also delete related EventPipeline and EventAttendee records
-    // For now, just delete the supporter
-    
-    res.json({ 
-      success: true, 
-      message: 'Supporter deleted',
-      deletedSupporter: supporter
-    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
