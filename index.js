@@ -4,13 +4,13 @@ import dotenv from 'dotenv';
 import connectDatabase from './config/database.js';
 
 // Import routes
-import orgsRouter from './routes/orgs.js';
-import supportersRouter from './routes/supporters.js';
-import eventsRouter from './routes/events.js';
-import eventPipelinesRouter from './routes/eventPipelines.js';
-import eventAttendeesRouter from './routes/eventAttendees.js';
-import eventPipelineActionsRouter from './routes/eventPipeline.js'; // Push actions
-import webhooksRouter from './routes/webhooks.js';
+import orgsRouter from './routes/orgsRoute.js';
+import supportersRouter from './routes/supportersRoute.js';
+import eventsRouter from './routes/eventsRoute.js';
+import eventPipelinesRouter from './routes/eventPipelinesRoute.js';
+import eventAttendeesRouter from './routes/eventAttendeesRoute.js';
+import eventPipelineActionsRouter from './routes/eventPipelineActionsRoute.js';
+import webhooksRouter from './routes/webhooksRoute.js';
 
 dotenv.config();
 
