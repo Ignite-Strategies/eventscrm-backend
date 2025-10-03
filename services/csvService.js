@@ -88,7 +88,7 @@ export function parseContactsCSV(csvBuffer) {
       zip: normalizedRecord.zip || "",
       employer: normalizedRecord.employer || "",
       yearsWithOrganization: parseInt(normalizedRecord.yearswithorganization || "0") || 0,
-      categoryOfEngagement: normalizedRecord.categoryofengagement || "general"
+      categoryOfEngagement: "general" // Default for CSV imports
     };
     
     contacts.push(supporter);
