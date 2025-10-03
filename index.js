@@ -28,6 +28,7 @@ await connectDatabase();
 // Routes
 app.use('/api/orgs', orgsRouter);
 app.use('/api/orgs', supportersRouter);         // Supporters nested under orgs
+app.use('/api', supportersRouter);              // Delete route not nested
 app.use('/api/orgs', eventsRouter);             // Event creation nested under orgs
 app.use('/api/events', eventsRouter);           // Event operations
 app.use('/api/events', eventPipelinesRouter);   // Pipeline records (GET/PATCH)

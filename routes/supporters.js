@@ -76,7 +76,8 @@ router.get('/:orgId/supporters', async (req, res) => {
     // Search by name or email
     if (search) {
       query.$or = [
-        { name: new RegExp(search, 'i') },
+        { firstName: new RegExp(search, 'i') },
+        { lastName: new RegExp(search, 'i') },
         { email: new RegExp(search, 'i') }
       ];
     }
@@ -89,6 +90,30 @@ router.get('/:orgId/supporters', async (req, res) => {
     
     const supporters = await Supporter.find(query).sort({ createdAt: -1 });
     res.json(supporters);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete supporter
+router.delete('/supporters/:supporterId', async (req, res) => {
+  try {
+    const { supporterId } = req.params;
+    
+    const supporter = await Supporter.findByIdAndDelete(supporterId);
+    
+    if (!supporter) {
+      return res.status(404).json({ error: 'Supporter not found' });
+    }
+    
+    // TODO: Also delete related EventPipeline and EventAttendee records
+    // For now, just delete the supporter
+    
+    res.json({ 
+      success: true, 
+      message: 'Supporter deleted',
+      deletedSupporter: supporter
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
