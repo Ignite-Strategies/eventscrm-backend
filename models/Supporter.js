@@ -28,7 +28,7 @@ const SupporterSchema = new mongoose.Schema({
   // Engagement Tracking
   categoryOfEngagement: {
     type: String,
-    enum: ["high", "medium", "low", "inactive"],
+    enum: ["high", "medium", "low", "inactive", "general"], // Temporarily allow old values
     default: "medium"
   },
   

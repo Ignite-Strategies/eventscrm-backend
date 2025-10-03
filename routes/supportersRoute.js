@@ -9,6 +9,29 @@ import Supporter from '../models/Supporter.js'; // Import Supporter model for PA
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Migration route to update old engagement categories
+router.post('/migrate-engagement-categories', async (req, res) => {
+  try {
+    console.log('🔄 MIGRATION: Starting engagement category migration');
+    
+    const result = await Supporter.updateMany(
+      { categoryOfEngagement: "general" },
+      { $set: { categoryOfEngagement: "medium" } }
+    );
+    
+    console.log('🔄 MIGRATION: Updated', result.modifiedCount, 'supporters from "general" to "medium"');
+    
+    res.json({
+      success: true,
+      message: `Updated ${result.modifiedCount} supporters from "general" to "medium"`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('🔄 MIGRATION ERROR:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Test route to check database connection
 router.get('/test-db/:orgId', async (req, res) => {
   try {
