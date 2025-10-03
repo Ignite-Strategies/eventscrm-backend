@@ -42,6 +42,14 @@ const SupporterSchema = new mongoose.Schema({
   originStory: String, // How they came to F3/area
   notes: String, // General notes
   
+  // Tags for segmentation
+  tags: [{
+    name: String, // e.g., "knows_organizer", "high_value", "local_business"
+    value: String, // e.g., "true", "false", "downtown", "suburbs"
+    addedBy: String, // Who added the tag
+    addedAt: { type: Date, default: Date.now }
+  }],
+  
   // Future fields (we'll refactor these)
   pipelines: [String], // Event pipelines they're in
   events: [String] // Events they've attended
