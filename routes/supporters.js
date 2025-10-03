@@ -30,11 +30,14 @@ router.post('/:orgId/supporters/csv', upload.single('file'), async (req, res) =>
   try {
     const { orgId } = req.params;
     
+    console.log('CSV Upload Request:', { orgId, file: req.file ? req.file.originalname : 'No file' });
+    
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
     
     const { contacts, errors } = parseContactsCSV(req.file.buffer);
+    console.log('CSV Parse Results:', { contactsCount: contacts.length, errorsCount: errors.length });
     
     if (errors.length > 0) {
       return res.status(400).json({ 
