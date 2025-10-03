@@ -11,6 +11,8 @@ import eventPipelinesRouter from './routes/eventPipelinesRoute.js';
 import eventAttendeesRouter from './routes/eventAttendeesRoute.js';
 import eventPipelineActionsRouter from './routes/eventPipelineActionsRoute.js';
 import webhooksRouter from './routes/webhooksRoute.js';
+import templatesRouter from './routes/templatesRoute.js';
+import emailRouter from './routes/emailRoute.js';
 
 dotenv.config();
 
@@ -35,6 +37,8 @@ app.use('/api/events', eventPipelinesRouter);   // Pipeline records (GET/PATCH/P
 app.use('/api/events', eventAttendeesRouter);   // Final attendees
 app.use('/api/events', eventPipelineActionsRouter); // Push actions
 app.use('/api/webhooks', webhooksRouter);
+app.use('/api/templates', templatesRouter);     // Email templates
+app.use('/api/email', emailRouter);             // Email sending
 
 // Health check
 app.get('/health', (req, res) => {
