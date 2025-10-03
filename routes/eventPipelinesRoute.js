@@ -1,26 +1,24 @@
 import express from 'express';
 import EventPipeline from '../models/EventPipeline.js';
 import { applyPaid } from '../services/pipelineService.js';
-import { graduateToAttendee, pushSupportersToEvent, pushAllSupportersToEvent } from '../services/eventPipelineService.js';
+import { graduateToAttendee, pushSupportersToEvent, pushAllSupportersToEvent, getEventRegistry, moveSupporterStage } from '../services/eventPipelineService.js';
 
 const router = express.Router();
 
-// Get all pipeline records for an event
+// Get event registry (new registry format)
 router.get('/:eventId/pipeline', async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { audienceType, stage } = req.query;
+    const { audienceType = "org_member" } = req.query;
     
-    const query = { eventId };
-    if (audienceType) query.audienceType = audienceType;
-    if (stage) query.stage = stage;
+    console.log('📋 ROUTE: Getting registry for event:', eventId, 'audience:', audienceType);
     
-    const pipelineRecords = await EventPipeline.find(query)
-      .populate('supporterId')
-      .sort({ createdAt: -1 });
+    const registryData = await getEventRegistry(eventId, audienceType);
     
-    res.json(pipelineRecords);
+    console.log('📋 ROUTE: Returning registry data:', registryData.map(r => ({ stage: r.stage, count: r.count })));
+    res.json(registryData);
   } catch (error) {
+    console.error('❌ ROUTE: Error getting registry:', error);
     res.status(400).json({ error: error.message });
   }
 });
@@ -57,28 +55,32 @@ router.post('/:eventId/pipeline/push', async (req, res) => {
     });
     
     console.log('📤 PUSH ROUTE: Sending response:', result);
-    
-    // Verify the pipeline records were actually created
-    console.log('🔍 PUSH ROUTE: Verifying pipeline records were created...');
-    const pipelineRecords = await EventPipeline.find({ eventId, orgId });
-    console.log('🔍 PUSH ROUTE: Found', pipelineRecords.length, 'pipeline records for this event');
-    
-    res.json({
-      ...result,
-      verification: {
-        pipelineRecordsCount: pipelineRecords.length,
-        pipelineRecords: pipelineRecords.map(p => ({
-          id: p._id,
-          name: p.name,
-          email: p.email,
-          stage: p.stage,
-          audienceType: p.audienceType
-        }))
-      }
-    });
+    res.json(result);
   } catch (error) {
     console.error('❌ PUSH ROUTE: Error:', error);
     console.error('❌ PUSH ROUTE: Error stack:', error.stack);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Move supporter between stages
+router.patch('/:eventId/pipeline/move', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { supporterId, fromStage, toStage, audienceType = "org_member" } = req.body;
+    
+    console.log('🔄 MOVE ROUTE: Moving supporter', supporterId, 'from', fromStage, 'to', toStage);
+    
+    if (!supporterId || !toStage) {
+      return res.status(400).json({ error: 'supporterId and toStage are required' });
+    }
+    
+    const result = await moveSupporterStage(eventId, supporterId, fromStage, toStage, audienceType);
+    
+    console.log('🔄 MOVE ROUTE: Move result:', result);
+    res.json(result);
+  } catch (error) {
+    console.error('❌ MOVE ROUTE: Error:', error);
     res.status(400).json({ error: error.message });
   }
 });

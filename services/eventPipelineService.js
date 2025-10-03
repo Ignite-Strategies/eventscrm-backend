@@ -1,6 +1,6 @@
 /**
- * Event Pipeline Service
- * Manages the funnel: Supporter → EventPipeline → EventAttendee
+ * Event Pipeline Service (Registry Format)
+ * Manages the funnel using registry records with supporter arrays
  */
 
 import Supporter from '../models/Supporter.js';
@@ -8,8 +8,8 @@ import EventPipeline from '../models/EventPipeline.js';
 import EventAttendee from '../models/EventAttendee.js';
 
 /**
- * Push supporters into event PIPELINE (working funnel)
- * Creates EventPipeline records from existing Supporters
+ * Push supporters into event registry
+ * Adds supporter IDs to the appropriate registry stage
  */
 export async function pushSupportersToEvent({
   orgId,
@@ -19,13 +19,13 @@ export async function pushSupportersToEvent({
   stage = "member",
   source = "admin_add"
 }) {
-  console.log('🚀 PUSH SUPPORTERS: Starting push operation');
-  console.log('🚀 PUSH SUPPORTERS: orgId:', orgId);
-  console.log('🚀 PUSH SUPPORTERS: eventId:', eventId);
-  console.log('🚀 PUSH SUPPORTERS: supporterIds:', supporterIds);
-  console.log('🚀 PUSH SUPPORTERS: audienceType:', audienceType);
-  console.log('🚀 PUSH SUPPORTERS: stage:', stage);
-  console.log('🚀 PUSH SUPPORTERS: source:', source);
+  console.log('🚀 REGISTRY PUSH: Starting registry push operation');
+  console.log('🚀 REGISTRY PUSH: orgId:', orgId);
+  console.log('🚀 REGISTRY PUSH: eventId:', eventId);
+  console.log('🚀 REGISTRY PUSH: supporterIds:', supporterIds);
+  console.log('🚀 REGISTRY PUSH: audienceType:', audienceType);
+  console.log('🚀 REGISTRY PUSH: stage:', stage);
+  console.log('🚀 REGISTRY PUSH: source:', source);
 
   const results = {
     success: [],
@@ -33,86 +33,23 @@ export async function pushSupportersToEvent({
     skipped: []
   };
 
+  // Validate all supporters exist first
+  const validSupporterIds = [];
   for (const supporterId of supporterIds) {
     try {
-      console.log(`🔍 PUSH SUPPORTERS: Processing supporter ${supporterId}`);
-      
-      // Get supporter from master CRM
       const supporter = await Supporter.findById(supporterId);
-      
       if (!supporter) {
-        console.log(`❌ PUSH SUPPORTERS: Supporter ${supporterId} not found`);
+        console.log(`❌ REGISTRY PUSH: Supporter ${supporterId} not found`);
         results.errors.push({ 
           supporterId, 
           error: "Supporter not found" 
         });
         continue;
       }
-
-      console.log(`✅ PUSH SUPPORTERS: Found supporter:`, {
-        id: supporter._id,
-        firstName: supporter.firstName,
-        lastName: supporter.lastName,
-        email: supporter.email,
-        phone: supporter.phone
-      });
-
-      // Check if already in pipeline
-      const existing = await EventPipeline.findOne({
-        orgId,
-        eventId,
-        email: supporter.email
-      });
-
-      if (existing) {
-        console.log(`⚠️ PUSH SUPPORTERS: Supporter ${supporter.email} already in pipeline`);
-        results.skipped.push({
-          supporterId,
-          email: supporter.email,
-          reason: "Already in pipeline"
-        });
-        continue;
-      }
-
-      // Create full name from firstName and lastName
-      const fullName = `${supporter.firstName} ${supporter.lastName}`;
-      console.log(`📝 PUSH SUPPORTERS: Creating pipeline record with name: "${fullName}"`);
-
-      // Create EventPipeline record (copy from Supporter)
-      const pipelineRecord = new EventPipeline({
-        orgId,
-        eventId,
-        supporterId,
-        name: fullName, // Use constructed full name
-        email: supporter.email,
-        phone: supporter.phone,
-        audienceType,
-        stage,
-        source,
-        tags: [`source:${source}`, `audience:${audienceType}`]
-      });
-
-      console.log(`💾 PUSH SUPPORTERS: Saving pipeline record:`, {
-        name: pipelineRecord.name,
-        email: pipelineRecord.email,
-        stage: pipelineRecord.stage,
-        audienceType: pipelineRecord.audienceType
-      });
-
-      await pipelineRecord.save();
-
-      console.log(`✅ PUSH SUPPORTERS: Successfully saved pipeline record ${pipelineRecord._id}`);
-
-      results.success.push({
-        supporterId,
-        pipelineId: pipelineRecord._id,
-        email: supporter.email,
-        name: fullName
-      });
-
+      validSupporterIds.push(supporterId);
+      console.log(`✅ REGISTRY PUSH: Valid supporter: ${supporter.firstName} ${supporter.lastName}`);
     } catch (error) {
-      console.error(`❌ PUSH SUPPORTERS: Error processing supporter ${supporterId}:`, error);
-      console.error(`❌ PUSH SUPPORTERS: Error stack:`, error.stack);
+      console.error(`❌ REGISTRY PUSH: Error validating supporter ${supporterId}:`, error);
       results.errors.push({
         supporterId,
         error: error.message
@@ -120,13 +57,138 @@ export async function pushSupportersToEvent({
     }
   }
 
-  console.log('🏁 PUSH SUPPORTERS: Final results:', {
+  if (validSupporterIds.length === 0) {
+    console.log('❌ REGISTRY PUSH: No valid supporters to add');
+    return results;
+  }
+
+  try {
+    // Find or create registry record for this stage
+    let registryRecord = await EventPipeline.findOne({
+      orgId,
+      eventId,
+      audienceType,
+      stage
+    });
+
+    if (!registryRecord) {
+      console.log(`📝 REGISTRY PUSH: Creating new registry record for ${audienceType}/${stage}`);
+      registryRecord = new EventPipeline({
+        orgId,
+        eventId,
+        audienceType,
+        stage,
+        supporterIds: [],
+        source
+      });
+    }
+
+    // Add supporter IDs to registry (avoid duplicates)
+    const existingIds = new Set(registryRecord.supporterIds.map(id => id.toString()));
+    const newIds = validSupporterIds.filter(id => !existingIds.has(id.toString()));
+    
+    if (newIds.length > 0) {
+      registryRecord.supporterIds.push(...newIds);
+      await registryRecord.save();
+      console.log(`✅ REGISTRY PUSH: Added ${newIds.length} supporters to ${audienceType}/${stage}`);
+    }
+
+    // Track results
+    for (const supporterId of validSupporterIds) {
+      if (existingIds.has(supporterId.toString())) {
+        results.skipped.push({
+          supporterId,
+          reason: "Already in registry"
+        });
+      } else {
+        results.success.push({
+          supporterId,
+          registryId: registryRecord._id,
+          stage,
+          audienceType
+        });
+      }
+    }
+
+  } catch (error) {
+    console.error('❌ REGISTRY PUSH: Error updating registry:', error);
+    results.errors.push({
+      error: error.message
+    });
+  }
+
+  console.log('🏁 REGISTRY PUSH: Final results:', {
     success: results.success.length,
     errors: results.errors.length,
     skipped: results.skipped.length
   });
 
   return results;
+}
+
+/**
+ * Get event registry with populated supporter details
+ */
+export async function getEventRegistry(eventId, audienceType = "org_member") {
+  console.log('📋 REGISTRY GET: Getting registry for event:', eventId, 'audience:', audienceType);
+  
+  try {
+    // Get registry records for this event and audience
+    const registryRecords = await EventPipeline.find({
+      eventId,
+      audienceType
+    }).populate('supporterIds', 'firstName lastName email phone categoryOfEngagement');
+
+    console.log('📋 REGISTRY GET: Found', registryRecords.length, 'registry records');
+
+    // Transform to frontend-friendly format
+    const stages = ['member', 'soft_commit', 'paid'];
+    const result = stages.map(stage => {
+      const record = registryRecords.find(r => r.stage === stage);
+      return {
+        stage,
+        supporters: record ? record.supporterIds : [],
+        count: record ? record.supporterIds.length : 0
+      };
+    });
+
+    console.log('📋 REGISTRY GET: Returning stages:', result.map(r => ({ stage: r.stage, count: r.count })));
+    return result;
+  } catch (error) {
+    console.error('❌ REGISTRY GET: Error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Move supporter between stages in registry
+ */
+export async function moveSupporterStage(eventId, supporterId, fromStage, toStage, audienceType = "org_member") {
+  console.log('🔄 REGISTRY MOVE: Moving supporter', supporterId, 'from', fromStage, 'to', toStage);
+  
+  try {
+    // Remove from source stage
+    if (fromStage) {
+      await EventPipeline.updateOne(
+        { eventId, audienceType, stage: fromStage },
+        { $pull: { supporterIds: supporterId } }
+      );
+      console.log('🔄 REGISTRY MOVE: Removed from', fromStage);
+    }
+
+    // Add to target stage
+    await EventPipeline.updateOne(
+      { eventId, audienceType, stage: toStage },
+      { $addToSet: { supporterIds: supporterId } },
+      { upsert: true }
+    );
+    console.log('🔄 REGISTRY MOVE: Added to', toStage);
+
+    return { success: true };
+  } catch (error) {
+    console.error('❌ REGISTRY MOVE: Error:', error);
+    throw error;
+  }
 }
 
 /**

@@ -13,48 +13,35 @@ const EventPipelineSchema = new mongoose.Schema({
     required: true,
     index: true 
   },
-  supporterId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "Supporter",
-    required: true,
-    index: true 
-  },
-  name: { type: String, required: true },
-  email: { type: String, required: true, index: true },
-  phone: String,
   
-  // Which pipeline (audience type)
+  // Registry format: one record per stage per audience type
   audienceType: {
     type: String,
     enum: ["org_member", "friend_spouse", "community_partner", "business_sponsor", "champion"],
     default: "org_member"
   },
   
-  // Where in journey
   stage: { 
     type: String, 
     enum: ["member", "soft_commit", "paid"],
-    default: "member" 
+    required: true
   },
   
-  // Tracking
-  source: String, // landing_form | csv | qr | admin | tag_filter
-  rsvp: { type: Boolean, default: false },
-  rsvpDate: Date,
-  paid: { type: Boolean, default: false },
-  paymentDate: Date,
-  amount: { type: Number, default: 0 },
-  engagementScore: { type: Number, default: 0 },
-  tags: [String], // ["source:csv", "rule:auto_soft_commit@2025-10-02"]
+  // Array of supporter IDs in this stage
+  supporterIds: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Supporter"
+  }],
   
-  // Optional fields
-  dietaryRestrictions: String,
-  plusOne: String,
+  // Tracking
+  source: String, // "admin_add", "csv", "bulk_add", etc.
+  
+  // Optional metadata
   notes: String
 }, { timestamps: true });
 
-// Unique: one pipeline record per email per event
-EventPipelineSchema.index({ orgId: 1, eventId: 1, email: 1 }, { unique: true });
+// Unique: one registry record per event + audience + stage combination
+EventPipelineSchema.index({ orgId: 1, eventId: 1, audienceType: 1, stage: 1 }, { unique: true });
 
 export default mongoose.model("EventPipeline", EventPipelineSchema);
 
