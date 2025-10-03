@@ -1,7 +1,7 @@
 import express from 'express';
 import EventPipeline from '../models/EventPipeline.js';
 import { applyPaid } from '../services/pipelineService.js';
-import { graduateToAttendee } from '../services/eventPipelineService.js';
+import { graduateToAttendee, pushSupportersToEvent, pushAllSupportersToEvent } from '../services/eventPipelineService.js';
 
 const router = express.Router();
 
@@ -21,6 +21,96 @@ router.get('/:eventId/pipeline', async (req, res) => {
     
     res.json(pipelineRecords);
   } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Push supporters into event pipeline
+router.post('/:eventId/pipeline/push', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { orgId, supporterIds, audienceType = "org_member", stage = "member", source = "admin_add" } = req.body;
+    
+    if (!orgId) {
+      return res.status(400).json({ error: 'orgId is required' });
+    }
+    
+    if (!supporterIds || supporterIds.length === 0) {
+      return res.status(400).json({ error: 'supporterIds is required' });
+    }
+    
+    const result = await pushSupportersToEvent({
+      orgId,
+      eventId,
+      supporterIds,
+      audienceType,
+      stage,
+      source
+    });
+    
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Push ALL supporters into event pipeline
+router.post('/:eventId/pipeline/push-all', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { orgId, audienceType = "org_member", stage = "member", source = "bulk_import" } = req.body;
+    
+    if (!orgId) {
+      return res.status(400).json({ error: 'orgId is required' });
+    }
+    
+    const result = await pushAllSupportersToEvent({
+      orgId,
+      eventId,
+      audienceType,
+      stage,
+      source
+    });
+    
+    res.json(result);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Create pipeline collections for selected audience types
+router.post('/:eventId/pipelines/create', async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { orgId, audienceTypes } = req.body;
+    
+    if (!orgId) {
+      return res.status(400).json({ error: 'orgId is required' });
+    }
+    
+    if (!audienceTypes || audienceTypes.length === 0) {
+      return res.status(400).json({ error: 'audienceTypes is required' });
+    }
+    
+    console.log(`🚀 Creating pipelines for event ${eventId} with audience types:`, audienceTypes);
+    
+    // For MVP1, we're just setting up the pipeline structure
+    // The actual EventPipeline records will be created when supporters are pushed
+    const result = {
+      success: true,
+      eventId,
+      audienceTypes,
+      message: `Pipeline structure created for ${audienceTypes.length} audience type(s)`,
+      pipelines: audienceTypes.map(type => ({
+        audienceType: type,
+        stages: ['member', 'soft_commit', 'paid'],
+        status: 'ready'
+      }))
+    };
+    
+    res.json(result);
+  } catch (error) {
+    console.error('Pipeline creation error:', error);
     res.status(400).json({ error: error.message });
   }
 });
