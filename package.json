@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Event CRM Backend - Pipeline automation and funnel management",
   "main": "index.js",
+  "license": "MIT",
   "scripts": {
     "dev": "nodemon index.js",
     "start": "node index.js"
