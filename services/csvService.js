@@ -26,8 +26,10 @@ function normalizeFieldName(fieldName) {
     'postalcode': 'zip',
     'company': 'employer',
     'organization': 'employer',
+    'years with organization': 'yearsWithOrganization',
     'years with org': 'yearsWithOrganization',
     'yearswithorg': 'yearsWithOrganization',
+    'category of engagement': 'categoryOfEngagement',
     'category': 'categoryOfEngagement',
     'engagement': 'categoryOfEngagement'
   };

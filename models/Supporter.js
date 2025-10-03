@@ -31,21 +31,6 @@ const SupporterSchema = new mongoose.Schema({
     default: "general"
   },
   
-  // Legacy fields (kept for existing data)
-  donationHistory: [{
-    amount: Number,
-    date: Date,
-    campaign: String
-  }],
-  totalDonated: { type: Number, default: 0 },
-  
-  // Preferences
-  communicationPreferences: {
-    email: { type: Boolean, default: true },
-    sms: { type: Boolean, default: false },
-    mail: { type: Boolean, default: false }
-  },
-  
   notes: String
 }, { timestamps: true });
 
