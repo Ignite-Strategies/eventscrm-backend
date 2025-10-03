@@ -103,13 +103,19 @@ export async function deleteSupporter(supporterId) {
  */
 export async function getSupportersByOrg(orgId) {
   try {
+    console.log('🔍 GET: Querying supporters for orgId:', orgId);
+    
     const supporters = await Supporter.find({ orgId }).sort({ createdAt: -1 });
+    
+    console.log('🔍 GET: Found', supporters.length, 'supporters');
+    console.log('🔍 GET: Sample supporter:', supporters[0]);
     
     return {
       success: true,
       supporters
     };
   } catch (error) {
+    console.error('🔍 GET ERROR:', error);
     return {
       success: false,
       error: error.message,

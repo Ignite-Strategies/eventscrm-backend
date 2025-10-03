@@ -105,28 +105,20 @@ router.post('/:orgId/supporters/csv', upload.single('file'), async (req, res) =>
 router.get('/:orgId/supporters', async (req, res) => {
   try {
     const { orgId } = req.params;
-    const { search, tags } = req.query;
+    console.log('📋 GET: Fetching supporters for orgId:', orgId);
     
-    const query = { orgId };
+    const result = await getSupportersByOrg(orgId);
+    console.log('📋 GET: Database result:', result);
     
-    // Search by name or email
-    if (search) {
-      query.$or = [
-        { firstName: new RegExp(search, 'i') },
-        { lastName: new RegExp(search, 'i') },
-        { email: new RegExp(search, 'i') }
-      ];
+    if (result.success) {
+      console.log('📋 GET: Returning', result.supporters.length, 'supporters');
+      res.json(result.supporters);
+    } else {
+      console.error('📋 GET: Database error:', result.error);
+      res.status(400).json({ error: result.error });
     }
-    
-    // Filter by tags
-    if (tags) {
-      const tagArray = tags.split(',');
-      query.tags = { $in: tagArray };
-    }
-    
-    const supporters = await Supporter.find(query).sort({ createdAt: -1 });
-    res.json(supporters);
   } catch (error) {
+    console.error('📋 GET: Route error:', error);
     res.status(400).json({ error: error.message });
   }
 });
