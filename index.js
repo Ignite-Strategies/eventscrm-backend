@@ -31,7 +31,7 @@ app.use('/api/orgs', supportersRouter);         // Supporters nested under orgs
 app.use('/api', supportersRouter);              // Delete route not nested
 app.use('/api/orgs', eventsRouter);             // Event creation nested under orgs
 app.use('/api/events', eventsRouter);           // Event operations
-app.use('/api/events', eventPipelinesRouter);   // Pipeline records (GET/PATCH)
+app.use('/api/events', eventPipelinesRouter);   // Pipeline records (GET/PATCH/PUSH)
 app.use('/api/events', eventAttendeesRouter);   // Final attendees
 app.use('/api/events', eventPipelineActionsRouter); // Push actions
 app.use('/api/webhooks', webhooksRouter);

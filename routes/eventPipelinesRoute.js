@@ -57,7 +57,25 @@ router.post('/:eventId/pipeline/push', async (req, res) => {
     });
     
     console.log('📤 PUSH ROUTE: Sending response:', result);
-    res.json(result);
+    
+    // Verify the pipeline records were actually created
+    console.log('🔍 PUSH ROUTE: Verifying pipeline records were created...');
+    const pipelineRecords = await EventPipeline.find({ eventId, orgId });
+    console.log('🔍 PUSH ROUTE: Found', pipelineRecords.length, 'pipeline records for this event');
+    
+    res.json({
+      ...result,
+      verification: {
+        pipelineRecordsCount: pipelineRecords.length,
+        pipelineRecords: pipelineRecords.map(p => ({
+          id: p._id,
+          name: p.name,
+          email: p.email,
+          stage: p.stage,
+          audienceType: p.audienceType
+        }))
+      }
+    });
   } catch (error) {
     console.error('❌ PUSH ROUTE: Error:', error);
     console.error('❌ PUSH ROUTE: Error stack:', error.stack);
