@@ -142,7 +142,7 @@ export async function getEventRegistry(eventId, audienceType = "org_member") {
     console.log('📋 REGISTRY GET: Found', registryRecords.length, 'registry records');
 
     // Transform to frontend-friendly format
-    const stages = ['member', 'soft_commit', 'paid'];
+    const stages = ['member', 'soft_commit', 'paid', 'lost'];
     const result = stages.map(stage => {
       const record = registryRecords.find(r => r.stage === stage);
       return {

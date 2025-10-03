@@ -23,7 +23,7 @@ const EventPipelineSchema = new mongoose.Schema({
   
   stage: { 
     type: String, 
-    enum: ["member", "soft_commit", "paid"],
+    enum: ["member", "soft_commit", "paid", "lost"],
     required: true
   },
   
