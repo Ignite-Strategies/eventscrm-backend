@@ -8,6 +8,27 @@ import { bulkUpsertSupporters, createSupporter, deleteSupporter, getSupportersBy
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
 
+// Test route to check database connection
+router.get('/test-db/:orgId', async (req, res) => {
+  try {
+    const { orgId } = req.params;
+    console.log('🧪 TEST: Testing database connection for orgId:', orgId);
+    
+    const result = await getSupportersByOrg(orgId);
+    console.log('🧪 TEST: Database test result:', result);
+    
+    res.json({
+      success: true,
+      message: 'Database connection working',
+      orgId,
+      supportersCount: result.supporters?.length || 0
+    });
+  } catch (error) {
+    console.error('🧪 TEST ERROR:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Create single supporter
 router.post('/:orgId/supporters', async (req, res) => {
   try {
@@ -53,18 +74,27 @@ router.post('/:orgId/supporters/csv', upload.single('file'), async (req, res) =>
     });
     
     // 4. Database mutation
+    console.log('🚀 ROUTE: About to call bulkUpsertSupporters with', validationResult.validRecords.length, 'records');
     const mutationResult = await bulkUpsertSupporters(orgId, validationResult.validRecords);
+    console.log('🚀 ROUTE: Mutation result:', mutationResult);
     
     if (!mutationResult.success) {
+      console.error('🚀 ROUTE: Mutation failed:', mutationResult.error);
       return res.status(400).json({ error: mutationResult.error });
     }
+    
+    // 5. Verify data was actually saved
+    console.log('🚀 ROUTE: Verifying data was saved...');
+    const verifyResult = await getSupportersByOrg(orgId);
+    console.log('🚀 ROUTE: Verification - supporters count:', verifyResult.supporters?.length || 0);
     
     res.json({
       success: true,
       inserted: mutationResult.inserted,
       updated: mutationResult.updated,
       total: validationResult.validCount,
-      errors: validationResult.errors
+      errors: validationResult.errors,
+      verified: verifyResult.supporters?.length || 0
     });
   } catch (error) {
     res.status(400).json({ error: error.message });
