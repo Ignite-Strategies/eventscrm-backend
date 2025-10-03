@@ -18,7 +18,7 @@ export function isValidEmail(email) {
 export function validateSupporterRecord(record, lineNumber) {
   const errors = [];
   
-  // Required field validation
+  // Required field validation (only firstName and lastName required)
   if (!record.firstName || record.firstName.trim() === '') {
     errors.push({
       line: lineNumber,
@@ -35,13 +35,8 @@ export function validateSupporterRecord(record, lineNumber) {
     });
   }
   
-  if (!record.email || record.email.trim() === '') {
-    errors.push({
-      line: lineNumber,
-      error: 'Missing email',
-      field: 'email'
-    });
-  } else if (!isValidEmail(record.email)) {
+  // Email is optional but if provided, must be valid
+  if (record.email && record.email.trim() !== '' && !isValidEmail(record.email)) {
     errors.push({
       line: lineNumber,
       error: 'Invalid email format',

@@ -123,6 +123,36 @@ router.get('/:orgId/supporters', async (req, res) => {
   }
 });
 
+// Update supporter field (inline editing)
+router.patch('/supporters/:supporterId', async (req, res) => {
+  try {
+    const { supporterId } = req.params;
+    const { field, value } = req.body;
+    
+    console.log('✏️ PATCH: Updating supporter', supporterId, 'field:', field, 'value:', value);
+    
+    const updateData = { [field]: value };
+    const supporter = await Supporter.findByIdAndUpdate(
+      supporterId, 
+      updateData, 
+      { new: true, runValidators: true }
+    );
+    
+    if (!supporter) {
+      return res.status(404).json({ error: 'Supporter not found' });
+    }
+    
+    console.log('✏️ PATCH: Successfully updated supporter');
+    res.json({
+      success: true,
+      supporter
+    });
+  } catch (error) {
+    console.error('✏️ PATCH ERROR:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Delete supporter
 router.delete('/supporters/:supporterId', async (req, res) => {
   try {

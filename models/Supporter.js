@@ -12,7 +12,7 @@ const SupporterSchema = new mongoose.Schema({
   firstName: { type: String, required: true },
   goesBy: String, // Nickname/preferred name
   lastName: { type: String, required: true },
-  email: { type: String, required: true, index: true },
+  email: { type: String, required: false, index: true },
   phone: String,
   
   // Address
