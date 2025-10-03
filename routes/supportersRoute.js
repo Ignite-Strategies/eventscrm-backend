@@ -125,7 +125,7 @@ router.get('/:orgId/supporters', async (req, res) => {
 });
 
 // Update supporter field (inline editing)
-router.patch('/supporters/:supporterId', async (req, res) => {
+router.post('/supporters/:supporterId/update', async (req, res) => {
   try {
     const { supporterId } = req.params;
     const { field, value } = req.body;
