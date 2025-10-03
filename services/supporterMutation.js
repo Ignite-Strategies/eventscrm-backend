@@ -33,6 +33,10 @@ export async function createSupporter(orgId, supporterData) {
  */
 export async function bulkUpsertSupporters(orgId, supportersData) {
   try {
+    console.log('🔧 MUTATION: Starting bulk upsert for orgId:', orgId);
+    console.log('🔧 MUTATION: Supporters data count:', supportersData.length);
+    console.log('🔧 MUTATION: First supporter sample:', supportersData[0]);
+    
     const operations = supportersData.map(supporter => ({
       updateOne: {
         filter: { orgId, email: supporter.email },
@@ -41,7 +45,17 @@ export async function bulkUpsertSupporters(orgId, supportersData) {
       }
     }));
     
+    console.log('🔧 MUTATION: Operations count:', operations.length);
+    console.log('🔧 MUTATION: First operation sample:', operations[0]);
+    
     const result = await Supporter.bulkWrite(operations);
+    
+    console.log('🔧 MUTATION: BulkWrite result:', {
+      inserted: result.upsertedCount,
+      updated: result.modifiedCount,
+      matched: result.matchedCount,
+      modified: result.modifiedCount
+    });
     
     return {
       success: true,
@@ -50,6 +64,7 @@ export async function bulkUpsertSupporters(orgId, supportersData) {
       total: supportersData.length
     };
   } catch (error) {
+    console.error('🔧 MUTATION ERROR:', error);
     return {
       success: false,
       error: error.message

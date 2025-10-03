@@ -6,11 +6,17 @@ import { parse } from 'csv-parse/sync';
  */
 export function readCSV(csvBuffer) {
   try {
+    console.log('📖 READER: Starting CSV parse, buffer size:', csvBuffer.length);
+    
     const records = parse(csvBuffer, {
       columns: true,
       skip_empty_lines: true,
       trim: true
     });
+    
+    console.log('📖 READER: Parsed', records.length, 'records');
+    console.log('📖 READER: Headers:', records.length > 0 ? Object.keys(records[0]) : []);
+    console.log('📖 READER: First record sample:', records[0]);
     
     return {
       success: true,
@@ -18,6 +24,7 @@ export function readCSV(csvBuffer) {
       headers: records.length > 0 ? Object.keys(records[0]) : []
     };
   } catch (error) {
+    console.error('📖 READER ERROR:', error);
     return {
       success: false,
       error: `CSV parsing failed: ${error.message}`,

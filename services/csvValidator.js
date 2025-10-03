@@ -77,6 +77,9 @@ export function cleanSupporterData(record) {
  * Validate and clean a batch of records
  */
 export function validateBatch(records) {
+  console.log('🔍 VALIDATOR: Starting validation of', records.length, 'records');
+  console.log('🔍 VALIDATOR: First record sample:', records[0]);
+  
   const validRecords = [];
   const errors = [];
   
@@ -87,12 +90,20 @@ export function validateBatch(records) {
     const validationErrors = validateSupporterRecord(record, lineNumber);
     
     if (validationErrors.length > 0) {
+      console.log('🔍 VALIDATOR: Record', lineNumber, 'has errors:', validationErrors);
       errors.push(...validationErrors);
     } else {
       // Clean and add to valid records
       const cleanedRecord = cleanSupporterData(record);
+      console.log('🔍 VALIDATOR: Record', lineNumber, 'cleaned:', cleanedRecord);
       validRecords.push(cleanedRecord);
     }
+  });
+  
+  console.log('🔍 VALIDATOR: Final results:', {
+    totalProcessed: records.length,
+    validCount: validRecords.length,
+    errorCount: errors.length
   });
   
   return {
