@@ -25,14 +25,26 @@ const SupporterSchema = new mongoose.Schema({
   employer: String,
   yearsWithOrganization: Number,
   
-  // Engagement Tracking (MVP1 - simplified)
+  // Engagement Tracking
   categoryOfEngagement: {
     type: String,
-    enum: ["member", "donor", "volunteer", "sponsor", "partner", "general"],
-    default: "general"
+    enum: ["high", "medium", "low", "inactive"],
+    default: "medium"
   },
   
-  notes: String
+  // Personal Information
+  birthday: String, // Format: "MM/DD" (e.g., "03/15" for March 15th)
+  married: { type: Boolean, default: false },
+  spouseName: String,
+  numberOfKids: { type: Number, default: 0 },
+  
+  // Story & Notes
+  originStory: String, // How they came to F3/area
+  notes: String, // General notes
+  
+  // Future fields (we'll refactor these)
+  pipelines: [String], // Event pipelines they're in
+  events: [String] // Events they've attended
 }, { timestamps: true });
 
 // Compound index for unique email per org
