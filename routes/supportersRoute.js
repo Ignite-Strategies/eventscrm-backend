@@ -4,6 +4,7 @@ import { readCSV } from '../services/csvReader.js';
 import { normalizeRecord } from '../services/csvNormalizer.js';
 import { validateBatch } from '../services/csvValidator.js';
 import { bulkUpsertSupporters, createSupporter, deleteSupporter, getSupportersByOrg } from '../services/supporterMutation.js';
+import Supporter from '../models/Supporter.js'; // Import Supporter model for PATCH
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -130,8 +131,16 @@ router.patch('/supporters/:supporterId', async (req, res) => {
     const { field, value } = req.body;
     
     console.log('✏️ PATCH: Updating supporter', supporterId, 'field:', field, 'value:', value);
+    console.log('✏️ PATCH: Request body:', req.body);
+    
+    // Validate required fields
+    if (!field) {
+      return res.status(400).json({ error: 'Field is required' });
+    }
     
     const updateData = { [field]: value };
+    console.log('✏️ PATCH: Update data:', updateData);
+    
     const supporter = await Supporter.findByIdAndUpdate(
       supporterId, 
       updateData, 
@@ -139,16 +148,18 @@ router.patch('/supporters/:supporterId', async (req, res) => {
     );
     
     if (!supporter) {
+      console.log('✏️ PATCH: Supporter not found with ID:', supporterId);
       return res.status(404).json({ error: 'Supporter not found' });
     }
     
-    console.log('✏️ PATCH: Successfully updated supporter');
+    console.log('✏️ PATCH: Successfully updated supporter:', supporter._id);
     res.json({
       success: true,
       supporter
     });
   } catch (error) {
     console.error('✏️ PATCH ERROR:', error);
+    console.error('✏️ PATCH ERROR Stack:', error.stack);
     res.status(400).json({ error: error.message });
   }
 });
