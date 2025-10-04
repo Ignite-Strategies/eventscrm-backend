@@ -1,15 +1,15 @@
 import express from "express";
-import verifyFirebaseToken from "../middleware/verifyFirebaseToken.js";
+import verifyGmailToken from "../middleware/verifyFirebaseToken.js";
 import { GmailService } from "../services/gmailService.js";
 import Template from "../models/Template.js";
 
 const router = express.Router();
 
 // POST /email/send - Send single email
-router.post("/send", verifyFirebaseToken, async (req, res) => {
+router.post("/send", verifyGmailToken, async (req, res) => {
   try {
     const { to, subject, body, templateId, variables } = req.body;
-    const { userEmail } = req; // From Firebase token
+    const { gmailAccessToken } = req; // From Gmail token
 
     if (!to || !subject || !body) {
       return res.status(400).json({ 
@@ -47,7 +47,7 @@ router.post("/send", verifyFirebaseToken, async (req, res) => {
     }
 
     // Initialize Gmail service
-    const gmailService = new GmailService(req.headers.authorization.split(' ')[1]);
+    const gmailService = new GmailService(gmailAccessToken);
 
     // Send email
     const result = await gmailService.sendEmail({
@@ -70,7 +70,7 @@ router.post("/send", verifyFirebaseToken, async (req, res) => {
 });
 
 // POST /email/send-bulk - Send bulk emails (campaign)
-router.post("/send-bulk", verifyFirebaseToken, async (req, res) => {
+router.post("/send-bulk", verifyGmailToken, async (req, res) => {
   try {
     const { recipients, subject, body, templateId, variables } = req.body;
 
@@ -101,7 +101,7 @@ router.post("/send-bulk", verifyFirebaseToken, async (req, res) => {
     }
 
     // Initialize Gmail service
-    const gmailService = new GmailService(req.headers.authorization.split(' ')[1]);
+    const gmailService = new GmailService(gmailAccessToken);
 
     // Prepare emails with personalized variables
     const emails = recipients.map(recipient => {
@@ -142,7 +142,7 @@ router.post("/send-bulk", verifyFirebaseToken, async (req, res) => {
 });
 
 // GET /email/templates - Get available templates for email composition
-router.get("/templates", verifyFirebaseToken, async (req, res) => {
+router.get("/templates", verifyGmailToken, async (req, res) => {
   try {
     const { orgId } = req.query;
     
