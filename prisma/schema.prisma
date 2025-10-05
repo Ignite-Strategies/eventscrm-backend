@@ -9,3 +9,330 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  mission   String?
+  website   String?
+  
+  // Social media
+  x         String?
+  instagram String?
+  facebook  String?
+  linkedin  String?
+  
+  // Address
+  street    String?
+  city      String?
+  state     String?
+  zip       String?
+  
+  // Pipeline defaults
+  pipelineDefaults String[] @default(["sop_entry", "rsvp", "paid", "attended", "champion"])
+  audienceDefaults String[] @default(["org_members", "friends_family", "community_partners", "local_businesses", "general_public"])
+  
+  // Relations
+  admins      AdminUser[]
+  supporters  Supporter[]
+  events      Event[]
+  templates   Template[]
+  contactLists ContactList[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AdminUser {
+  id       String @id @default(cuid())
+  username String @unique
+  password String
+  orgId    String
+  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supporter {
+  id        String @id @default(cuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  // Contact Info
+  firstName String
+  goesBy    String?
+  lastName  String
+  email     String?
+  phone     String?
+  
+  // Address
+  street    String?
+  city      String?
+  state     String?
+  zip       String?
+  
+  // Organization Context
+  employer              String?
+  yearsWithOrganization Int?
+  
+  // Engagement Tracking
+  categoryOfEngagement String @default("medium") // "high", "medium", "low", "inactive"
+  
+  // Personal Information
+  birthday     String? // Format: "MM/DD"
+  married      Boolean @default(false)
+  spouseName   String?
+  numberOfKids Int     @default(0)
+  
+  // Story & Notes
+  originStory String?
+  notes       String?
+  
+  // Relations
+  tags         SupporterTag[]
+  pipelineEntries EventPipelineEntry[]
+  contactListMembers ContactListMember[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([orgId, email])
+  @@index([orgId])
+}
+
+model SupporterTag {
+  id         String @id @default(cuid())
+  supporterId String
+  supporter  Supporter @relation(fields: [supporterId], references: [id], onDelete: Cascade)
+  name       String // e.g., "knows_organizer", "high_value"
+  value      String // e.g., "true", "false", "downtown"
+  addedBy    String
+  addedAt    DateTime @default(now())
+  
+  @@index([supporterId])
+}
+
+model Event {
+  id        String @id @default(cuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name      String
+  slug      String
+  description String?
+  date      DateTime?
+  time      String? // e.g., "7:00 PM"
+  location  String?
+  hasTickets Boolean @default(false)
+  ticketCost  Float   @default(0)
+  
+  // Pipeline overrides
+  pipelines String[] // optional override of org defaults
+  
+  // Pipeline Rules
+  autoSopOnIntake     Boolean @default(true)
+  sopTriggers         String[] @default(["landing_form", "csv", "qr", "admin_add"])
+  rsvpTriggers        String[] @default(["form_rsvp", "button_click"])
+  paidTriggers        String[] @default(["stripe_webhook"])
+  minEngagement       Int     @default(3)
+  championTags        String[] @default(["role:ao_q", "role:influencer", "shared_media"])
+  manualOverrideAllowed Boolean @default(true)
+  
+  // Goals
+  totalFundraise Float @default(0)
+  ticketTarget   Int   @default(0)
+  costs          Float @default(0)
+  
+  // Audience Segmentation
+  membersConversionRate Float @default(0.25) // 25%
+  membersTargetCount    Int   @default(0)
+  friendsConversionRate Float @default(0.15) // 15%
+  friendsTargetCount    Int   @default(0)
+  adsConversionRate     Float @default(0.05) // 5%
+  adsTargetCount        Int   @default(0)
+  totalOutreachTarget   Int   @default(0)
+  
+  // Relations
+  pipelineEntries EventPipelineEntry[]
+  attendees       EventAttendee[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([orgId, slug])
+  @@index([orgId])
+}
+
+model EventPipelineEntry {
+  id           String @id @default(cuid())
+  orgId        String
+  eventId      String
+  event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  supporterId  String
+  supporter    Supporter @relation(fields: [supporterId], references: [id], onDelete: Cascade)
+  
+  audienceType String // "org_member", "friend_spouse", "community_partner", "business_sponsor", "champion"
+  stage        String // "member", "soft_commit", "paid", "lost"
+  source       String? // "admin_add", "csv", "bulk_add", etc.
+  notes        String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([eventId, supporterId, audienceType])
+  @@index([eventId, audienceType, stage])
+  @@index([orgId])
+}
+
+model EventAttendee {
+  id          String @id @default(cuid())
+  orgId       String
+  eventId     String
+  event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  supporterId String
+  supporter   Supporter @relation(fields: [supporterId], references: [id], onDelete: Cascade)
+  
+  // Final attendance data
+  attended    Boolean @default(false)
+  checkedInAt DateTime?
+  ticketType  String?
+  amountPaid  Float   @default(0)
+  notes       String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([eventId, supporterId])
+  @@index([orgId])
+}
+
+model FamilyProspect {
+  id        String @id @default(cuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  // Contact Info
+  firstName String
+  goesBy    String?
+  lastName  String
+  email     String?
+  phone     String?
+  
+  // Address
+  street    String?
+  city      String?
+  state     String?
+  zip       String?
+  
+  // Relationship Context
+  relationshipToMember String? // "friend", "co_worker", "neighbor", "family"
+  howDidYouMeet        String? // "work", "neighborhood", "mutual_friend"
+  eventInterest        String? // "high", "medium", "low"
+  
+  // Personal Information
+  birthday     String? // Format: "MM/DD"
+  married      Boolean @default(false)
+  spouseName   String?
+  numberOfKids Int     @default(0)
+  
+  // Story & Notes
+  originStory String?
+  notes       String?
+  
+  // Relations
+  tags         FamilyProspectTag[]
+  contactListMembers ContactListMember[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([orgId, email])
+  @@index([orgId])
+}
+
+model FamilyProspectTag {
+  id         String @id @default(cuid())
+  prospectId String
+  prospect   FamilyProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  name       String
+  value      String
+  addedBy    String
+  addedAt    DateTime @default(now())
+  
+  @@index([prospectId])
+}
+
+model Template {
+  id          String @id @default(cuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  subject     String
+  body        String
+  type        String @default("email")
+  variables   Json   @default("[]")
+  usageCount  Int    @default(0)
+  lastUsed    DateTime?
+  isActive    Boolean @default(true)
+  createdBy   String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([orgId])
+}
+
+model ContactList {
+  id          String @id @default(cuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  type        String // "manual", "pipeline", "tag_based", "dynamic"
+  
+  // Pipeline lists
+  eventId     String?
+  audienceType String?
+  stages      String[]
+  
+  // Tag-based lists
+  tagFilters  Json? // Complex tag filtering criteria
+  
+  // Dynamic lists
+  filters     Json? // Complex filtering criteria
+  
+  // Stats
+  totalContacts Int      @default(0)
+  lastUpdated   DateTime @default(now())
+  usageCount    Int      @default(0)
+  lastUsed      DateTime?
+  isActive      Boolean  @default(true)
+  createdBy     String?
+  tags          String[]
+  
+  // Relations
+  members ContactListMember[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([orgId, name])
+  @@index([orgId])
+}
+
+model ContactListMember {
+  id            String @id @default(cuid())
+  contactListId String
+  contactList   ContactList @relation(fields: [contactListId], references: [id], onDelete: Cascade)
+  supporterId   String?
+  supporter     Supporter? @relation(fields: [supporterId], references: [id], onDelete: Cascade)
+  prospectId    String?
+  prospect      FamilyProspect? @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  
+  addedAt DateTime @default(now())
+  
+  @@index([contactListId])
+  @@index([supporterId])
+  @@index([prospectId])
+}
