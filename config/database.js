@@ -1,24 +1,34 @@
-import mongoose from 'mongoose';
+import { PrismaClient } from '@prisma/client';
 
 /**
  * Database Configuration
  * 
- * RENDER ENVIRONMENT VARIABLE NAME: SUPPORTER_DB
- * ACTUAL MONGODB DATABASE: impact_events
+ * RENDER ENVIRONMENT VARIABLE NAME: DATABASE_URL
+ * ACTUAL POSTGRES DATABASE: ignite_crm
  * 
  * On Render, set:
- * SUPPORTER_DB = mongodb+srv://user:pass@cluster.mongodb.net/impact_events
+ * DATABASE_URL = postgresql://user:pass@host:port/ignite_crm
  */
+
+let prisma;
 
 export async function connectDatabase() {
   try {
-    await mongoose.connect(process.env.SUPPORTER_DB);
-    console.log('✅ MongoDB connected');
-    console.log('📊 Database:', mongoose.connection.db.databaseName);
+    prisma = new PrismaClient();
+    await prisma.$connect();
+    console.log('✅ PostgreSQL connected via Prisma');
+    console.log('📊 Database: ignite_crm');
   } catch (err) {
-    console.error('❌ MongoDB connection error:', err);
+    console.error('❌ PostgreSQL connection error:', err);
     process.exit(1);
   }
+}
+
+export function getPrismaClient() {
+  if (!prisma) {
+    prisma = new PrismaClient();
+  }
+  return prisma;
 }
 
 export default connectDatabase;
