@@ -122,6 +122,48 @@ export async function pushAllSupportersToEvent({
 }
 
 /**
+ * Push supporters by tag to event
+ */
+export async function pushSupportersByTag({
+  orgId,
+  eventId,
+  tags,
+  audienceType = "org_member",
+  stage = "aware",
+  source = "tag_filter"
+}) {
+  console.log('🏷️ TAG PUSH: Finding supporters with tags:', tags);
+
+  // Find supporters with matching tags
+  const supporters = await prisma.supporter.findMany({
+    where: {
+      orgId,
+      tags: {
+        some: {
+          OR: tags.map(tag => ({
+            name: tag.name,
+            value: tag.value
+          }))
+        }
+      }
+    }
+  });
+
+  console.log(`🏷️ Found ${supporters.length} supporters with matching tags`);
+
+  const supporterIds = supporters.map(s => s.id);
+  
+  return await pushSupportersToEvent({
+    orgId,
+    eventId,
+    supporterIds,
+    audienceType,
+    stage,
+    source
+  });
+}
+
+/**
  * Get event registry (hydrated with supporter data)
  */
 export async function getEventRegistry(eventId, audienceType) {
