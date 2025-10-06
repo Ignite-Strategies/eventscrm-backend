@@ -20,8 +20,15 @@ router.post('/:orgId/events', async (req, res) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
     
+    // Convert date string to ISO DateTime if provided
+    let dateTime = null;
+    if (req.body.date) {
+      dateTime = new Date(req.body.date + 'T00:00:00.000Z'); // Convert to ISO DateTime
+    }
+    
     const eventData = {
       ...req.body,
+      date: dateTime, // Prisma expects DateTime, not string
       orgId,
       pipelines: req.body.pipelines || org.pipelineDefaults
     };
