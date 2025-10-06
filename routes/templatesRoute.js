@@ -1,7 +1,8 @@
 import express from "express";
-import Template from "../models/Template.js";
+import { getPrismaClient } from "../config/database.js";
 
 const router = express.Router();
+const prisma = getPrismaClient();
 
 // GET /templates - Get all templates for org
 router.get("/", async (req, res) => {
@@ -12,8 +13,10 @@ router.get("/", async (req, res) => {
       return res.status(400).json({ error: "orgId is required" });
     }
     
-    const templates = await Template.find({ orgId, isActive: true })
-      .sort({ createdAt: -1 });
+    const templates = await prisma.template.findMany({
+      where: { orgId, isActive: true },
+      orderBy: { createdAt: 'desc' }
+    });
     
     res.json(templates);
   } catch (error) {
@@ -27,7 +30,9 @@ router.get("/:templateId", async (req, res) => {
   try {
     const { templateId } = req.params;
     
-    const template = await Template.findById(templateId);
+    const template = await prisma.template.findUnique({
+      where: { id: templateId }
+    });
     
     if (!template) {
       return res.status(404).json({ error: "Template not found" });
@@ -45,32 +50,35 @@ router.post("/", async (req, res) => {
   try {
     const { orgId, name, description, subject, body, type, variables, createdBy } = req.body;
     
-    if (!orgId || !name || !subject || !body) {
+    if (!orgId || !name || !body) {
       return res.status(400).json({ 
-        error: "orgId, name, subject, and body are required" 
+        error: "orgId, name, and body are required" 
       });
     }
     
     // Check if template name already exists for this org
-    const existingTemplate = await Template.findOne({ orgId, name });
+    const existingTemplate = await prisma.template.findFirst({
+      where: { orgId, name }
+    });
+    
     if (existingTemplate) {
       return res.status(400).json({ 
         error: "Template name already exists for this organization" 
       });
     }
     
-    const template = new Template({
-      orgId,
-      name,
-      description,
-      subject,
-      body,
-      type: type || "email",
-      variables: variables || [],
-      createdBy: createdBy || "admin"
+    const template = await prisma.template.create({
+      data: {
+        orgId,
+        name,
+        description,
+        subject: subject || "",
+        body,
+        type: type || "email",
+        variables: variables || [],
+        createdBy: createdBy || "admin"
+      }
     });
-    
-    await template.save();
     
     res.status(201).json(template);
   } catch (error) {
@@ -83,22 +91,17 @@ router.post("/", async (req, res) => {
 router.patch("/:templateId", async (req, res) => {
   try {
     const { templateId } = req.params;
-    const updates = req.body;
+    const updates = { ...req.body };
     
     // Remove fields that shouldn't be updated directly
     delete updates.orgId;
     delete updates.usageCount;
     delete updates.lastUsed;
     
-    const template = await Template.findByIdAndUpdate(
-      templateId,
-      updates,
-      { new: true, runValidators: true }
-    );
-    
-    if (!template) {
-      return res.status(404).json({ error: "Template not found" });
-    }
+    const template = await prisma.template.update({
+      where: { id: templateId },
+      data: updates
+    });
     
     res.json(template);
   } catch (error) {
@@ -112,15 +115,10 @@ router.delete("/:templateId", async (req, res) => {
   try {
     const { templateId } = req.params;
     
-    const template = await Template.findByIdAndUpdate(
-      templateId,
-      { isActive: false },
-      { new: true }
-    );
-    
-    if (!template) {
-      return res.status(404).json({ error: "Template not found" });
-    }
+    const template = await prisma.template.update({
+      where: { id: templateId },
+      data: { isActive: false }
+    });
     
     res.json({ message: "Template deleted successfully" });
   } catch (error) {
@@ -134,18 +132,13 @@ router.post("/:templateId/use", async (req, res) => {
   try {
     const { templateId } = req.params;
     
-    const template = await Template.findByIdAndUpdate(
-      templateId,
-      { 
-        $inc: { usageCount: 1 },
+    const template = await prisma.template.update({
+      where: { id: templateId },
+      data: {
+        usageCount: { increment: 1 },
         lastUsed: new Date()
-      },
-      { new: true }
-    );
-    
-    if (!template) {
-      return res.status(404).json({ error: "Template not found" });
-    }
+      }
+    });
     
     res.json(template);
   } catch (error) {

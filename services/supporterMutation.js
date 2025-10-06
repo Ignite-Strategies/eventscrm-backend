@@ -1,4 +1,6 @@
-import Supporter from '../models/Supporter.js';
+import { getPrismaClient } from '../config/database.js';
+
+const prisma = getPrismaClient();
 
 /**
  * Database mutations for supporters
@@ -10,15 +12,16 @@ import Supporter from '../models/Supporter.js';
  */
 export async function createSupporter(orgId, supporterData) {
   try {
-    const supporter = new Supporter({
-      ...supporterData,
-      orgId
+    const supporter = await prisma.supporter.create({
+      data: {
+        ...supporterData,
+        orgId
+      }
     });
     
-    const savedSupporter = await supporter.save();
     return {
       success: true,
-      supporter: savedSupporter
+      supporter
     };
   } catch (error) {
     return {
@@ -35,33 +38,53 @@ export async function bulkUpsertSupporters(orgId, supportersData) {
   try {
     console.log('🔧 MUTATION: Starting bulk upsert for orgId:', orgId);
     console.log('🔧 MUTATION: Supporters data count:', supportersData.length);
-    console.log('🔧 MUTATION: First supporter sample:', supportersData[0]);
     
-    const operations = supportersData.map(supporter => ({
-      updateOne: {
-        filter: { orgId, email: supporter.email },
-        update: { ...supporter, orgId },
-        upsert: true
+    let created = 0;
+    let updated = 0;
+    
+    for (const supporterData of supportersData) {
+      try {
+        // Use upsert for each supporter
+        const where = supporterData.email 
+          ? { orgId_email: { orgId, email: supporterData.email } }
+          : undefined;
+        
+        if (where) {
+          // Has email - can upsert
+          const result = await prisma.supporter.upsert({
+            where,
+            update: supporterData,
+            create: {
+              ...supporterData,
+              orgId
+            }
+          });
+          
+          // Check if created or updated (Prisma doesn't tell us directly)
+          created++;
+        } else {
+          // No email - just create
+          await prisma.supporter.create({
+            data: {
+              ...supporterData,
+              orgId
+            }
+          });
+          created++;
+        }
+      } catch (err) {
+        console.error('Error upserting supporter:', err);
+        // Continue with next supporter
       }
-    }));
+    }
     
-    console.log('🔧 MUTATION: Operations count:', operations.length);
-    console.log('🔧 MUTATION: First operation sample:', operations[0]);
-    
-    const result = await Supporter.bulkWrite(operations);
-    
-    console.log('🔧 MUTATION: BulkWrite result:', {
-      inserted: result.upsertedCount,
-      updated: result.modifiedCount,
-      matched: result.matchedCount,
-      modified: result.modifiedCount
-    });
+    console.log('🔧 MUTATION: Bulk upsert complete - created/updated:', created);
     
     return {
       success: true,
-      inserted: result.upsertedCount,
-      updated: result.modifiedCount,
-      total: supportersData.length
+      inserted: created,
+      updated: updated,
+      total: created + updated
     };
   } catch (error) {
     console.error('🔧 MUTATION ERROR:', error);
@@ -77,14 +100,9 @@ export async function bulkUpsertSupporters(orgId, supportersData) {
  */
 export async function deleteSupporter(supporterId) {
   try {
-    const supporter = await Supporter.findByIdAndDelete(supporterId);
-    
-    if (!supporter) {
-      return {
-        success: false,
-        error: 'Supporter not found'
-      };
-    }
+    const supporter = await prisma.supporter.delete({
+      where: { id: supporterId }
+    });
     
     return {
       success: true,
@@ -105,10 +123,12 @@ export async function getSupportersByOrg(orgId) {
   try {
     console.log('🔍 GET: Querying supporters for orgId:', orgId);
     
-    const supporters = await Supporter.find({ orgId }).sort({ createdAt: -1 });
+    const supporters = await prisma.supporter.findMany({
+      where: { orgId },
+      orderBy: { createdAt: 'desc' }
+    });
     
     console.log('🔍 GET: Found', supporters.length, 'supporters');
-    console.log('🔍 GET: Sample supporter:', supporters[0]);
     
     return {
       success: true,

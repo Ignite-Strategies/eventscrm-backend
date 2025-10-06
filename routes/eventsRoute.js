@@ -1,8 +1,8 @@
 import express from 'express';
-import Event from '../models/Event.js';
-import Organization from '../models/Organization.js';
+import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();
+const prisma = getPrismaClient();
 
 // Create event
 router.post('/:orgId/events', async (req, res) => {
@@ -10,7 +10,9 @@ router.post('/:orgId/events', async (req, res) => {
     const { orgId } = req.params;
     
     // Get org defaults if pipelines not specified
-    const org = await Organization.findById(orgId);
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId }
+    });
     if (!org) return res.status(404).json({ error: 'Organization not found' });
     
     const eventData = {
@@ -19,8 +21,9 @@ router.post('/:orgId/events', async (req, res) => {
       pipelines: req.body.pipelines || org.pipelineDefaults
     };
     
-    const event = new Event(eventData);
-    await event.save();
+    const event = await prisma.event.create({
+      data: eventData
+    });
     
     res.status(201).json(event);
   } catch (error) {
@@ -31,8 +34,10 @@ router.post('/:orgId/events', async (req, res) => {
 // List events for org
 router.get('/:orgId/events', async (req, res) => {
   try {
-    const events = await Event.find({ orgId: req.params.orgId })
-      .sort({ date: -1 });
+    const events = await prisma.event.findMany({
+      where: { orgId: req.params.orgId },
+      orderBy: { date: 'desc' }
+    });
     res.json(events);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -42,7 +47,9 @@ router.get('/:orgId/events', async (req, res) => {
 // Get single event
 router.get('/:eventId', async (req, res) => {
   try {
-    const event = await Event.findById(req.params.eventId);
+    const event = await prisma.event.findUnique({
+      where: { id: req.params.eventId }
+    });
     if (!event) return res.status(404).json({ error: 'Event not found' });
     res.json(event);
   } catch (error) {
@@ -53,12 +60,10 @@ router.get('/:eventId', async (req, res) => {
 // Update event
 router.patch('/:eventId', async (req, res) => {
   try {
-    const event = await Event.findByIdAndUpdate(
-      req.params.eventId,
-      req.body,
-      { new: true, runValidators: true }
-    );
-    if (!event) return res.status(404).json({ error: 'Event not found' });
+    const event = await prisma.event.update({
+      where: { id: req.params.eventId },
+      data: req.body
+    });
     res.json(event);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -68,14 +73,25 @@ router.patch('/:eventId', async (req, res) => {
 // Get pipeline config for event
 router.get('/:eventId/pipeline-config', async (req, res) => {
   try {
-    const event = await Event.findById(req.params.eventId);
+    const event = await prisma.event.findUnique({
+      where: { id: req.params.eventId },
+      include: { org: true }
+    });
     if (!event) return res.status(404).json({ error: 'Event not found' });
     
-    const org = await Organization.findById(event.orgId);
-    
     res.json({
-      pipelines: event.pipelines || org.pipelineDefaults,
-      pipelineRules: event.pipelineRules
+      pipelines: event.pipelines || event.org.pipelineDefaults,
+      pipelineRules: {
+        autoSopOnIntake: event.autoSopOnIntake,
+        sopTriggers: event.sopTriggers,
+        rsvpTriggers: event.rsvpTriggers,
+        paidTriggers: event.paidTriggers,
+        championCriteria: {
+          minEngagement: event.minEngagement,
+          tagsAny: event.championTags,
+          manualOverrideAllowed: event.manualOverrideAllowed
+        }
+      }
     });
   } catch (error) {
     res.status(400).json({ error: error.message });

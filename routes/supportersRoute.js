@@ -4,7 +4,9 @@ import { readCSV } from '../services/csvReader.js';
 import { normalizeRecord } from '../services/csvNormalizer.js';
 import { validateBatch } from '../services/csvValidator.js';
 import { bulkUpsertSupporters, createSupporter, deleteSupporter, getSupportersByOrg } from '../services/supporterMutation.js';
-import Supporter from '../models/Supporter.js'; // Import Supporter model for PATCH
+import { getPrismaClient } from '../config/database.js';
+
+const prisma = getPrismaClient();
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -14,17 +16,17 @@ router.post('/migrate-engagement-categories', async (req, res) => {
   try {
     console.log('🔄 MIGRATION: Starting engagement category migration');
     
-    const result = await Supporter.updateMany(
-      { categoryOfEngagement: "general" },
-      { $set: { categoryOfEngagement: "medium" } }
-    );
+    const result = await prisma.supporter.updateMany({
+      where: { categoryOfEngagement: "general" },
+      data: { categoryOfEngagement: "medium" }
+    });
     
-    console.log('🔄 MIGRATION: Updated', result.modifiedCount, 'supporters from "general" to "medium"');
+    console.log('🔄 MIGRATION: Updated', result.count, 'supporters from "general" to "medium"');
     
     res.json({
       success: true,
-      message: `Updated ${result.modifiedCount} supporters from "general" to "medium"`,
-      modifiedCount: result.modifiedCount
+      message: `Updated ${result.count} supporters from "general" to "medium"`,
+      modifiedCount: result.count
     });
   } catch (error) {
     console.error('🔄 MIGRATION ERROR:', error);
@@ -164,18 +166,12 @@ router.post('/supporters/:supporterId/update', async (req, res) => {
     const updateData = { [field]: value };
     console.log('✏️ PATCH: Update data:', updateData);
     
-    const supporter = await Supporter.findByIdAndUpdate(
-      supporterId, 
-      updateData, 
-      { new: true, runValidators: true }
-    );
+    const supporter = await prisma.supporter.update({
+      where: { id: supporterId },
+      data: updateData
+    });
     
-    if (!supporter) {
-      console.log('✏️ PATCH: Supporter not found with ID:', supporterId);
-      return res.status(404).json({ error: 'Supporter not found' });
-    }
-    
-    console.log('✏️ PATCH: Successfully updated supporter:', supporter._id);
+    console.log('✏️ PATCH: Successfully updated supporter:', supporter.id);
     res.json({
       success: true,
       supporter

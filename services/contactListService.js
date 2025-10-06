@@ -1,7 +1,6 @@
-import ContactList from "../models/ContactList.js";
-import Supporter from "../models/Supporter.js";
-import FamilyProspect from "../models/FamilyProspect.js";
-import EventPipeline from "../models/EventPipeline.js";
+import { getPrismaClient } from "../config/database.js";
+
+const prisma = getPrismaClient();
 
 class ContactListService {
   
