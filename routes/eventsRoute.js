@@ -33,6 +33,14 @@ router.post('/:orgId/events', async (req, res) => {
     });
     
     console.log('✅ Event created:', event.id);
+    console.log('📊 Event data in DB:', JSON.stringify(event, null, 2));
+    
+    // Verify it's actually in the database
+    const verification = await prisma.event.findUnique({
+      where: { id: event.id }
+    });
+    console.log('🔍 VERIFICATION: Event exists in DB?', verification ? 'YES' : 'NO');
+    
     res.status(201).json(event);
   } catch (error) {
     console.error('❌ Event creation error:', error);
