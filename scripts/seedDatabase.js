@@ -48,6 +48,18 @@ async function main() {
       }
     });
     console.log(`✅ Organization created: ${org.name} (ID: ${org.id})`);
+    
+    // Create owner member
+    const owner = await prisma.orgMember.create({
+      data: {
+        orgId: org.id,
+        email: 'owner@f3capital.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        role: 'owner'
+      }
+    });
+    console.log(`✅ Owner created: ${owner.email}`);
   }
   console.log('');
 

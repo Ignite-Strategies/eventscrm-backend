@@ -34,7 +34,7 @@ model Organization {
   audienceDefaults String[] @default(["org_members", "friends_family", "community_partners", "local_businesses", "general_public"])
   
   // Relations
-  admins        AdminUser[]
+  members       OrgMember[]
   supporters    Supporter[]
   familyProspects FamilyProspect[]
   events        Event[]
@@ -46,15 +46,27 @@ model Organization {
   updatedAt DateTime @updatedAt
 }
 
-model AdminUser {
-  id       String @id @default(cuid())
-  username String @unique
-  password String
-  orgId    String
-  org      Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+model OrgMember {
+  id        String @id @default(cuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  email     String @unique
+  firstName String
+  lastName  String
+  photoURL  String?
+  
+  // Google OAuth
+  googleId  String? @unique
+  
+  // Role: "owner", "admin", "member"
+  role      String @default("member")
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  @@index([orgId])
+  @@index([email])
 }
 
 model Supporter {
