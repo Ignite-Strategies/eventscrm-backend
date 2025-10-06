@@ -8,12 +8,17 @@ const prisma = getPrismaClient();
 router.post('/:orgId/events', async (req, res) => {
   try {
     const { orgId } = req.params;
+    console.log('📝 Creating event for org:', orgId);
+    console.log('📝 Event data received:', JSON.stringify(req.body, null, 2));
     
     // Get org defaults if pipelines not specified
     const org = await prisma.organization.findUnique({
       where: { id: orgId }
     });
-    if (!org) return res.status(404).json({ error: 'Organization not found' });
+    if (!org) {
+      console.log('❌ Org not found:', orgId);
+      return res.status(404).json({ error: 'Organization not found' });
+    }
     
     const eventData = {
       ...req.body,
@@ -21,12 +26,18 @@ router.post('/:orgId/events', async (req, res) => {
       pipelines: req.body.pipelines || org.pipelineDefaults
     };
     
+    console.log('📝 Final event data to create:', JSON.stringify(eventData, null, 2));
+    
     const event = await prisma.event.create({
       data: eventData
     });
     
+    console.log('✅ Event created:', event.id);
     res.status(201).json(event);
   } catch (error) {
+    console.error('❌ Event creation error:', error);
+    console.error('❌ Error details:', error.message);
+    console.error('❌ Stack:', error.stack);
     res.status(400).json({ error: error.message });
   }
 });
@@ -34,12 +45,16 @@ router.post('/:orgId/events', async (req, res) => {
 // List events for org
 router.get('/:orgId/events', async (req, res) => {
   try {
+    console.log('📋 Fetching events for org:', req.params.orgId);
     const events = await prisma.event.findMany({
       where: { orgId: req.params.orgId },
       orderBy: { date: 'desc' }
     });
+    console.log(`✅ Found ${events.length} events`);
     res.json(events);
   } catch (error) {
+    console.error('❌ List events error:', error);
+    console.error('❌ Error details:', error.message);
     res.status(400).json({ error: error.message });
   }
 });

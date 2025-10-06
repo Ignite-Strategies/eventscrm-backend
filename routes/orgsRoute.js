@@ -32,12 +32,20 @@ router.post('/', async (req, res) => {
 // Get organization
 router.get('/:orgId', async (req, res) => {
   try {
+    console.log('🏢 Fetching org:', req.params.orgId);
     const org = await prisma.organization.findUnique({
       where: { id: req.params.orgId }
     });
-    if (!org) return res.status(404).json({ error: 'Organization not found' });
+    if (!org) {
+      console.log('❌ Org not found:', req.params.orgId);
+      return res.status(404).json({ error: 'Organization not found' });
+    }
+    console.log('✅ Org found:', org.name);
     res.json(org);
   } catch (error) {
+    console.error('❌ Get org error:', error);
+    console.error('❌ Error details:', error.message);
+    console.error('❌ OrgId:', req.params.orgId);
     res.status(400).json({ error: error.message });
   }
 });
