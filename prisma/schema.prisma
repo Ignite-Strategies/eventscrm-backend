@@ -139,8 +139,6 @@ model Supporter {
   // Relations
   tags         SupporterTag[]
   pipelineEntries EventPipelineEntry[]
-  attendeeRecords EventAttendee[]
-  contactListMembers ContactListMember[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -392,15 +390,17 @@ model ContactListMember {
   id            String @id @default(cuid())
   contactListId String
   contactList   ContactList @relation(fields: [contactListId], references: [id], onDelete: Cascade)
-  supporterId   String?
-  supporter     Supporter? @relation(fields: [supporterId], references: [id], onDelete: Cascade)
+  
+  // Can link to either OrgMember OR Supporter OR Prospect
+  orgMemberId   String?
+  orgMember     OrgMember? @relation(fields: [orgMemberId], references: [id], onDelete: Cascade)
   prospectId    String?
   prospect      FamilyProspect? @relation(fields: [prospectId], references: [id], onDelete: Cascade)
   
   addedAt DateTime @default(now())
   
   @@index([contactListId])
-  @@index([supporterId])
+  @@index([orgMemberId])
   @@index([prospectId])
 }
 
