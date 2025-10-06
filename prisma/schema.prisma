@@ -33,11 +33,12 @@ model Organization {
   audienceDefaults String[] @default(["org_members", "friends_family", "community_partners", "local_businesses", "general_public"])
   
   // Relations
-  admins      AdminUser[]
-  supporters  Supporter[]
-  events      Event[]
-  templates   Template[]
-  contactLists ContactList[]
+  admins        AdminUser[]
+  supporters    Supporter[]
+  familyProspects FamilyProspect[]
+  events        Event[]
+  templates     Template[]
+  contactLists  ContactList[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -92,6 +93,7 @@ model Supporter {
   // Relations
   tags         SupporterTag[]
   pipelineEntries EventPipelineEntry[]
+  attendeeRecords EventAttendee[]
   contactListMembers ContactListMember[]
   
   createdAt DateTime @default(now())
