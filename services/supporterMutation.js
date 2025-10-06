@@ -3,16 +3,16 @@ import { getPrismaClient } from '../config/database.js';
 const prisma = getPrismaClient();
 
 /**
- * Database mutations for supporters
+ * Database mutations for OrgMembers (master contact list)
  * Pure database operations - no validation, no parsing
  */
 
 /**
- * Create a single supporter
+ * Create a single OrgMember
  */
 export async function createSupporter(orgId, supporterData) {
   try {
-    const supporter = await prisma.supporter.create({
+    const orgMember = await prisma.orgMember.create({
       data: {
         ...supporterData,
         orgId
@@ -21,7 +21,7 @@ export async function createSupporter(orgId, supporterData) {
     
     return {
       success: true,
-      supporter
+      supporter: orgMember // Keep 'supporter' key for backward compat
     };
   } catch (error) {
     return {
@@ -37,21 +37,21 @@ export async function createSupporter(orgId, supporterData) {
 export async function bulkUpsertSupporters(orgId, supportersData) {
   try {
     console.log('🔧 MUTATION: Starting bulk upsert for orgId:', orgId);
-    console.log('🔧 MUTATION: Supporters data count:', supportersData.length);
+    console.log('🔧 MUTATION: OrgMembers data count:', supportersData.length);
     
     let created = 0;
     let updated = 0;
     
     for (const supporterData of supportersData) {
       try {
-        // Use upsert for each supporter
+        // Use upsert for each OrgMember
         const where = supporterData.email 
           ? { orgId_email: { orgId, email: supporterData.email } }
           : undefined;
         
         if (where) {
           // Has email - can upsert
-          const result = await prisma.supporter.upsert({
+          const result = await prisma.orgMember.upsert({
             where,
             update: supporterData,
             create: {
@@ -64,7 +64,7 @@ export async function bulkUpsertSupporters(orgId, supportersData) {
           created++;
         } else {
           // No email - just create
-          await prisma.supporter.create({
+          await prisma.orgMember.create({
             data: {
               ...supporterData,
               orgId
@@ -73,8 +73,8 @@ export async function bulkUpsertSupporters(orgId, supportersData) {
           created++;
         }
       } catch (err) {
-        console.error('Error upserting supporter:', err);
-        // Continue with next supporter
+        console.error('Error upserting OrgMember:', err);
+        // Continue with next
       }
     }
     
@@ -96,17 +96,17 @@ export async function bulkUpsertSupporters(orgId, supportersData) {
 }
 
 /**
- * Delete a supporter
+ * Delete an OrgMember
  */
 export async function deleteSupporter(supporterId) {
   try {
-    const supporter = await prisma.supporter.delete({
+    const orgMember = await prisma.orgMember.delete({
       where: { id: supporterId }
     });
     
     return {
       success: true,
-      deletedSupporter: supporter
+      deletedSupporter: orgMember
     };
   } catch (error) {
     return {
@@ -117,22 +117,22 @@ export async function deleteSupporter(supporterId) {
 }
 
 /**
- * Get supporters by organization
+ * Get OrgMembers by organization
  */
 export async function getSupportersByOrg(orgId) {
   try {
-    console.log('🔍 GET: Querying supporters for orgId:', orgId);
+    console.log('🔍 GET: Querying OrgMembers for orgId:', orgId);
     
-    const supporters = await prisma.supporter.findMany({
+    const orgMembers = await prisma.orgMember.findMany({
       where: { orgId },
       orderBy: { createdAt: 'desc' }
     });
     
-    console.log('🔍 GET: Found', supporters.length, 'supporters');
+    console.log('🔍 GET: Found', orgMembers.length, 'OrgMembers');
     
     return {
       success: true,
-      supporters
+      supporters: orgMembers // Keep 'supporters' key for backward compat
     };
   } catch (error) {
     console.error('🔍 GET ERROR:', error);
