@@ -9,11 +9,11 @@
     "dev": "nodemon index.js",
     "start": "node index.js",
     "migrate": "npx prisma migrate deploy",
-    "db:push": "npx prisma db push",
+    "db:push": "npx prisma db push --force-reset",
     "db:seed": "node scripts/seedDatabase.js",
     "db:check": "node scripts/checkDatabase.js",
     "db:studio": "npx prisma studio",
-    "postinstall": "npx prisma generate && npx prisma db push --accept-data-loss && node scripts/seedDatabase.js"
+    "postinstall": "npx prisma generate && npx prisma db push --force-reset --accept-data-loss && node scripts/seedDatabase.js"
   },
   "dependencies": {
     "@prisma/client": "^6.16.3",
