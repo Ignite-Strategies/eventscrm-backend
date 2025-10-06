@@ -1,43 +1,105 @@
-# Deployment Configuration
+# 🚀 Deployment Guide
 
-## Environment Variables Setup
+## First-Time Database Setup (Render)
 
-### Vercel (Frontend) Environment Variables:
+### Step 1: Create Database Schema
+
+In Render shell, run:
 ```bash
-# Firebase Configuration
-VITE_FIREBASE_API_KEY=your-firebase-api-key
-VITE_FIREBASE_MESSAGING_SENDER_ID=your-messaging-sender-id
-VITE_FIREBASE_APP_ID=your-firebase-app-id
-
-# Google OAuth
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
+npx prisma db push --accept-data-loss
 ```
 
-### Render (Backend) Environment Variables:
+This creates all tables from `prisma/schema.prisma`.
+
+### Step 2: Seed Initial Data
+
+Still in Render shell:
 ```bash
-# Database
-SUPPORTER_DB=mongodb+srv://username:password@cluster.mongodb.net/impact_events
-
-# Firebase/Google OAuth
-GOOGLE_CLIENT_SECRET={"web":{"client_id":"your-client-id","project_id":"ignite-events-crm","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"your-client-secret","redirect_uris":["https://ignitestrategescrm-frontend.vercel.app"]}}
-
-# URLs
-FRONTEND_URL=https://ignitestrategescrm-frontend.vercel.app
-PAY_BACKEND_URL=your-payment-backend-url
+npm run db:seed
 ```
 
-## OAuth Redirect URIs
-Make sure these are configured in Google Cloud Console:
-- `https://ignitestrategescrm-frontend.vercel.app` (production)
-- `http://localhost:3000` (development)
+This will:
+- ✅ Create Ignite Strategies organization
+- ✅ Create admin user
+- ✅ Output the Org ID for your frontend
 
-## Gmail API Scopes
-Required scopes in Google Cloud Console:
-- `https://www.googleapis.com/auth/gmail.send`
+### Step 3: Update Frontend Environment Variables
 
-## Testing
-1. Deploy frontend to Vercel
-2. Deploy backend to Render
-3. Update Firebase authorized domains with your Vercel URL
-4. Test Google sign-in
-5. Test email sending
+Copy the `VITE_ORG_ID` from the seed output and add it to your Vercel environment variables:
+
+```
+VITE_ORG_ID=<the-id-from-seed-output>
+```
+
+Redeploy frontend.
+
+---
+
+## Subsequent Deployments
+
+Normal deployments just need:
+```bash
+git push origin main
+```
+
+The `postinstall` hook will automatically run `npx prisma generate` to update the Prisma client.
+
+---
+
+## Local Development Setup
+
+1. Create `.env` file:
+```env
+DATABASE_URL="postgresql://..."
+FIREBASE_PROJECT_ID="your-project-id"
+PORT=3001
+```
+
+2. Push schema to local database:
+```bash
+npx prisma db push
+```
+
+3. Seed local database:
+```bash
+npm run db:seed
+```
+
+4. Start dev server:
+```bash
+npm run dev
+```
+
+---
+
+## Prisma Commands Reference
+
+| Command | Description |
+|---------|-------------|
+| `npx prisma db push` | Sync schema to database (no migration files) |
+| `npx prisma generate` | Generate Prisma Client |
+| `npx prisma studio` | Open Prisma Studio (DB GUI) |
+| `npm run db:seed` | Seed database with initial data |
+
+---
+
+## Database Schema Changes
+
+When you modify `prisma/schema.prisma`:
+
+1. **Development**: `npx prisma db push`
+2. **Production (Render)**: Run in Render shell → `npx prisma db push`
+3. **Redeploy**: Both environments will auto-generate client on next deploy
+
+---
+
+## Troubleshooting
+
+### "Table does not exist"
+Run: `npx prisma db push --accept-data-loss`
+
+### "Org ID not found"
+Run: `npm run db:seed` to create organization
+
+### "DATABASE_URL not set"
+Check Render environment variables or local `.env` file
