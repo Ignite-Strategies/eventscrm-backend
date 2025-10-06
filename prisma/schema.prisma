@@ -51,20 +51,52 @@ model OrgMember {
   orgId     String
   org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   
-  email     String @unique
+  // Contact Info
   firstName String
+  goesBy    String?
   lastName  String
+  email     String?
+  phone     String?
+  
+  // Address
+  street    String?
+  city      String?
+  state     String?
+  zip       String?
+  
+  // Organization Context
+  employer              String?
+  yearsWithOrganization Int?
+  
+  // Personal Information
+  birthday     String? // Format: "MM/DD"
+  married      Boolean @default(false)
+  spouseName   String?
+  numberOfKids Int     @default(0)
+  
+  // Story & Notes
+  originStory String?
+  notes       String?
+  
+  // App Access (optional - only for team members who can login)
+  role      String? // "owner", "manager", or null (just a contact)
+  googleId  String? @unique
   photoURL  String?
   
-  // Google OAuth
-  googleId  String? @unique
+  // Leadership Tags (Board, Committee, VIP, Donor, Volunteer)
+  tags      String[] @default([])
   
-  // Role: "owner", "admin", "member"
-  role      String @default("member")
+  // Engagement Tracking
+  categoryOfEngagement String @default("medium") // "high", "medium", "low", "inactive"
+  
+  // Relations
+  eventAttendees EventAttendee[]
+  contactListMembers ContactListMember[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
+  @@unique([orgId, email])
   @@index([orgId])
   @@index([email])
 }
@@ -215,8 +247,16 @@ model EventAttendee {
   orgId       String
   eventId     String
   event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  supporterId String
-  supporter   Supporter @relation(fields: [supporterId], references: [id], onDelete: Cascade)
+  
+  // Links to OrgMember (master contact list)
+  orgMemberId String
+  orgMember   OrgMember @relation(fields: [orgMemberId], references: [id], onDelete: Cascade)
+  
+  // Pipeline stage for THIS event
+  stage       String @default("in_funnel") // Pipeline tracking per event
+  
+  // Audience type (how they were added)
+  audienceType String? // "org_members", "friends_family", etc.
   
   // Final attendance data
   attended    Boolean @default(false)
@@ -228,8 +268,9 @@ model EventAttendee {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  @@unique([eventId, supporterId])
+  @@unique([eventId, orgMemberId])
   @@index([orgId])
+  @@index([eventId, stage])
 }
 
 model FamilyProspect {
