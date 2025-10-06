@@ -38,7 +38,6 @@ model Organization {
   supporters    Supporter[]
   familyProspects FamilyProspect[]
   events        Event[]
-  eventLocations EventLocation[]
   templates     Template[]
   contactLists  ContactList[]
   
@@ -406,38 +405,8 @@ model ContactListMember {
   @@index([prospectId])
 }
 
-model EventLocation {
-  id          String @id @default(cuid())
-  orgId       String
-  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-
-  // Venue Info
-  venueName   String
-  street      String
-  city        String
-  state       String
-  zip         String
-  phone       String?
-  website     String?
-
-  // Venue Details
-  capacity    Int?
-  venueType   String? // "brewery", "restaurant", "park", "gym", etc.
-  notes       String?
-
-  // Rating & Usage
-  rating      Float   @default(0) // 0-5 stars
-  timesUsed   Int     @default(0)
-  lastUsed    DateTime?
-
-  // Relations
-  events      Event[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([orgId])
-}
+// EventLocation - BREADCRUMB for future venue reuse feature
+// For MVP 1: Use Event.eventVenueName, eventStreet, etc. directly
 
 model EventTask {
   id          String @id @default(cuid())

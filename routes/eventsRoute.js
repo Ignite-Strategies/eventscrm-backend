@@ -1,5 +1,6 @@
 import express from 'express';
 import { getPrismaClient } from '../config/database.js';
+import { validateAndCleanEventData } from '../services/eventDataCheckerService.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -9,9 +10,9 @@ router.post('/:orgId/events', async (req, res) => {
   try {
     const { orgId } = req.params;
     console.log('📝 Creating event for org:', orgId);
-    console.log('📝 Data received:', JSON.stringify(req.body, null, 2));
+    console.log('📝 Raw data received:', JSON.stringify(req.body, null, 2));
     
-    // Get org defaults for pipelines
+    // Get org for defaults
     const org = await prisma.organization.findUnique({
       where: { id: orgId }
     });
@@ -20,15 +21,13 @@ router.post('/:orgId/events', async (req, res) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
     
-    // EXACT FIELD MAPPING - Frontend → Prisma (NO transformation!)
-    const eventData = {
-      orgId,
-      ...req.body,
-      pipelines: req.body.pipelines || org.pipelineDefaults
-    };
+    // Validate and clean data (service ensures Prisma-safe format)
+    const eventData = validateAndCleanEventData(req.body, org.pipelineDefaults);
     
-    console.log('📝 Creating event with data:', JSON.stringify(eventData, null, 2));
+    // Add orgId
+    eventData.orgId = orgId;
     
+    // Create event with validated data
     const event = await prisma.event.create({
       data: eventData
     });
@@ -38,7 +37,6 @@ router.post('/:orgId/events', async (req, res) => {
   } catch (error) {
     console.error('❌ Event creation error:', error);
     console.error('❌ Error details:', error.message);
-    console.error('❌ Stack:', error.stack);
     res.status(400).json({ error: error.message });
   }
 });
