@@ -37,6 +37,7 @@ model Organization {
   supporters    Supporter[]
   familyProspects FamilyProspect[]
   events        Event[]
+  eventLocations EventLocation[]
   templates     Template[]
   contactLists  ContactList[]
   
@@ -123,8 +124,13 @@ model Event {
   slug      String
   description String?
   date      DateTime?
-  time      String? // e.g., "7:00 PM"
-  location  String?
+  time      String? // e.g., "6:00 PM - 9:00 PM"
+  
+  // Location (can be venue or custom)
+  locationId  String?
+  location    EventLocation? @relation(fields: [locationId], references: [id])
+  customLocation String? // For one-off locations
+  
   hasTickets Boolean @default(false)
   ticketCost  Float   @default(0)
   
@@ -337,4 +343,37 @@ model ContactListMember {
   @@index([contactListId])
   @@index([supporterId])
   @@index([prospectId])
+}
+
+model EventLocation {
+  id          String @id @default(cuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  // Venue Info
+  venueName   String
+  street      String
+  city        String
+  state       String
+  zip         String
+  phone       String?
+  website     String?
+  
+  // Venue Details
+  capacity    Int?
+  venueType   String? // "brewery", "restaurant", "park", "gym", etc.
+  notes       String?
+  
+  // Rating & Usage
+  rating      Float   @default(0) // 0-5 stars
+  timesUsed   Int     @default(0)
+  lastUsed    DateTime?
+  
+  // Relations
+  events      Event[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([orgId])
 }
