@@ -134,6 +134,10 @@ model Event {
   hasTickets Boolean @default(false)
   ticketCost  Float   @default(0)
   
+  // Fundraising Goals
+  fundraisingGoal    Float @default(0)
+  additionalExpenses Float @default(0)
+  
   // Pipeline overrides
   pipelines String[] // optional override of org defaults
   
@@ -180,7 +184,7 @@ model EventPipelineEntry {
   supporter    Supporter @relation(fields: [supporterId], references: [id], onDelete: Cascade)
   
   audienceType String // "org_member", "friend_spouse", "community_partner", "business_sponsor", "champion"
-  stage        String // "member", "soft_commit", "paid", "lost"
+  stage        String // "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid", "cant_attend"
   source       String? // "admin_add", "csv", "bulk_add", etc.
   notes        String?
   

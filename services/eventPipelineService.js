@@ -16,7 +16,7 @@ export async function pushSupportersToEvent({
   eventId,
   supporterIds,
   audienceType = "org_member",
-  stage = "aware",
+  stage = "in_funnel",
   source = "admin_add"
 }) {
   console.log('🚀 REGISTRY PUSH: Starting registry push operation');
@@ -101,7 +101,7 @@ export async function pushAllSupportersToEvent({
   orgId,
   eventId,
   audienceType = "org_member",
-  stage = "aware",
+  stage = "in_funnel",
   source = "bulk_import"
 }) {
   // Get all supporters for org
@@ -129,7 +129,7 @@ export async function pushSupportersByTag({
   eventId,
   tags,
   audienceType = "org_member",
-  stage = "aware",
+  stage = "in_funnel",
   source = "tag_filter"
 }) {
   console.log('🏷️ TAG PUSH: Finding supporters with tags:', tags);
@@ -169,7 +169,8 @@ export async function pushSupportersByTag({
 export async function getEventRegistry(eventId, audienceType) {
   console.log('📋 GET REGISTRY: eventId:', eventId, 'audienceType:', audienceType);
 
-  const stages = ['aware', 'member', 'soft_commit', 'paid', 'lost'];
+  // New 7-stage funnel
+  const stages = ['in_funnel', 'general_awareness', 'personal_invite', 'expressed_interest', 'soft_commit', 'paid', 'cant_attend'];
   const registryData = [];
 
   for (const stage of stages) {
