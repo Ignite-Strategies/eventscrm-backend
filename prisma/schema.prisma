@@ -47,8 +47,8 @@ model Organization {
 
 model OrgMember {
   id        String @id @default(cuid())
-  orgId     String
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId     String?
+  org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
   
   // Contact Info
   firstName String
@@ -78,9 +78,9 @@ model OrgMember {
   notes       String?
   
   // App Access (optional - only for team members who can login)
-  role      String? // "owner", "manager", or null (just a contact)
-  googleId  String? @unique
-  photoURL  String?
+  role       String? // "owner", "manager", or null (just a contact)
+  firebaseId String? @unique
+  photoURL   String?
   
   // Leadership Tags (Board, Committee, VIP, Donor, Volunteer)
   tags      String[] @default([])

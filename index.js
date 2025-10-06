@@ -4,7 +4,9 @@ import dotenv from 'dotenv';
 import connectDatabase from './config/database.js';
 
 // Import routes
+import authRouter from './routes/authRoute.js';
 import orgsRouter from './routes/orgsRoute.js';
+import orgMembersRouter from './routes/orgMembersRoute.js';
 import supportersRouter from './routes/supportersRoute.js';
 import eventsRouter from './routes/eventsRoute.js';
 import eventPipelinesRouter from './routes/eventPipelinesRoute.js';
@@ -30,8 +32,10 @@ app.use(express.urlencoded({ extended: true }));
 await connectDatabase();
 
 // Routes
+app.use('/api/auth', authRouter);               // Firebase auth (findOrCreate)
 app.use('/api/orgs', orgsRouter);
-app.use('/api/orgs', supportersRouter);         // Supporters nested under orgs
+app.use('/api/org-members', orgMembersRouter);  // OrgMember CRUD
+app.use('/api/orgs', supportersRouter);         // Contact CSV upload
 app.use('/api', supportersRouter);              // Delete route not nested
 app.use('/api/orgs', eventsRouter);             // Event creation nested under orgs
 app.use('/api/events', eventsRouter);           // Event operations
