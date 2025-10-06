@@ -12,7 +12,7 @@ router.post('/:orgId/events', async (req, res) => {
     console.log('📝 Creating event for org:', orgId);
     console.log('📝 Raw data received:', JSON.stringify(req.body, null, 2));
     
-    // Get org for defaults
+    // Verify org exists
     const org = await prisma.organization.findUnique({
       where: { id: orgId }
     });

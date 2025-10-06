@@ -268,8 +268,8 @@ model EventAttendee {
   updatedAt DateTime @updatedAt
   
   @@unique([eventId, orgMemberId])
-  @@index([orgId])
   @@index([eventId, stage])
+  @@index([orgId])
 }
 
 model FamilyProspect {
