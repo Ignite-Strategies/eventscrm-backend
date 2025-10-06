@@ -10,31 +10,46 @@ async function main() {
   console.log('   Run: npx prisma db push --accept-data-loss\n');
   
   // Step 2: Create hardcoded organization
-  console.log('🏢 Creating Ignite Strategies organization...');
+  console.log('🏢 Creating F3 Capital organization...');
   
-  const org = await prisma.organization.upsert({
-    where: { 
-      slug: 'ignite-strategies'
-    },
-    update: {},
-    create: {
-      name: 'Ignite Strategies',
-      slug: 'ignite-strategies',
-      pipelineDefaults: [
-        'in_funnel',
-        'general_awareness',
-        'personal_invite',
-        'expressed_interest',
-        'soft_commit',
-        'paid',
-        'cant_attend'
-      ],
-      tagCategories: ['VIP', 'Committee', 'Volunteer', 'Donor', 'Board'],
-      firebaseProjectId: process.env.FIREBASE_PROJECT_ID || ''
-    }
+  // Check if org already exists
+  const existingOrg = await prisma.organization.findFirst({
+    where: { slug: 'f3-capital' }
   });
 
-  console.log(`✅ Organization created: ${org.name} (ID: ${org.id})\n`);
+  let org;
+  if (existingOrg) {
+    console.log(`   ✅ Organization already exists: ${existingOrg.name} (ID: ${existingOrg.id})`);
+    org = existingOrg;
+  } else {
+    org = await prisma.organization.create({
+      data: {
+        name: 'F3 Capital',
+        slug: 'f3-capital',
+        mission: 'Building better men through fitness, fellowship, and faith. Supporting our community through impactful events and service.',
+        website: 'https://f3capital.com',
+        x: 'https://x.com/f3capital',
+        instagram: 'https://instagram.com/f3capital',
+        facebook: 'https://facebook.com/f3capital',
+        linkedin: 'https://linkedin.com/company/f3capital',
+        street: '1600 Pennsylvania Avenue NW',
+        city: 'Washington',
+        state: 'DC',
+        zip: '20500',
+        pipelineDefaults: [
+          'in_funnel',
+          'general_awareness',
+          'personal_invite',
+          'expressed_interest',
+          'soft_commit',
+          'paid',
+          'cant_attend'
+        ]
+      }
+    });
+    console.log(`✅ Organization created: ${org.name} (ID: ${org.id})`);
+  }
+  console.log('');
 
   // Step 3: Create admin user (optional)
   console.log('👤 Creating admin user...');
