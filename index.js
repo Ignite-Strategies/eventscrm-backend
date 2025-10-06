@@ -14,6 +14,7 @@ import webhooksRouter from './routes/webhooksRoute.js';
 import templatesRouter from './routes/templatesRoute.js';
 import emailRouter from './routes/emailRoute.js';
 import contactListsRouter from './routes/contactListsRoute.js';
+import eventTasksRouter from './routes/eventTasksRoute.js';
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use('/api/webhooks', webhooksRouter);
 app.use('/api/templates', templatesRouter);     // Email templates
 app.use('/api/email', emailRouter);             // Email sending
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
+app.use('/api/events', eventTasksRouter);       // Event tasks
 
 // Health check
 app.get('/health', (req, res) => {

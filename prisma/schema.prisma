@@ -167,6 +167,7 @@ model Event {
   // Relations
   pipelineEntries EventPipelineEntry[]
   attendees       EventAttendee[]
+  tasks           EventTask[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -353,7 +354,7 @@ model EventLocation {
   id          String @id @default(cuid())
   orgId       String
   org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  
+
   // Venue Info
   venueName   String
   street      String
@@ -362,22 +363,48 @@ model EventLocation {
   zip         String
   phone       String?
   website     String?
-  
+
   // Venue Details
   capacity    Int?
   venueType   String? // "brewery", "restaurant", "park", "gym", etc.
   notes       String?
-  
+
   // Rating & Usage
   rating      Float   @default(0) // 0-5 stars
   timesUsed   Int     @default(0)
   lastUsed    DateTime?
-  
+
   // Relations
   events      Event[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([orgId])
+}
+
+model EventTask {
+  id          String @id @default(cuid())
+  eventId     String
+  event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  // Task Details
+  title       String
+  description String?
+  category    String // "design", "marketing", "tech", "logistics", "finance"
+  completed   Boolean @default(false)
+  dueDate     DateTime?
+  
+  // Assignment
+  assignedTo  String? // Future: link to team member
+  priority    String @default("medium") // "low", "medium", "high"
+  
+  // Order
+  orderIndex  Int @default(0)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  @@index([orgId])
+  @@index([eventId])
+  @@index([eventId, completed])
 }
