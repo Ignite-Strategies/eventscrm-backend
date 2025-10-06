@@ -1,6 +1,5 @@
 import express from 'express';
 import { getPrismaClient } from '../config/database.js';
-import { createEvent } from '../services/eventService.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -10,7 +9,7 @@ router.post('/:orgId/events', async (req, res) => {
   try {
     const { orgId } = req.params;
     console.log('📝 Creating event for org:', orgId);
-    console.log('📝 Raw data received:', JSON.stringify(req.body, null, 2));
+    console.log('📝 Data received:', JSON.stringify(req.body, null, 2));
     
     // Get org defaults for pipelines
     const org = await prisma.organization.findUnique({
@@ -21,14 +20,18 @@ router.post('/:orgId/events', async (req, res) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
     
-    // Add pipelines if not provided
-    const dataWithDefaults = {
+    // EXACT FIELD MAPPING - Frontend → Prisma (NO transformation!)
+    const eventData = {
+      orgId,
       ...req.body,
       pipelines: req.body.pipelines || org.pipelineDefaults
     };
     
-    // Use service to handle Prisma mapping
-    const event = await createEvent(orgId, dataWithDefaults);
+    console.log('📝 Creating event with data:', JSON.stringify(eventData, null, 2));
+    
+    const event = await prisma.event.create({
+      data: eventData
+    });
     
     console.log('✅ Event created:', event.id);
     res.status(201).json(event);
