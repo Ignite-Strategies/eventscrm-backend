@@ -51,27 +51,7 @@ async function main() {
   }
   console.log('');
 
-  // Step 3: Create admin user (optional)
-  console.log('👤 Creating admin user...');
-  
-  const admin = await prisma.adminUser.upsert({
-    where: {
-      email: 'admin@ignitestrategies.com'
-    },
-    update: {},
-    create: {
-      orgId: org.id,
-      email: 'admin@ignitestrategies.com',
-      firebaseUid: 'admin-placeholder',
-      role: 'admin',
-      firstName: 'Admin',
-      lastName: 'User'
-    }
-  });
-
-  console.log(`✅ Admin user created: ${admin.email}\n`);
-
-  // Step 4: Summary
+  // Step 3: Summary
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('🎉 Database seeding complete!');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -79,7 +59,6 @@ async function main() {
   console.log(`   • Organization: ${org.name}`);
   console.log(`   • Org ID: ${org.id}`);
   console.log(`   • Slug: ${org.slug}`);
-  console.log(`   • Admin: ${admin.email}`);
   console.log(`   • Pipeline Stages: ${org.pipelineDefaults.length}`);
   console.log(`\n🔗 Save this Org ID for your frontend .env:`);
   console.log(`   VITE_ORG_ID=${org.id}\n`);
