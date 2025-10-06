@@ -168,8 +168,8 @@ model Event {
   name      String
   slug      String
   description String?
-  date      DateTime?
-  time      String? // e.g., "6:00 PM - 9:00 PM"
+  date      String? // FLEXIBLE: "2025-10-23", "10/23/2025", whatever!
+  time      String? // FLEXIBLE: "6:00 PM - 9:00 PM", "6 PM", "9:00", whatever!
   
   // Location (can be venue or custom)
   locationId  String?
