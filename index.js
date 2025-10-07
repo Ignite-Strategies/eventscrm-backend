@@ -11,7 +11,7 @@ import supportersRouter from './routes/supportersRoute.js';
 import eventsRouter from './routes/eventsRoute.js';
 import eventPipelinesRouter from './routes/eventPipelinesRoute.js';
 import eventAttendeesRouter from './routes/eventAttendeesRoute.js';
-import eventPipelineActionsRouter from './routes/eventPipelineActionsRoute.js';
+// import eventPipelineActionsRouter from './routes/eventPipelineActionsRoute.js'; // REMOVED - duplicate of eventPipelinesRouter
 import webhooksRouter from './routes/webhooksRoute.js';
 import templatesRouter from './routes/templatesRoute.js';
 import emailRouter from './routes/emailRoute.js';
@@ -19,8 +19,8 @@ import contactListsRouter from './routes/contactListsRoute.js';
 import eventTasksRouter from './routes/eventTasksRoute.js';
 import publicFormsRouter from './routes/publicFormsRoute.js';
 import formsRouter from './routes/formsRoute.js';
-import stageRouter from './routes/stageRoute.js';
-import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js';
+// import stageRouter from './routes/stageRoute.js'; // TODO: Create this route
+// import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // TODO: Create this route
 // import pipelineRouter from './routes/pipelineRoute.js'; // TODO: Create this route
 
 dotenv.config();
@@ -50,7 +50,7 @@ app.use('/api/orgs', eventsRouter);             // Event creation nested under o
 app.use('/api/events', eventsRouter);           // Event operations
 app.use('/api/events', eventPipelinesRouter);   // Pipeline records (GET/PATCH/PUSH)
 app.use('/api/events', eventAttendeesRouter);   // Final attendees
-app.use('/api/events', eventPipelineActionsRouter); // Push actions
+// app.use('/api/events', eventPipelineActionsRouter); // REMOVED - duplicate functionality in eventPipelinesRouter
 app.use('/api/webhooks', webhooksRouter);
 app.use('/api/templates', templatesRouter);     // Email templates
 app.use('/api/email', emailRouter);             // Email sending
@@ -58,8 +58,8 @@ app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/events', eventTasksRouter);       // Event tasks
 app.use('/api/public', publicFormsRouter);      // Public landing page forms (no auth)
 app.use('/api/forms', formsRouter);             // Form CRUD (authenticated)
-app.use('/api', stageRouter);                   // Stage definitions (hydrated from database)
-app.use('/api', pipelineHydrationRouter);       // Pipeline hydration (stages + attendees)
+// app.use('/api', stageRouter);                   // Stage definitions (hydrated from database) // TODO: Create this route
+// app.use('/api', pipelineHydrationRouter);       // Pipeline hydration (stages + attendees) // TODO: Create this route
 // app.use('/api', pipelineRouter);                 // Pipeline management (7-stage system) // TODO: Create this route
 
 // Health check
