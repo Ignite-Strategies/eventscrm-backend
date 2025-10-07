@@ -500,3 +500,28 @@ Different funnels for different audience types:
 
 **See MVP1-CONSTRAINTS.md for full details and expansion plan.**
 
+---
+
+## 🚨 CRITICAL: Service Architecture Issues
+
+**We have MULTIPLE services using DIFFERENT models causing pipeline failures!**
+
+### The Problem
+- **Event creation** calls `populateEventPipeline()` from `eventAttendeeService.js`
+- **Service uses NEW models:** `OrgMember` + `EventAttendee` 
+- **Service uses NEW fields:** `currentStage` (not `stage`)
+- **Database might have OLD models:** `Supporter` + `EventPipelineEntry`
+
+### Service Conflicts
+1. **`eventAttendeeService.js`** - NEW system (✅ CURRENT)
+2. **`eventPipelineService.js`** - OLD system (❌ DEPRECATED)
+3. **`pipelineService.js`** - OLD 5-stage system (❌ DEPRECATED)
+
+### Immediate Actions Required
+1. **Check database reality** - What tables actually exist?
+2. **Fix field names** - Use `currentStage` not `stage`
+3. **Delete old services** - Remove deprecated code
+4. **Test pipeline population** - Make sure it works
+
+**See `SERVICES.md` for complete service documentation and cleanup guide.**
+

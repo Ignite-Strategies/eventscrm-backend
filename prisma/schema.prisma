@@ -232,8 +232,8 @@ model EventPipeline {
   eventId      String
   event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   
-  // Pipeline Identity
-  audienceType String // "org_members", "landing_page_public", "friends_family", etc.
+  // Pipeline Identity - 5 audience types with different stage trees
+  audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
   stages       String[] @default(["in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid", "cant_attend"])
   
   // Status
@@ -327,7 +327,7 @@ model EventAttendee {
   stage        String @default("in_funnel") // DEPRECATED: Use currentStage instead
   
   // Audience type (DEPRECATED: Use pipeline.audienceType instead)
-  audienceType String? // "org_members", "friends_family", etc.
+  audienceType String? // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
   
   // Form tracking
   submittedFormId String? // Which form created this attendee?

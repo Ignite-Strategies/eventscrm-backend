@@ -1,7 +1,7 @@
 import express from 'express';
 import { getPrismaClient } from '../config/database.js';
 import { validateAndCleanEventData } from '../services/eventDataCheckerService.js';
-import { populateEventPipeline } from '../services/eventAttendeeService.js';
+import { populateEventPipeline } from '../services/audience.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
