@@ -225,6 +225,59 @@ model Event {
   @@index([orgId])
 }
 
+// NEW: OrgMember - Master contact list for organizations
+model OrgMember {
+  id        String @id @default(cuid())
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  // Contact Info
+  firstName String
+  goesBy    String?
+  lastName  String
+  email     String?
+  phone     String?
+  
+  // Address
+  street    String?
+  city      String?
+  state     String?
+  zip       String?
+  
+  // Organization Context
+  employer              String?
+  yearsWithOrganization Int?
+  
+  // Engagement Tracking
+  categoryOfEngagement String @default("medium") // "high", "medium", "low", "inactive"
+  
+  // Personal Information
+  birthday     String? // Format: "MM/DD"
+  married      Boolean @default(false)
+  spouseName   String?
+  numberOfKids Int     @default(0)
+  
+  // Story & Notes
+  originStory String?
+  notes       String?
+  
+  // App User Fields (for admins)
+  role      String? // "owner", "manager", "member"
+  firebaseId String? // Firebase UID for app users
+  photoURL  String? // Profile photo
+  
+  // Relations
+  tags         String[] @default([]) // Simple tags array
+  attendees    EventAttendee[] // Pipeline attendees
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([orgId, email])
+  @@index([orgId])
+  @@index([firebaseId])
+}
+
 // NEW: EventPipeline - First-class pipeline model
 model EventPipeline {
   id           String @id @default(cuid())
