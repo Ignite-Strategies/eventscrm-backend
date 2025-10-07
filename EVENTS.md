@@ -468,3 +468,35 @@ Different funnels for different audience types:
 
 **Remember:** OrgMembers are sacred and permanent. EventAttendees are event-specific and track the journey.
 
+---
+
+## ⚠️ MVP1 Constraint: Single Active Event
+
+**For MVP1, organizations can only have ONE active event at a time.**
+
+**Event Status Field:**
+- `draft` - Being planned, not live yet
+- `upcoming` - Next event, main focus (ONLY ONE allowed)
+- `active` - Happening now (event day)  
+- `past` - Archived, historical only
+
+**Business Rules:**
+- Can only create new event if no `upcoming` or `active` events exist
+- Creating new event auto-archives current event to `past`
+- Can have unlimited `past` events (historical tracking)
+- Can have multiple `draft` events (planning)
+
+**UI Simplifications:**
+- Dashboard shows THE event (no list/selection)
+- Forms always for THE current event
+- Pipeline management always for THE current event
+- No "which event?" dropdowns needed
+
+**Future Expansion:**
+- Remove constraint when demand exists
+- Multi-event dashboard view
+- Event templates/cloning
+- Team-based event separation
+
+**See MVP1-CONSTRAINTS.md for full details and expansion plan.**
+

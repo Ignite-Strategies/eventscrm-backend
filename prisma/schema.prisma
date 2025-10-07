@@ -168,6 +168,9 @@ model Event {
   date      String? // FLEXIBLE: "2025-10-23", "10/23/2025", whatever!
   time      String? // FLEXIBLE: "6:00 PM - 9:00 PM", "6 PM", "9:00", whatever!
   
+  // MVP1: Single Active Event
+  status    String @default("upcoming") // "upcoming", "active", "past", "draft"
+  
   // Event Location (NOT confused with Contact location)
   eventVenueName String?
   eventStreet    String?
