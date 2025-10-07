@@ -1,6 +1,6 @@
 import express from 'express';
 import EventPipeline from '../models/EventPipeline.js';
-// import { applyPaid } from '../services/pipelineService.js'; // TODO: Create this service
+import { applyPaid } from '../services/pipelineService.js';
 import { graduateToAttendee, pushSupportersToEvent, pushAllSupportersToEvent, getEventRegistry, moveSupporterStage } from '../services/eventPipelineService.js';
 
 const router = express.Router();
