@@ -209,9 +209,11 @@ model Event {
   totalOutreachTarget   Int   @default(0)
   
   // Relations
-  pipelineEntries EventPipelineEntry[]
+  eventPipelines  EventPipeline[] // NEW: Proper pipeline management
+  pipelineEntries EventPipelineEntry[] // OLD: Legacy, to be deprecated
   attendees       EventAttendee[]
   tasks           EventTask[]
+  eventForms      EventForm[] // Forms for this event
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -220,6 +222,68 @@ model Event {
   @@index([orgId])
 }
 
+// NEW: EventPipeline - First-class pipeline model
+model EventPipeline {
+  id           String @id @default(cuid())
+  orgId        String
+  eventId      String
+  event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  // Pipeline Identity
+  audienceType String // "org_members", "landing_page_public", "friends_family", etc.
+  stages       String[] @default(["in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid", "cant_attend"])
+  
+  // Status
+  isActive     Boolean @default(true)
+  
+  // Relations
+  attendees    EventAttendee[]
+  forms        EventForm[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([eventId, audienceType])
+  @@index([eventId])
+  @@index([orgId])
+}
+
+// NEW: EventForm - Form configuration
+model EventForm {
+  id           String @id @default(cuid())
+  orgId        String
+  eventId      String
+  event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  pipelineId   String
+  pipeline     EventPipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  
+  // Form Identity
+  name         String // "Bros & Brews Slack Soft Commit"
+  slug         String @unique // "bros-soft-commit-slack"
+  description  String?
+  
+  // Pipeline Integration
+  targetStage  String // Where they land: "soft_commit"
+  
+  // Form Configuration
+  fields       Json // Field definitions
+  styling      Json? // Custom styling
+  
+  // Status & Analytics
+  isActive          Boolean @default(true)
+  submissionCount   Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([pipelineId])
+  @@index([slug])
+  @@index([eventId])
+  @@index([orgId])
+}
+
+// OLD: Legacy model, to be deprecated
 model EventPipelineEntry {
   id           String @id @default(cuid())
   orgId        String
@@ -247,28 +311,41 @@ model EventAttendee {
   eventId     String
   event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   
+  // NEW: Links to specific pipeline
+  pipelineId  String?
+  pipeline    EventPipeline? @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  
   // Links to OrgMember (master contact list)
   orgMemberId String
   orgMember   OrgMember @relation(fields: [orgMemberId], references: [id], onDelete: Cascade)
   
-  // Pipeline stage for THIS event
-  stage       String @default("in_funnel") // Pipeline tracking per event
+  // Pipeline stage for THIS event (renamed from "stage" to "currentStage" for clarity)
+  currentStage String @default("in_funnel") // Current position in pipeline
+  stage        String @default("in_funnel") // DEPRECATED: Use currentStage instead
   
-  // Audience type (how they were added)
+  // Audience type (DEPRECATED: Use pipeline.audienceType instead)
   audienceType String? // "org_members", "friends_family", etc.
+  
+  // Form tracking
+  submittedFormId String? // Which form created this attendee?
   
   // Final attendance data
   attended    Boolean @default(false)
   checkedInAt DateTime?
   ticketType  String?
   amountPaid  Float   @default(0)
-  notes       String?
+  notes       String? // JSON with custom form fields
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  @@unique([eventId, orgMemberId])
+  // NOTE: Unique constraint on pipelineId allows same person in multiple pipelines for one event
+  // @@unique([eventId, orgMemberId]) // OLD: One person per event total - REMOVED for multi-pipeline support
+  @@unique([pipelineId, orgMemberId]) // NEW: One person per pipeline (can be in multiple pipelines for same event)
   @@index([eventId, stage])
+  @@index([eventId, currentStage])
+  @@index([eventId, orgMemberId]) // Index for queries
+  @@index([pipelineId])
   @@index([orgId])
 }
 

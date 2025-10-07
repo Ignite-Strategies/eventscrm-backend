@@ -1,6 +1,7 @@
 import express from 'express';
 import { getPrismaClient } from '../config/database.js';
 import { validateAndCleanEventData } from '../services/eventDataCheckerService.js';
+import { populateEventPipeline } from '../services/eventAttendeeService.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -41,7 +42,20 @@ router.post('/:orgId/events', async (req, res) => {
     });
     console.log('🔍 VERIFICATION: Event exists in DB?', verification ? 'YES' : 'NO');
     
-    res.status(201).json(event);
+    // Auto-populate event pipeline with all existing OrgMembers
+    console.log('🎯 AUTO-POPULATING event pipeline...');
+    const pipelineResult = await populateEventPipeline(event.id, orgId);
+    
+    if (pipelineResult.success) {
+      console.log(`✅ Pipeline populated: ${pipelineResult.added} attendees added`);
+    } else {
+      console.log('⚠️ Pipeline population warning:', pipelineResult.error);
+    }
+    
+    res.status(201).json({
+      ...event,
+      pipelinePopulated: pipelineResult.added || 0
+    });
   } catch (error) {
     console.error('❌ Event creation error:', error);
     console.error('❌ Error details:', error.message);
