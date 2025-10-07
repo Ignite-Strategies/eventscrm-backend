@@ -19,6 +19,8 @@ import contactListsRouter from './routes/contactListsRoute.js';
 import eventTasksRouter from './routes/eventTasksRoute.js';
 import publicFormsRouter from './routes/publicFormsRoute.js';
 import formsRouter from './routes/formsRoute.js';
+import stageRouter from './routes/stageRoute.js';
+import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js';
 // import pipelineRouter from './routes/pipelineRoute.js'; // TODO: Create this route
 
 dotenv.config();
@@ -56,6 +58,8 @@ app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/events', eventTasksRouter);       // Event tasks
 app.use('/api/public', publicFormsRouter);      // Public landing page forms (no auth)
 app.use('/api/forms', formsRouter);             // Form CRUD (authenticated)
+app.use('/api', stageRouter);                   // Stage definitions (hydrated from database)
+app.use('/api', pipelineHydrationRouter);       // Pipeline hydration (stages + attendees)
 // app.use('/api', pipelineRouter);                 // Pipeline management (7-stage system) // TODO: Create this route
 
 // Health check
