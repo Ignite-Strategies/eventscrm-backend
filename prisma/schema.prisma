@@ -262,10 +262,13 @@ model EventForm {
   pipelineId   String
   pipeline     EventPipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
   
-  // Form Identity
-  name         String // "Bros & Brews Slack Soft Commit"
-  slug         String @unique // "bros-soft-commit-slack"
-  description  String?
+  // Internal (CRM only)
+  name         String // "Bros & Brews Soft Commit Form"
+  slug         String @unique // "bros-soft-commit"
+  
+  // Public (Landing Page)
+  publicTitle       String // "Sign up for Bros & Brews!"
+  publicDescription String? // "Fill out the form below to let us know..."
   
   // Pipeline Integration
   targetStage  String // Where they land: "soft_commit"
