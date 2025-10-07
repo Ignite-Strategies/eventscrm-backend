@@ -105,13 +105,18 @@ router.get('/by-firebase/:firebaseId', async (req, res) => {
  */
 router.patch('/:orgMemberId', async (req, res) => {
   try {
+    console.log('📝 PATCH OrgMember:', req.params.orgMemberId);
+    console.log('📝 Update data:', req.body);
+    
     const orgMember = await prisma.orgMember.update({
       where: { id: req.params.orgMemberId },
       data: req.body
     });
     
+    console.log('✅ OrgMember updated:', orgMember.email);
     res.json(orgMember);
   } catch (error) {
+    console.error('❌ PATCH OrgMember error:', error);
     res.status(400).json({ error: error.message });
   }
 });
