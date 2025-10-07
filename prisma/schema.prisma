@@ -513,3 +513,29 @@ model EventTask {
   @@index([eventId])
   @@index([eventId, completed])
 }
+
+// NEW: Stage Model - The 7 standard stages
+model Stage {
+  id          String @id @default(cuid())
+  orgId       String
+  
+  // Stage Identity (the 7 stages from PIPELINES.md)
+  name        String // "In Funnel", "General Awareness", "Soft Commit", etc.
+  slug        String // "in_funnel", "general_awareness", "soft_commit", etc.
+  description String? // "Just entered the pipeline"
+  
+  // Visual Design
+  color       String @default("#6B7280") // Hex color for UI
+  icon        String? // "🎯", "👁️", "🤝", etc.
+  
+  // Stage Behavior
+  isActive    Boolean @default(true)
+  isFinal     Boolean @default(false) // Final stage (paid, cant_attend)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([orgId, slug])
+  @@index([orgId])
+  @@index([slug])
+}
