@@ -9,7 +9,7 @@ import orgsRouter from './routes/orgsRoute.js';
 import orgMembersRouter from './routes/orgMembersRoute.js';
 import supportersRouter from './routes/supportersRoute.js';
 import eventsRouter from './routes/eventsRoute.js';
-import eventPipelinesRouter from './routes/eventPipelinesRoute.js';
+// import eventPipelinesRouter from './routes/eventPipelinesRoute.js'; // REMOVED - deprecated for now
 import eventAttendeesRouter from './routes/eventAttendeesRoute.js';
 // import eventPipelineActionsRouter from './routes/eventPipelineActionsRoute.js'; // REMOVED - duplicate of eventPipelinesRouter
 import webhooksRouter from './routes/webhooksRoute.js';
@@ -48,7 +48,7 @@ app.use('/api/orgs', supportersRouter);         // Contact CSV upload
 app.use('/api', supportersRouter);              // Delete route not nested
 app.use('/api/orgs', eventsRouter);             // Event creation nested under orgs
 app.use('/api/events', eventsRouter);           // Event operations
-app.use('/api/events', eventPipelinesRouter);   // Pipeline records (GET/PATCH/PUSH)
+// app.use('/api/events', eventPipelinesRouter);   // REMOVED - Pipeline routes deprecated for now
 app.use('/api/events', eventAttendeesRouter);   // Final attendees
 // app.use('/api/events', eventPipelineActionsRouter); // REMOVED - duplicate functionality in eventPipelinesRouter
 app.use('/api/webhooks', webhooksRouter);
