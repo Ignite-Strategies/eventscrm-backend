@@ -233,16 +233,16 @@ model EventPipeline {
   eventId      String
   event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   
-  // Pipeline Identity - 5 audience types with different stage trees
+  // Pipeline Identity - 5 audience types
   audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
-  stages       String[] @default(["in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid", "cant_attend"])
   
   // Status
   isActive     Boolean @default(true)
   
   // Relations
-  attendees    EventAttendee[]
-  forms        EventForm[]
+  attendees       EventAttendee[]
+  forms           EventForm[]
+  pipelineStages  PipelineStage[] // Stages for this pipeline (not hardcoded!)
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -515,23 +515,18 @@ model EventTask {
   @@index([eventId, completed])
 }
 
-// NEW: Stage Model - The 7 standard stages
+// NEW: Stage Model - All possible stages (could be 30+)
 model Stage {
   id          String @id @default(cuid())
   orgId       String
   
-  // Stage Identity (the 7 stages from PIPELINES.md)
-  name        String // "In Funnel", "General Awareness", "Soft Commit", etc.
-  slug        String // "in_funnel", "general_awareness", "soft_commit", etc.
+  // Stage Identity
+  name        String // "In Funnel", "Soft Commit", "VIP Invite", etc.
+  slug        String // "in_funnel", "soft_commit", "vip_invite", etc.
   description String? // "Just entered the pipeline"
   
-  // Visual Design
-  color       String @default("#6B7280") // Hex color for UI
-  icon        String? // "🎯", "👁️", "🤝", etc.
-  
-  // Stage Behavior
-  isActive    Boolean @default(true)
-  isFinal     Boolean @default(false) // Final stage (paid, cant_attend)
+  // Relations
+  pipelineStages PipelineStage[] // Which pipelines use this stage
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -539,4 +534,22 @@ model Stage {
   @@unique([orgId, slug])
   @@index([orgId])
   @@index([slug])
+}
+
+// NEW: PipelineStage - Junction table (which stages for THIS pipeline)
+model PipelineStage {
+  id         String @id @default(cuid())
+  pipelineId String
+  pipeline   EventPipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  stageId    String
+  stage      Stage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  
+  // Order in this pipeline
+  orderIndex Int @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([pipelineId, stageId])
+  @@index([pipelineId, orderIndex])
 }
