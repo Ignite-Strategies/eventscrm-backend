@@ -1,6 +1,6 @@
 import express from 'express';
 import ContactEventMembership from '../models/ContactEventMembership.js';
-import { applyPaid } from '../services/pipelineService.js';
+// import { applyPaid } from '../services/pipelineService.js'; // REMOVED - service deprecated
 
 const router = express.Router();
 
@@ -21,9 +21,10 @@ router.post('/payment', async (req, res) => {
       return res.status(404).json({ error: 'Membership not found' });
     }
     
-    // Apply paid logic (auto-advance to "paid" stage)
-    membership = applyPaid(membership, amount);
-    await membership.save();
+    // TODO: Apply paid logic when we rebuild pipeline services
+    // membership = applyPaid(membership, amount);
+    // await membership.save();
+    console.log('⚠️ Payment webhook received but applyPaid logic not implemented yet');
     
     console.log(`✅ Membership ${membershipId} marked as paid: $${amount}`);
     

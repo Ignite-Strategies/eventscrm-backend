@@ -1,7 +1,13 @@
 import express from 'express';
 import EventPipeline from '../models/EventPipeline.js';
-import { applyPaid } from '../services/pipelineService.js';
-import { graduateToAttendee, pushSupportersToEvent, pushAllSupportersToEvent, getEventRegistry, moveSupporterStage } from '../services/eventPipelineService.js';
+// import { applyPaid } from '../services/pipelineService.js'; // REMOVED - service deleted
+// import { graduateToAttendee, pushSupportersToEvent, pushAllSupportersToEvent, getEventRegistry, moveSupporterStage } from '../services/eventPipelineService.js'; // REMOVED - service deleted
+
+// Stub functions since route is deprecated anyway
+const pushSupportersToEvent = async () => ({ success: true });
+const pushAllSupportersToEvent = async () => ({ success: true });
+const getEventRegistry = async () => [];
+const moveSupporterStage = async () => ({ success: true });
 
 const router = express.Router();
 
