@@ -18,6 +18,7 @@ import emailRouter from './routes/emailRoute.js';
 import contactListsRouter from './routes/contactListsRoute.js';
 import eventTasksRouter from './routes/eventTasksRoute.js';
 import publicFormsRouter from './routes/publicFormsRoute.js';
+import formsRouter from './routes/formsRoute.js';
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ app.use('/api/email', emailRouter);             // Email sending
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/events', eventTasksRouter);       // Event tasks
 app.use('/api/public', publicFormsRouter);      // Public landing page forms (no auth)
+app.use('/api/forms', formsRouter);             // Form CRUD (authenticated)
 
 // Health check
 app.get('/health', (req, res) => {
