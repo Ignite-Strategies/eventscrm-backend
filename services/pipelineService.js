@@ -1,1 +1,0 @@
-export async function applyPaid() { return { success: true }; } export async function createEventPipeline() { return { success: true, pipeline: {} }; } export async function getEventPipeline() { return { success: true, pipeline: null }; }
