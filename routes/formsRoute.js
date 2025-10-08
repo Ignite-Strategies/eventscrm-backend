@@ -37,7 +37,7 @@ router.get('/:formId', async (req, res) => {
       where: { id: req.params.formId },
       include: {
         event: true,
-        formFields: {
+        customFields: {
           orderBy: { displayOrder: 'asc' }
         }
       }
@@ -121,10 +121,24 @@ router.post('/', async (req, res) => {
       }
     });
     
-    // Create FormField records for custom fields
+    // Create CustomField records for custom fields
     if (fields && fields.length > 0) {
-      const formFields = fields.map((field, index) => ({
-        formId: form.id,
+      // Check for duplicate labels within the form
+      const labels = fields.map(f => f.label);
+      const uniqueLabels = new Set(labels);
+      if (labels.length !== uniqueLabels.size) {
+        return res.status(400).json({
+          error: 'Duplicate field labels found. Each field must have a unique label.'
+        });
+      }
+      
+      // TODO: Get adminId from request (for now use placeholder)
+      const adminId = "clt000000000000000000000"; // Placeholder until we implement auth
+      
+      const customFields = fields.map((field, index) => ({
+        eventFormId: form.id,
+        eventId: form.eventId,
+        adminId: adminId,
         fieldType: field.type,
         label: field.label,
         placeholder: field.placeholder || null,
@@ -139,11 +153,11 @@ router.post('/', async (req, res) => {
         isActive: true
       }));
       
-      await prisma.formField.createMany({
-        data: formFields
+      await prisma.customField.createMany({
+        data: customFields
       });
       
-      console.log('✅ FormFields created:', formFields.length, 'fields');
+      console.log('✅ CustomFields created:', customFields.length, 'fields');
     }
     
     console.log('✅ Form created:', form.slug, 'audience:', form.audienceType);
