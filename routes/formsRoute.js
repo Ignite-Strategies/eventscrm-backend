@@ -132,8 +132,8 @@ router.post('/', async (req, res) => {
         });
       }
       
-      // TODO: Get adminId from request (for now use placeholder)
-      const adminId = "clt000000000000000000000"; // Placeholder until we implement auth
+      // Get adminId from request headers (set by frontend)
+      const adminId = req.headers['x-admin-id'] || null;
       
       const customFields = fields.map((field, index) => ({
         eventFormId: form.id,
@@ -169,8 +169,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Update form
-router.patch('/:formId', async (req, res) => {
+// Update form (full replacement)
+router.put('/:formId', async (req, res) => {
   try {
     const { formId } = req.params;
     const updates = req.body;
@@ -182,14 +182,36 @@ router.patch('/:formId', async (req, res) => {
     delete updates.eventId;
     delete updates.audienceType;
     delete updates.submissionCount; // Only backend can update this
+    delete updates.id; // Don't allow changing the ID
     
     // Handle custom fields if provided
     const { fields } = updates;
     delete updates.fields; // Remove from main update
     
+    // Only update allowed fields
+    const allowedUpdates = {
+      internalName: updates.internalName,
+      slug: updates.slug,
+      publicTitle: updates.publicTitle,
+      publicDescription: updates.publicDescription,
+      targetStage: updates.targetStage,
+      styling: updates.styling,
+      collectName: updates.collectName,
+      collectEmail: updates.collectEmail,
+      collectPhone: updates.collectPhone,
+      isActive: updates.isActive
+    };
+    
+    // Remove undefined values
+    Object.keys(allowedUpdates).forEach(key => {
+      if (allowedUpdates[key] === undefined) {
+        delete allowedUpdates[key];
+      }
+    });
+    
     const form = await prisma.eventForm.update({
       where: { id: formId },
-      data: updates,
+      data: allowedUpdates,
       include: {
         event: true
       }
@@ -211,8 +233,8 @@ router.patch('/:formId', async (req, res) => {
         where: { eventFormId: formId }
       });
       
-      // Create new custom fields
-      const adminId = "clt000000000000000000000"; // Placeholder until we implement auth
+      // Get adminId from request headers (set by frontend)
+      const adminId = req.headers['x-admin-id'] || null;
       
       const customFields = fields.map((field, index) => ({
         eventFormId: formId,

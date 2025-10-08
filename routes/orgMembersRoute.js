@@ -106,6 +106,30 @@ router.get('/by-firebase/:firebaseId', async (req, res) => {
 });
 
 /**
+ * Get OrgMember by ID
+ */
+router.get('/:orgMemberId', async (req, res) => {
+  try {
+    const orgMember = await prisma.orgMember.findUnique({
+      where: { id: req.params.orgMemberId },
+      include: {
+        contact: true,
+        org: true
+      }
+    });
+    
+    if (!orgMember) {
+      return res.status(404).json({ error: 'OrgMember not found' });
+    }
+    
+    res.json(orgMember);
+  } catch (error) {
+    console.error('❌ GET OrgMember error:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
  * Update OrgMember (for profile setup)
  */
 router.patch('/:orgMemberId', async (req, res) => {

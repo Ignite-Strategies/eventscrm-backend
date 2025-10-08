@@ -338,8 +338,8 @@ model CustomField {
   eventForm   EventForm @relation(fields: [eventFormId], references: [id], onDelete: Cascade)
   eventId    String
   event      Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  adminId    String
-  admin      Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  adminId    String?
+  admin      Admin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
   
   // Field Configuration
   label        String // "How likely to attend?"
