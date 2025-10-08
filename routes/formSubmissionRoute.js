@@ -5,13 +5,160 @@ const router = express.Router();
 const prisma = getPrismaClient();
 
 /**
- * PUBLIC ENDPOINT - No auth required
- * Soft Commit Form Submission from Landing Pages
+ * NEW GENERIC ENDPOINT - No auth required
+ * Form Submission - Reads form config to know where to put the contact!
  * 
- * Creates/updates OrgMember and links to Event via EventAttendee
- * with stage="soft_commit"
- * 
- * Supports lookup by eventId OR slug (e.g., "brosandbrews")
+ * The form config determines:
+ * - Which pipeline (audienceType)
+ * - Which stage (targetStage)
+ * - Which fields to collect
+ */
+router.post('/forms/:formSlug/submit', async (req, res) => {
+  try {
+    const { formSlug } = req.params;
+    const formData = req.body;
+    
+    console.log('📝 Form submission for slug:', formSlug);
+    
+    // 1. Get the form config
+    const form = await prisma.eventForm.findUnique({
+      where: { slug: formSlug },
+      include: {
+        event: true,
+        pipeline: true
+      }
+    });
+    
+    if (!form) {
+      return res.status(404).json({ error: 'Form not found' });
+    }
+    
+    if (!form.isActive) {
+      return res.status(400).json({ error: 'Form is not active' });
+    }
+    
+    console.log('✅ Form found:', form.name);
+    console.log('🎯 Target pipeline:', form.pipeline.audienceType);
+    console.log('🎯 Target stage:', form.targetStage);
+    
+    // 2. Extract contact data from form submission
+    const { name, email, phone } = formData;
+    
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Name and email are required' });
+    }
+    
+    // Parse name
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+    
+    // 3. Find or create OrgMember
+    let orgMember = await prisma.orgMember.findFirst({
+      where: {
+        orgId: form.orgId,
+        email: email.toLowerCase().trim()
+      }
+    });
+    
+    if (orgMember) {
+      console.log('✅ Existing contact found:', orgMember.id);
+      if (phone && !orgMember.phone) {
+        orgMember = await prisma.orgMember.update({
+          where: { id: orgMember.id },
+          data: { phone }
+        });
+      }
+    } else {
+      console.log('📝 Creating new contact');
+      orgMember = await prisma.orgMember.create({
+        data: {
+          orgId: form.orgId,
+          firstName,
+          lastName,
+          email: email.toLowerCase().trim(),
+          phone: phone || null,
+          role: null,
+          firebaseId: null,
+          categoryOfEngagement: 'medium',
+          tags: []
+        }
+      });
+    }
+    
+    // 4. Create EventAttendee using form's target stage!
+    const notes = JSON.stringify({
+      ...formData,
+      formId: form.id,
+      formSlug: form.slug,
+      submitted_at: new Date().toISOString()
+    });
+    
+    let eventAttendee = await prisma.eventAttendee.findUnique({
+      where: {
+        pipelineId_orgMemberId: {
+          pipelineId: form.pipelineId,
+          orgMemberId: orgMember.id
+        }
+      }
+    });
+    
+    if (eventAttendee) {
+      // Update if stage is higher
+      const stageHierarchy = ['in_funnel', 'general_awareness', 'personal_invite', 'expressed_interest', 'soft_commit', 'paid', 'cant_attend'];
+      const currentLevel = stageHierarchy.indexOf(eventAttendee.currentStage);
+      const targetLevel = stageHierarchy.indexOf(form.targetStage);
+      
+      if (targetLevel > currentLevel || eventAttendee.currentStage === 'cant_attend') {
+        eventAttendee = await prisma.eventAttendee.update({
+          where: { id: eventAttendee.id },
+          data: { 
+            currentStage: form.targetStage,
+            notes,
+            submittedFormId: form.id
+          }
+        });
+      }
+    } else {
+      eventAttendee = await prisma.eventAttendee.create({
+        data: {
+          orgId: form.orgId,
+          eventId: form.eventId,
+          pipelineId: form.pipelineId,
+          orgMemberId: orgMember.id,
+          currentStage: form.targetStage, // Uses form's target stage!
+          audienceType: form.pipeline.audienceType,
+          notes,
+          submittedFormId: form.id,
+          attended: false,
+          amountPaid: 0
+        }
+      });
+    }
+    
+    // Update submission count
+    await prisma.eventForm.update({
+      where: { id: form.id },
+      data: { submissionCount: { increment: 1 } }
+    });
+    
+    console.log('✅ Form submission complete!');
+    
+    res.status(201).json({
+      success: true,
+      message: 'Form submitted successfully',
+      contactId: orgMember.id
+    });
+    
+  } catch (error) {
+    console.error('❌ Form submission error:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * DEPRECATED - Old hardcoded endpoint
+ * Keeping for backwards compatibility with existing softcommit.html
  */
 router.post('/events/:eventIdOrSlug/soft-commit', async (req, res) => {
   try {

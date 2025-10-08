@@ -17,7 +17,7 @@ import templatesRouter from './routes/templatesRoute.js';
 import emailRouter from './routes/emailRoute.js';
 import contactListsRouter from './routes/contactListsRoute.js';
 import eventTasksRouter from './routes/eventTasksRoute.js';
-import publicFormsRouter from './routes/publicFormsRoute.js';
+import formSubmissionRouter from './routes/formSubmissionRoute.js';
 import formsRouter from './routes/formsRoute.js';
 // import stageRouter from './routes/stageRoute.js'; // TODO: Create this route
 // import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // TODO: Create this route
@@ -56,7 +56,7 @@ app.use('/api/templates', templatesRouter);     // Email templates
 app.use('/api/email', emailRouter);             // Email sending
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/events', eventTasksRouter);       // Event tasks
-app.use('/api/public', publicFormsRouter);      // Public landing page forms (no auth)
+app.use('/api/public', formSubmissionRouter);   // Form submissions (no auth) - generic endpoint that reads form config!
 app.use('/api/forms', formsRouter);             // Form CRUD (authenticated)
 // app.use('/api', stageRouter);                   // Stage definitions (hydrated from database) // TODO: Create this route
 // app.use('/api', pipelineHydrationRouter);       // Pipeline hydration (stages + attendees) // TODO: Create this route
