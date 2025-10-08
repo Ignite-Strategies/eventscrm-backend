@@ -49,8 +49,8 @@ router.get('/:firebaseId', async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
     
-    // Get supporters for the org
-    const supporters = await prisma.orgMember.findMany({
+    // Get all org members (team members in this org)
+    const orgMembers = await prisma.orgMember.findMany({
       where: { orgId: org.id },
       include: {
         contact: true
@@ -116,13 +116,14 @@ router.get('/:firebaseId', async (req, res) => {
         slug: event.slug
       })),
       
-      // Supporters data (OrgMembers)
-      supporters: supporters.map(supporter => ({
-        id: supporter.id,
-        contactId: supporter.contactId,
-        firstName: supporter.firstName,
-        lastName: supporter.lastName,
-        email: supporter.email
+      // Team members (OrgMembers in this org)
+      orgMembers: orgMembers.map(member => ({
+        id: member.id,
+        contactId: member.contactId,
+        firstName: member.firstName,
+        lastName: member.lastName,
+        email: member.email,
+        role: member.role
       })),
       
       // Admin data (NEW)
@@ -140,7 +141,7 @@ router.get('/:firebaseId', async (req, res) => {
       adminId: admin ? admin.id : 'none',
       org: org.name,
       events: events.length,
-      supporters: supporters.length
+      orgMembers: orgMembers.length
     });
     
     res.json(hydrationData);
