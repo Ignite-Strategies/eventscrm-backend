@@ -183,6 +183,10 @@ router.patch('/:formId', async (req, res) => {
     delete updates.audienceType;
     delete updates.submissionCount; // Only backend can update this
     
+    // Handle custom fields if provided
+    const { fields } = updates;
+    delete updates.fields; // Remove from main update
+    
     const form = await prisma.eventForm.update({
       where: { id: formId },
       data: updates,
@@ -190,6 +194,50 @@ router.patch('/:formId', async (req, res) => {
         event: true
       }
     });
+    
+    // Update custom fields if provided
+    if (fields && fields.length > 0) {
+      // Check for duplicate labels within the form
+      const labels = fields.map(f => f.label);
+      const uniqueLabels = new Set(labels);
+      if (labels.length !== uniqueLabels.size) {
+        return res.status(400).json({
+          error: 'Duplicate field labels found. Each field must have a unique label.'
+        });
+      }
+      
+      // Delete existing custom fields
+      await prisma.customField.deleteMany({
+        where: { eventFormId: formId }
+      });
+      
+      // Create new custom fields
+      const adminId = "clt000000000000000000000"; // Placeholder until we implement auth
+      
+      const customFields = fields.map((field, index) => ({
+        eventFormId: formId,
+        eventId: form.eventId,
+        adminId: adminId,
+        fieldType: field.type,
+        label: field.label,
+        placeholder: field.placeholder || null,
+        helpText: field.helpText || null,
+        isRequired: field.required || false,
+        minLength: field.minLength || null,
+        maxLength: field.maxLength || null,
+        minValue: field.min || null,
+        maxValue: field.max || null,
+        options: field.options ? JSON.stringify(field.options) : null,
+        displayOrder: field.order || index,
+        isActive: true
+      }));
+      
+      await prisma.customField.createMany({
+        data: customFields
+      });
+      
+      console.log('✅ CustomFields updated:', customFields.length, 'fields');
+    }
     
     console.log('✅ Form updated:', form.slug);
     
