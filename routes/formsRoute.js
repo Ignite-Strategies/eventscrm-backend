@@ -36,7 +36,10 @@ router.get('/:formId', async (req, res) => {
     const form = await prisma.eventForm.findUnique({
       where: { id: req.params.formId },
       include: {
-        event: true
+        event: true,
+        formFields: {
+          orderBy: { displayOrder: 'asc' }
+        }
       }
     });
     
