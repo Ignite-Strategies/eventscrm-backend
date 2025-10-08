@@ -18,9 +18,6 @@ router.get('/', async (req, res) => {
       include: {
         event: {
           select: { id: true, name: true, slug: true }
-        },
-        pipeline: {
-          select: { id: true, audienceType: true }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -39,8 +36,7 @@ router.get('/:formId', async (req, res) => {
     const form = await prisma.eventForm.findUnique({
       where: { id: req.params.formId },
       include: {
-        event: true,
-        pipeline: true
+        event: true
       }
     });
     
@@ -61,22 +57,23 @@ router.post('/', async (req, res) => {
     const {
       orgId,
       eventId,
-      pipelineId,
+      audienceType,
       name,
       slug,
-      description,
+      publicTitle,
+      publicDescription,
       targetStage,
       fields,
       styling,
       isActive
     } = req.body;
     
-    console.log('📝 Creating form:', name);
+    console.log('📝 Creating form:', name, 'for audience:', audienceType);
     
     // Validate required fields
-    if (!orgId || !eventId || !pipelineId || !name || !slug || !targetStage) {
+    if (!orgId || !eventId || !audienceType || !name || !slug || !targetStage) {
       return res.status(400).json({
-        error: 'Missing required fields: orgId, eventId, pipelineId, name, slug, targetStage'
+        error: 'Missing required fields: orgId, eventId, audienceType, name, slug, targetStage'
       });
     }
     
@@ -91,18 +88,11 @@ router.post('/', async (req, res) => {
       });
     }
     
-    // Verify event and pipeline exist
-    const [event, pipeline] = await Promise.all([
-      prisma.event.findUnique({ where: { id: eventId } }),
-      prisma.eventPipeline.findUnique({ where: { id: pipelineId } })
-    ]);
+    // Verify event exists
+    const event = await prisma.event.findUnique({ where: { id: eventId } });
     
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
-    }
-    
-    if (!pipeline) {
-      return res.status(404).json({ error: 'Pipeline not found' });
     }
     
     // Create form
@@ -110,10 +100,11 @@ router.post('/', async (req, res) => {
       data: {
         orgId,
         eventId,
-        pipelineId,
+        audienceType,
         name,
         slug,
-        description,
+        publicTitle: publicTitle || name,
+        publicDescription: publicDescription || '',
         targetStage,
         fields,
         styling,
@@ -121,12 +112,11 @@ router.post('/', async (req, res) => {
         submissionCount: 0
       },
       include: {
-        event: true,
-        pipeline: true
+        event: true
       }
     });
     
-    console.log('✅ Form created:', form.slug);
+    console.log('✅ Form created:', form.slug, 'audience:', form.audienceType);
     
     res.status(201).json(form);
   } catch (error) {
@@ -143,18 +133,17 @@ router.patch('/:formId', async (req, res) => {
     
     console.log('📝 Updating form:', formId);
     
-    // Don't allow changing orgId, eventId, or pipelineId
+    // Don't allow changing orgId, eventId, or audienceType
     delete updates.orgId;
     delete updates.eventId;
-    delete updates.pipelineId;
+    delete updates.audienceType;
     delete updates.submissionCount; // Only backend can update this
     
     const form = await prisma.eventForm.update({
       where: { id: formId },
       data: updates,
       include: {
-        event: true,
-        pipeline: true
+        event: true
       }
     });
     
@@ -205,19 +194,13 @@ router.get('/:formId/submissions', async (req, res) => {
     const submissions = await prisma.eventAttendee.findMany({
       where: { submittedFormId: formId },
       include: {
-        orgMember: {
+        contact: {
           select: {
             id: true,
             firstName: true,
             lastName: true,
             email: true,
             phone: true
-          }
-        },
-        pipeline: {
-          select: {
-            id: true,
-            audienceType: true
           }
         }
       },
