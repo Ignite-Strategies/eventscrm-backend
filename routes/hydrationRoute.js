@@ -35,7 +35,8 @@ router.get('/:firebaseId', async (req, res) => {
     }
     
     console.log('🔍 Hydration Debug:', {
-      orgMemberId,
+      firebaseId,
+      orgMemberId: orgMember.id,
       contactId: orgMember.contactId,
       orgId: orgMember.orgId,
       hasOrg: !!org,
