@@ -269,7 +269,7 @@ model EventForm {
   audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
   
   // Internal (CRM only) - Clean naming
-  internalName     String // "Bros & Brews Soft Commit Form"
+  internalName     String? // "Bros & Brews Soft Commit Form" (optional for migration)
   internalPurpose String? // "Collect soft commits for Bros & Brews event"
   slug            String @unique // "bros-soft-commit"
   
