@@ -34,8 +34,9 @@ model Organization {
   audienceDefaults String[] @default(["org_members", "friends_family", "community_partners", "local_businesses", "general_public"])
   
   // Relations
-  members       OrgMember[]
-  supporters    Supporter[]
+  contacts      Contact[] // Universal person records
+  members       OrgMember[] // Promoted contacts in master list
+  supporters    Supporter[] // Legacy, to be deprecated
   familyProspects FamilyProspect[]
   events        Event[]
   templates     Template[]
@@ -45,19 +46,38 @@ model Organization {
   updatedAt DateTime @updatedAt
 }
 
-model OrgMember {
+// NEW: Contact - Universal person record (everyone starts here)
+model Contact {
   id        String @id @default(cuid())
-  orgId     String?
-  org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId     String
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   
-  // Contact Info
+  // Basic Info (minimal)
   firstName String
-  goesBy    String?
   lastName  String
-  email     String?
+  email     String
   phone     String?
   
-  // Address
+  // Relations
+  eventAttendees EventAttendee[] // Events they're attending
+  orgMember      OrgMember? // If promoted to master list
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([orgId, email])
+  @@index([orgId])
+  @@index([email])
+}
+
+// NEW: OrgMember - Promoted contacts in master list
+model OrgMember {
+  id        String @id @default(cuid())
+  contactId String @unique
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  
+  // Extended Contact Info (beyond basic Contact)
+  goesBy    String?
   street    String?
   city      String?
   state     String?
@@ -78,7 +98,7 @@ model OrgMember {
   notes       String?
   
   // App Access (optional - only for team members who can login)
-  role       String? // "owner", "manager", or null (just a contact)
+  role       String? // "owner", "manager", or null
   firebaseId String? @unique
   photoURL   String?
   
@@ -88,16 +108,11 @@ model OrgMember {
   // Engagement Tracking
   categoryOfEngagement String @default("medium") // "high", "medium", "low", "inactive"
   
-  // Relations
-  eventAttendees EventAttendee[]
-  contactListMembers ContactListMember[]
-  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  @@unique([orgId, email])
-  @@index([orgId])
-  @@index([email])
+  @@index([contactId])
+  @@index([firebaseId])
 }
 
 model Supporter {
@@ -322,9 +337,9 @@ model EventAttendee {
   pipelineId  String?
   pipeline    EventPipeline? @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
   
-  // Links to OrgMember (master contact list)
-  orgMemberId String
-  orgMember   OrgMember @relation(fields: [orgMemberId], references: [id], onDelete: Cascade)
+  // Links to Contact (the universal person record)
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   
   // Pipeline stage for THIS event (renamed from "stage" to "currentStage" for clarity)
   currentStage String @default("in_funnel") // Current position in pipeline
@@ -346,14 +361,14 @@ model EventAttendee {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  // NOTE: Unique constraint on pipelineId allows same person in multiple pipelines for one event
-  // @@unique([eventId, orgMemberId]) // OLD: One person per event total - REMOVED for multi-pipeline support
-  @@unique([pipelineId, orgMemberId]) // NEW: One person per pipeline (can be in multiple pipelines for same event)
+  // NOTE: One contact per pipeline (but can be in multiple pipelines for same event)
+  @@unique([pipelineId, contactId])
   @@index([eventId, stage])
   @@index([eventId, currentStage])
-  @@index([eventId, orgMemberId]) // Index for queries
+  @@index([eventId, contactId])
   @@index([pipelineId])
   @@index([orgId])
+  @@index([contactId])
 }
 
 model FamilyProspect {
