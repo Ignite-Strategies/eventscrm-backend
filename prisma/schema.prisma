@@ -268,11 +268,12 @@ model EventForm {
   // Maps to EventAttendee.audienceType when form is submitted
   audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
   
-  // Internal (CRM only)
-  name         String // "Bros & Brews Soft Commit Form"
-  slug         String @unique // "bros-soft-commit"
+  // Internal (CRM only) - Clean naming
+  internalName     String // "Bros & Brews Soft Commit Form"
+  internalPurpose String? // "Collect soft commits for Bros & Brews event"
+  slug            String @unique // "bros-soft-commit"
   
-  // Public (Landing Page)
+  // Public (Landing Page) - Clean naming
   publicTitle       String // "Sign up for Bros & Brews!"
   publicDescription String? // "Fill out the form below to let us know..."
   
@@ -280,9 +281,14 @@ model EventForm {
   targetStage  String // Where contacts land when they submit this form (maps to EventAttendee.currentStage)
   // Examples: "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid"
   
-  // Form Configuration
-  fields       Json // Field definitions
+  // Form Configuration - RELATIONAL FIELDS!
+  formFields   FormField[] // Relational fields instead of JSON
   styling      Json? // Custom styling
+  
+  // Standard Contact Fields (auto-populated by frontend)
+  collectName     Boolean @default(true) // "Full Name" field
+  collectEmail    Boolean @default(true) // "Email Address" field  
+  collectPhone    Boolean @default(true) // "Phone Number" field
   
   // Status & Analytics
   isActive          Boolean @default(true)
@@ -295,6 +301,41 @@ model EventForm {
   @@index([eventId])
   @@index([orgId])
   @@index([audienceType])
+}
+
+// NEW: FormField - Individual form fields (like HubSpot)
+model FormField {
+  id        String @id @default(cuid())
+  formId    String
+  form      EventForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+  
+  // Field Configuration
+  fieldType    String // "text", "email", "tel", "textarea", "select", "radio", "checkbox", "number"
+  label        String // "Full Name", "Email Address", "Phone Number"
+  placeholder  String? // "Enter your full name"
+  helpText     String? // "We'll use this to contact you"
+  
+  // Validation
+  isRequired   Boolean @default(false)
+  minLength    Int?
+  maxLength    Int?
+  minValue     Float?
+  maxValue     Float?
+  
+  // Options (for select/radio/checkbox)
+  options      Json? // [{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]
+  
+  // Display Order
+  displayOrder Int @default(0)
+  
+  // Field Settings
+  isActive     Boolean @default(true)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([formId])
+  @@index([fieldType])
 }
 
 // OLD: Legacy model, to be deprecated

@@ -101,13 +101,15 @@ router.post('/', async (req, res) => {
         orgId,
         eventId,
         audienceType,
-        name,
+        internalName: name,
         slug,
         publicTitle: publicTitle || name,
         publicDescription: publicDescription || '',
         targetStage,
-        fields,
         styling,
+        collectName: true,
+        collectEmail: true,
+        collectPhone: true,
         isActive: isActive !== undefined ? isActive : true,
         submissionCount: 0
       },
@@ -115,6 +117,31 @@ router.post('/', async (req, res) => {
         event: true
       }
     });
+    
+    // Create FormField records for custom fields
+    if (fields && fields.length > 0) {
+      const formFields = fields.map((field, index) => ({
+        formId: form.id,
+        fieldType: field.type,
+        label: field.label,
+        placeholder: field.placeholder || null,
+        helpText: field.helpText || null,
+        isRequired: field.required || false,
+        minLength: field.minLength || null,
+        maxLength: field.maxLength || null,
+        minValue: field.min || null,
+        maxValue: field.max || null,
+        options: field.options ? JSON.stringify(field.options) : null,
+        displayOrder: field.order || index,
+        isActive: true
+      }));
+      
+      await prisma.formField.createMany({
+        data: formFields
+      });
+      
+      console.log('✅ FormFields created:', formFields.length, 'fields');
+    }
     
     console.log('✅ Form created:', form.slug, 'audience:', form.audienceType);
     
