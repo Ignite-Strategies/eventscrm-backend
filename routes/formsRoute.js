@@ -62,6 +62,7 @@ router.post('/', async (req, res) => {
       eventId,
       audienceType,
       name,
+      internalName, // NEW: Support both name and internalName
       slug,
       publicTitle,
       publicDescription,
@@ -71,12 +72,15 @@ router.post('/', async (req, res) => {
       isActive
     } = req.body;
     
-    console.log('📝 Creating form:', name, 'for audience:', audienceType);
+    // Use internalName if provided, otherwise fallback to name
+    const formName = internalName || name;
+    
+    console.log('📝 Creating form:', formName, 'for audience:', audienceType);
     
     // Validate required fields
-    if (!orgId || !eventId || !audienceType || !name || !slug || !targetStage) {
+    if (!orgId || !eventId || !audienceType || !formName || !slug || !targetStage) {
       return res.status(400).json({
-        error: 'Missing required fields: orgId, eventId, audienceType, name, slug, targetStage'
+        error: 'Missing required fields: orgId, eventId, audienceType, name/internalName, slug, targetStage'
       });
     }
     
@@ -104,9 +108,9 @@ router.post('/', async (req, res) => {
         orgId,
         eventId,
         audienceType,
-        internalName: name,
+        internalName: formName,
         slug,
-        publicTitle: publicTitle || name,
+        publicTitle: publicTitle || formName,
         publicDescription: publicDescription || '',
         targetStage,
         styling,
