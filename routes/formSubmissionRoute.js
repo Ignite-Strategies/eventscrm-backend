@@ -24,8 +24,7 @@ router.post('/forms/:formSlug/submit', async (req, res) => {
     const form = await prisma.eventForm.findUnique({
       where: { slug: formSlug },
       include: {
-        event: true,
-        pipeline: true
+        event: true
       }
     });
     
@@ -38,7 +37,7 @@ router.post('/forms/:formSlug/submit', async (req, res) => {
     }
     
     console.log('✅ Form found:', form.name);
-    console.log('🎯 Target pipeline:', form.pipeline.audienceType);
+    console.log('🎯 Target audience:', form.audienceType);
     console.log('🎯 Target stage:', form.targetStage);
     
     // 2. Extract contact data from form submission
@@ -53,35 +52,31 @@ router.post('/forms/:formSlug/submit', async (req, res) => {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
     
-    // 3. Find or create OrgMember
-    let orgMember = await prisma.orgMember.findFirst({
+    // 3. Find or create Contact (universal person record)
+    let contact = await prisma.contact.findFirst({
       where: {
         orgId: form.orgId,
         email: email.toLowerCase().trim()
       }
     });
     
-    if (orgMember) {
-      console.log('✅ Existing contact found:', orgMember.id);
-      if (phone && !orgMember.phone) {
-        orgMember = await prisma.orgMember.update({
-          where: { id: orgMember.id },
+    if (contact) {
+      console.log('✅ Existing contact found:', contact.id);
+      if (phone && !contact.phone) {
+        contact = await prisma.contact.update({
+          where: { id: contact.id },
           data: { phone }
         });
       }
     } else {
       console.log('📝 Creating new contact');
-      orgMember = await prisma.orgMember.create({
+      contact = await prisma.contact.create({
         data: {
           orgId: form.orgId,
           firstName,
           lastName,
           email: email.toLowerCase().trim(),
-          phone: phone || null,
-          role: null,
-          firebaseId: null,
-          categoryOfEngagement: 'medium',
-          tags: []
+          phone: phone || null
         }
       });
     }
@@ -96,9 +91,10 @@ router.post('/forms/:formSlug/submit', async (req, res) => {
     
     let eventAttendee = await prisma.eventAttendee.findUnique({
       where: {
-        pipelineId_orgMemberId: {
-          pipelineId: form.pipelineId,
-          orgMemberId: orgMember.id
+        eventId_contactId_audienceType: {
+          eventId: form.eventId,
+          contactId: contact.id,
+          audienceType: form.audienceType
         }
       }
     });
@@ -124,10 +120,9 @@ router.post('/forms/:formSlug/submit', async (req, res) => {
         data: {
           orgId: form.orgId,
           eventId: form.eventId,
-          pipelineId: form.pipelineId,
-          orgMemberId: orgMember.id,
+          contactId: contact.id,
           currentStage: form.targetStage, // Uses form's target stage!
-          audienceType: form.pipeline.audienceType,
+          audienceType: form.audienceType,
           notes,
           submittedFormId: form.id,
           attended: false,
@@ -147,7 +142,7 @@ router.post('/forms/:formSlug/submit', async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Form submitted successfully',
-      contactId: orgMember.id
+      contactId: contact.id
     });
     
   } catch (error) {
