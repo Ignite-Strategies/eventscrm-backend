@@ -264,7 +264,8 @@ model EventForm {
   eventId      String
   event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   
-  // Audience type (hardcoded - no EventPipeline model)
+  // Audience type (hardcoded - no EventPipeline model for MVP1)
+  // Maps to EventAttendee.audienceType when form is submitted
   audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
   
   // Internal (CRM only)
@@ -276,7 +277,8 @@ model EventForm {
   publicDescription String? // "Fill out the form below to let us know..."
   
   // Pipeline Integration
-  targetStage  String // Where they land: "soft_commit"
+  targetStage  String // Where contacts land when they submit this form (maps to EventAttendee.currentStage)
+  // Examples: "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid"
   
   // Form Configuration
   fields       Json // Field definitions
