@@ -241,7 +241,6 @@ model Event {
   totalOutreachTarget   Int   @default(0)
   
   // Relations
-  eventPipelines  EventPipeline[] // NEW: Proper pipeline management
   pipelineEntries EventPipelineEntry[] // OLD: Legacy, to be deprecated
   attendees       EventAttendee[]
   tasks           EventTask[]
@@ -255,31 +254,8 @@ model Event {
 }
 
 
-// NEW: EventPipeline - First-class pipeline model
-model EventPipeline {
-  id           String @id @default(cuid())
-  orgId        String
-  eventId      String
-  event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
-  // Pipeline Identity - 5 audience types
-  audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
-  
-  // Status
-  isActive     Boolean @default(true)
-  
-  // Relations
-  attendees       EventAttendee[]
-  forms           EventForm[]
-  pipelineStages  PipelineStage[] // Stages for this pipeline (not hardcoded!)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@unique([eventId, audienceType])
-  @@index([eventId])
-  @@index([orgId])
-}
+// REMOVED: EventPipeline - Deprecated for MVP1
+// Audience types are now hardcoded strings in EventForm.audienceType and EventAttendee.audienceType
 
 // NEW: EventForm - Form configuration
 model EventForm {
@@ -288,8 +264,8 @@ model EventForm {
   eventId      String
   event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   
-  pipelineId   String
-  pipeline     EventPipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  // Audience type (hardcoded - no EventPipeline model)
+  audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
   
   // Internal (CRM only)
   name         String // "Bros & Brews Soft Commit Form"
@@ -313,10 +289,10 @@ model EventForm {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  @@index([pipelineId])
   @@index([slug])
   @@index([eventId])
   @@index([orgId])
+  @@index([audienceType])
 }
 
 // OLD: Legacy model, to be deprecated
@@ -347,20 +323,13 @@ model EventAttendee {
   eventId     String
   event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   
-  // NEW: Links to specific pipeline
-  pipelineId  String?
-  pipeline    EventPipeline? @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
-  
   // Links to Contact (the universal person record)
   contactId String
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   
-  // Pipeline stage for THIS event (renamed from "stage" to "currentStage" for clarity)
-  currentStage String @default("in_funnel") // Current position in pipeline
-  stage        String @default("in_funnel") // DEPRECATED: Use currentStage instead
-  
-  // Audience type (DEPRECATED: Use pipeline.audienceType instead)
-  audienceType String? // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
+  // Pipeline tracking (hardcoded - no EventPipeline model)
+  currentStage String @default("in_funnel") // Current position in funnel
+  audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
   
   // Form tracking
   submittedFormId String? // Which form created this attendee?
@@ -375,12 +344,11 @@ model EventAttendee {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  // NOTE: One contact per pipeline (but can be in multiple pipelines for same event)
-  @@unique([pipelineId, contactId])
-  @@index([eventId, stage])
+  // NOTE: One contact per event+audienceType combo
+  @@unique([eventId, contactId, audienceType])
   @@index([eventId, currentStage])
   @@index([eventId, contactId])
-  @@index([pipelineId])
+  @@index([eventId, audienceType])
   @@index([orgId])
   @@index([contactId])
 }
@@ -547,41 +515,5 @@ model EventTask {
   @@index([eventId, completed])
 }
 
-// NEW: Stage Model - All possible stages (could be 30+)
-model Stage {
-  id          String @id @default(cuid())
-  orgId       String
-  
-  // Stage Identity
-  name        String // "In Funnel", "Soft Commit", "VIP Invite", etc.
-  slug        String // "in_funnel", "soft_commit", "vip_invite", etc.
-  description String? // "Just entered the pipeline"
-  
-  // Relations
-  pipelineStages PipelineStage[] // Which pipelines use this stage
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@unique([orgId, slug])
-  @@index([orgId])
-  @@index([slug])
-}
-
-// NEW: PipelineStage - Junction table (which stages for THIS pipeline)
-model PipelineStage {
-  id         String @id @default(cuid())
-  pipelineId String
-  pipeline   EventPipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
-  stageId    String
-  stage      Stage @relation(fields: [stageId], references: [id], onDelete: Cascade)
-  
-  // Order in this pipeline
-  orderIndex Int @default(0)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@unique([pipelineId, stageId])
-  @@index([pipelineId, orderIndex])
-}
+// REMOVED: Stage and PipelineStage models - Stages are now hardcoded strings in EventAttendee.currentStage
+// Possible stages: "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid"
