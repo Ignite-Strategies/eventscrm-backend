@@ -20,6 +20,7 @@ import eventTasksRouter from './routes/eventTasksRoute.js';
 import formSubmissionRouter from './routes/formSubmissionRoute.js';
 import formsRouter from './routes/formsRoute.js';
 import adminRouter from './routes/adminRoute.js';
+import hydrationRouter from './routes/hydrationRoute.js';
 // import stageRouter from './routes/stageRoute.js'; // TODO: Create this route
 // import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // TODO: Create this route
 // import pipelineRouter from './routes/pipelineRoute.js'; // TODO: Create this route
@@ -60,6 +61,7 @@ app.use('/api/events', eventTasksRouter);       // Event tasks
 app.use('/api/public', formSubmissionRouter);   // Form submissions (no auth) - generic endpoint that reads form config!
 app.use('/api/forms', formsRouter);             // Form CRUD (authenticated)
 app.use('/api/admins', adminRouter);            // Admin operations
+app.use('/api/hydration', hydrationRouter);     // Universal hydration
 // app.use('/api', stageRouter);                   // Stage definitions (hydrated from database) // TODO: Create this route
 // app.use('/api', pipelineHydrationRouter);       // Pipeline hydration (stages + attendees) // TODO: Create this route
 // app.use('/api', pipelineRouter);                 // Pipeline management (7-stage system) // TODO: Create this route

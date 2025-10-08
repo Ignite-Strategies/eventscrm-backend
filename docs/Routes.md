@@ -8,13 +8,72 @@ This backend provides RESTful APIs for the Ignite Strategies Event CRM system.
 - **Production:** `https://eventscrm-backend.onrender.com/api`
 
 ## Route Files (All end with "Route.js")
+- `authRoute.js` - Firebase authentication and user creation
 - `orgsRoute.js` - Organization management
+- `orgMembersRoute.js` - OrgMember CRUD operations
 - `supportersRoute.js` - Master supporter list (CRM)
 - `eventsRoute.js` - Event creation and management
-- `eventPipelinesRoute.js` - Event pipeline records (working funnel)
 - `eventAttendeesRoute.js` - Final event attendees (permanent records)
-- `eventPipelineActionsRoute.js` - Pipeline actions (push supporters to events)
+- `formsRoute.js` - Event form CRUD operations
+- `formSubmissionRoute.js` - Public form submissions
+- `adminRoute.js` - Admin user operations
+- `hydrationRoute.js` - Universal data hydration
 - `webhooksRoute.js` - Webhook handlers
+
+## Authentication Flow
+
+### Frontend Routing Logic
+1. **Splash** → Firebase auth check
+2. **Home** → Route to Welcome or Signup
+3. **Welcome** → Universal hydrator + routing logic
+4. **Dashboard** → Main app
+
+### Welcome.jsx Routing Logic
+- ❌ **No phone** → `/profile-setup`
+- ❌ **No org** → `/org/choose`
+- ❌ **No events** → `/event/create`
+- ✅ **All good** → `/dashboard`
+
+### Universal Hydration
+- **Endpoint:** `GET /api/hydration/:orgMemberId`
+- **Returns:** All data needed for dashboard in one call
+- **Data:** orgMember, org, events, supporters, admin
+- **Saves to localStorage:** adminId, contactId, orgMemberId, orgId, eventId
+
+## Authentication Routes (`/api/auth`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/findOrCreate` | Find or create OrgMember by Firebase ID |
+
+## OrgMember Routes (`/api/org-members`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/org-members/:orgMemberId` | Get OrgMember by ID |
+| PATCH | `/org-members/:orgMemberId` | Update OrgMember |
+
+## Hydration Routes (`/api/hydration`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/hydration/:orgMemberId` | Universal hydration - get all data |
+
+## Admin Routes (`/api/admins`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/admins/contact/:contactId` | Get admin by contact ID |
+
+## Form Routes (`/api/forms`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/forms` | List all forms |
+| POST | `/forms` | Create new form |
+| GET | `/forms/:formId` | Get form by ID |
+| PATCH | `/forms/:formId` | Update form |
+| DELETE | `/forms/:formId` | Delete form |
+
+## Public Form Routes (`/api/public`)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/public/forms/:formSlug/submit` | Submit public form |
 
 ## Organization Routes (`/api/orgs`)
 | Method | Endpoint | Description |
