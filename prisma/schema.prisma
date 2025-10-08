@@ -76,6 +76,10 @@ model OrgMember {
   contactId String @unique
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   
+  // Organization link (for members relation in Organization model)
+  orgId     String?
+  org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
   // Extended Contact Info (beyond basic Contact)
   goesBy    String?
   street    String?
@@ -108,11 +112,15 @@ model OrgMember {
   // Engagement Tracking
   categoryOfEngagement String @default("medium") // "high", "medium", "low", "inactive"
   
+  // Relations
+  contactListMembers ContactListMember[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
   @@index([contactId])
   @@index([firebaseId])
+  @@index([orgId])
 }
 
 model Supporter {
