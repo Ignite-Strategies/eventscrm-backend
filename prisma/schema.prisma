@@ -73,12 +73,18 @@ model Contact {
 // NEW: OrgMember - Promoted contacts in master list
 model OrgMember {
   id        String @id @default(cuid())
-  contactId String @unique
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String? @unique
+  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
   
   // Organization link (for members relation in Organization model)
   orgId     String?
   org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  // Basic auth fields (for users without Contact link yet)
+  firstName String?
+  lastName  String?
+  email     String?
+  phone     String?
   
   // Extended Contact Info (beyond basic Contact)
   goesBy    String?
