@@ -7,16 +7,17 @@ const prisma = getPrismaClient();
 /**
  * Universal Hydration Route
  * Returns all data needed for the dashboard in one call
+ * Looks up by firebaseId from the Firebase token!
  */
-router.get('/:orgMemberId', async (req, res) => {
+router.get('/:firebaseId', async (req, res) => {
   try {
-    const { orgMemberId } = req.params;
+    const { firebaseId } = req.params;
     
-    console.log('🚀 UNIVERSAL HYDRATION for orgMemberId:', orgMemberId);
+    console.log('🚀 UNIVERSAL HYDRATION for firebaseId:', firebaseId);
     
-    // Get OrgMember with all relations
+    // Get OrgMember by firebaseId
     const orgMember = await prisma.orgMember.findUnique({
-      where: { id: orgMemberId },
+      where: { firebaseId: firebaseId },
       include: {
         contact: true,
         org: true
@@ -24,7 +25,7 @@ router.get('/:orgMemberId', async (req, res) => {
     });
     
     if (!orgMember) {
-      return res.status(404).json({ error: 'OrgMember not found' });
+      return res.status(404).json({ error: 'OrgMember not found for this Firebase user' });
     }
     
     // Get organization data
@@ -32,6 +33,14 @@ router.get('/:orgMemberId', async (req, res) => {
     if (!org) {
       return res.status(404).json({ error: 'Organization not found' });
     }
+    
+    console.log('🔍 Hydration Debug:', {
+      orgMemberId,
+      contactId: orgMember.contactId,
+      orgId: orgMember.orgId,
+      hasOrg: !!org,
+      orgName: org?.name
+    });
     
     // Get events for the org
     const events = await prisma.event.findMany({
@@ -57,25 +66,56 @@ router.get('/:orgMemberId', async (req, res) => {
     
     // Return all hydrated data
     const hydrationData = {
+      // NAVIGATION KEYS (source of truth for routing)
+      contactId: orgMember.contactId,
+      adminId: admin ? admin.id : null,
+      orgId: orgMember.orgId,
+      phone: orgMember.phone || orgMember.contact?.phone, // Check both sources
+      
+      // CRM DATA (for CRM operations)
       orgMember: {
-        id: orgMember.id,
+        id: orgMember.id,  // Still needed for CRM operations!
         contactId: orgMember.contactId,
         orgId: orgMember.orgId,
         firstName: orgMember.firstName,
         lastName: orgMember.lastName,
         email: orgMember.email,
-        phone: orgMember.phone
+        phone: orgMember.phone,
+        role: orgMember.role,
+        firebaseId: orgMember.firebaseId,
+        // Extended CRM fields
+        goesBy: orgMember.goesBy,
+        street: orgMember.street,
+        city: orgMember.city,
+        state: orgMember.state,
+        zip: orgMember.zip,
+        employer: orgMember.employer,
+        yearsWithOrganization: orgMember.yearsWithOrganization,
+        birthday: orgMember.birthday,
+        married: orgMember.married,
+        spouseName: orgMember.spouseName,
+        numberOfKids: orgMember.numberOfKids,
+        originStory: orgMember.originStory,
+        notes: orgMember.notes,
+        tags: orgMember.tags,
+        categoryOfEngagement: orgMember.categoryOfEngagement
       },
+      
+      // Organization data
       org: {
         id: org.id,
         name: org.name,
         slug: org.slug
       },
+      
+      // Events data
       events: events.map(event => ({
         id: event.id,
         name: event.name,
         slug: event.slug
       })),
+      
+      // Supporters data (OrgMembers)
       supporters: supporters.map(supporter => ({
         id: supporter.id,
         contactId: supporter.contactId,
@@ -83,19 +123,23 @@ router.get('/:orgMemberId', async (req, res) => {
         lastName: supporter.lastName,
         email: supporter.email
       })),
+      
+      // Admin data (NEW)
       admin: admin ? {
         id: admin.id,
         role: admin.role,
-        permissions: admin.permissions
+        permissions: admin.permissions,
+        isActive: admin.isActive
       } : null
     };
     
     console.log('✅ Hydration complete:', {
       orgMember: orgMember.id,
+      contactId: orgMember.contactId,
+      adminId: admin ? admin.id : 'none',
       org: org.name,
       events: events.length,
-      supporters: supporters.length,
-      admin: admin ? admin.id : 'none'
+      supporters: supporters.length
     });
     
     res.json(hydrationData);

@@ -200,21 +200,21 @@ router.post('/events/:eventIdOrSlug/soft-commit', async (req, res) => {
     const firstName = nameParts[0] || '';
     const lastName = nameParts.slice(1).join(' ') || '';
     
-    // Find or create OrgMember for this contact
-    let orgMember = await prisma.orgMember.findFirst({
+    // Find or create Contact for this person
+    let contact = await prisma.contact.findFirst({
       where: {
         orgId: event.orgId,
         email: email.toLowerCase().trim()
       }
     });
     
-    if (orgMember) {
-      console.log('✅ Existing contact found:', orgMember.id);
+    if (contact) {
+      console.log('✅ Existing contact found:', contact.id);
       
       // Update phone if provided and not already set
-      if (phone && !orgMember.phone) {
-        orgMember = await prisma.orgMember.update({
-          where: { id: orgMember.id },
+      if (phone && !contact.phone) {
+        contact = await prisma.contact.update({
+          where: { id: contact.id },
           data: { phone }
         });
         console.log('📱 Updated phone for existing contact');
@@ -222,22 +222,18 @@ router.post('/events/:eventIdOrSlug/soft-commit', async (req, res) => {
     } else {
       console.log('📝 Creating new contact');
       
-      // Create new OrgMember (contact only, no login access)
-      orgMember = await prisma.orgMember.create({
+      // Create new Contact (universal person record)
+      contact = await prisma.contact.create({
         data: {
           orgId: event.orgId,
           firstName,
           lastName,
           email: email.toLowerCase().trim(),
-          phone,
-          role: null, // Just a contact, not a user
-          firebaseId: null,
-          categoryOfEngagement: 'medium',
-          tags: []
+          phone: phone || null
         }
       });
       
-      console.log('✅ New contact created:', orgMember.id);
+      console.log('✅ New contact created:', contact.id);
     }
     
     // Create soft commit notes
@@ -264,34 +260,35 @@ router.post('/events/:eventIdOrSlug/soft-commit', async (req, res) => {
     // Find or create EventAttendee
     let eventAttendee = await prisma.eventAttendee.findUnique({
       where: {
-        eventId_orgMemberId: {
+        eventId_contactId_audienceType: {
           eventId: event.id,
-          orgMemberId: orgMember.id
+          contactId: contact.id,
+          audienceType: 'landing_page'
         }
       }
     });
     
     if (eventAttendee) {
-      console.log('✅ Existing EventAttendee found, current stage:', eventAttendee.stage);
+      console.log('✅ Existing EventAttendee found, current stage:', eventAttendee.currentStage);
       
       // Only update stage if moving forward or re-engaging from "cant_attend"
-      const currentLevel = stageHierarchy[eventAttendee.stage] || 0;
+      const currentLevel = stageHierarchy[eventAttendee.currentStage] || 0;
       const softCommitLevel = stageHierarchy['soft_commit'];
       
-      if (currentLevel < softCommitLevel || eventAttendee.stage === 'cant_attend') {
-        console.log('📈 Moving forward: ', eventAttendee.stage, '→ soft_commit');
+      if (currentLevel < softCommitLevel || eventAttendee.currentStage === 'cant_attend') {
+        console.log('📈 Moving forward: ', eventAttendee.currentStage, '→ soft_commit');
         
         eventAttendee = await prisma.eventAttendee.update({
           where: { id: eventAttendee.id },
           data: {
-            stage: 'soft_commit',
+            currentStage: 'soft_commit',
             audienceType: eventAttendee.audienceType || 'landing_page',
             notes: softCommitNotes,
             updatedAt: new Date()
           }
         });
       } else {
-        console.log('⚠️ Contact already at higher stage (', eventAttendee.stage, '), just updating notes');
+        console.log('⚠️ Contact already at higher stage (', eventAttendee.currentStage, '), just updating notes');
         
         // Don't downgrade, just update notes
         eventAttendee = await prisma.eventAttendee.update({
@@ -310,8 +307,8 @@ router.post('/events/:eventIdOrSlug/soft-commit', async (req, res) => {
         data: {
           orgId: event.orgId,
           eventId: event.id,
-          orgMemberId: orgMember.id,
-          stage: 'soft_commit',
+          contactId: contact.id,
+          currentStage: 'soft_commit',
           audienceType: 'landing_page',
           attended: false,
           amountPaid: 0,
@@ -321,7 +318,7 @@ router.post('/events/:eventIdOrSlug/soft-commit', async (req, res) => {
     }
     
     console.log('🎉 Soft commit recorded!');
-    console.log('   - Contact:', orgMember.email);
+    console.log('   - Contact:', contact.email);
     console.log('   - Event:', event.name);
     console.log('   - Stage: soft_commit');
     console.log('   - Likelihood:', likelihood);
@@ -331,7 +328,7 @@ router.post('/events/:eventIdOrSlug/soft-commit', async (req, res) => {
       success: true,
       message: 'Soft commit recorded successfully',
       eventAttendeId: eventAttendee.id,
-      orgMemberId: orgMember.id
+      contactId: contact.id
     });
     
   } catch (error) {
