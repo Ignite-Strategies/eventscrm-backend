@@ -247,6 +247,7 @@ model Event {
   attendees       EventAttendee[]
   tasks           EventTask[]
   eventForms      EventForm[] // Forms for this event
+  customFields    CustomField[] // Custom fields for this event
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -308,7 +309,7 @@ model EventForm {
 // NEW: Admin - Admin users with permissions
 model Admin {
   id        String @id @default(cuid())
-  contactId String
+  contactId String @unique
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   orgId     String
   org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
