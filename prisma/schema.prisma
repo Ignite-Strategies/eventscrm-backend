@@ -246,7 +246,8 @@ model Event {
   pipelineEntries EventPipelineEntry[] // OLD: Legacy, to be deprecated
   attendees       EventAttendee[]
   tasks           EventTask[]
-  eventForms      EventForm[] // Forms for this event
+  publicForms     PublicForm[]  // Public forms for external submissions
+  eventForms      EventForm[]   // Internal CRM tracking forms
   customFields    CustomField[] // Custom fields for this event
   
   createdAt DateTime @default(now())
@@ -261,37 +262,31 @@ model Event {
 // Audience types are now hardcoded strings in EventForm.audienceType and EventAttendee.audienceType
 
 // NEW: EventForm - Form configuration
-model EventForm {
-  id           String @id @default(cuid())
-  orgId        String
-  eventId      String
-  event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+// PUBLIC FORM - External-facing form for submissions
+// This is what external users interact with
+model PublicForm {
+  id          String @id @default(cuid())
+  orgId       String  // For relational integrity
+  eventId     String  // For relational integrity
+  event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   
-  // Audience type (hardcoded - no EventPipeline model for MVP1)
-  // Maps to EventAttendee.audienceType when form is submitted
-  audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
+  // Public fields (what users see)
+  slug        String @unique // "bros-soft-commit"
+  title       String // "Sign up for Bros & Brews!"
+  description String? // "Fill out the form below to let us know..."
   
-  // Internal (CRM only) - Clean naming
-  internalName     String? // "Bros & Brews Soft Commit Form" (optional for migration)
-  internalPurpose String? // "Collect soft commits for Bros & Brews event"
-  slug            String @unique // "bros-soft-commit"
-  
-  // Public (Landing Page) - Clean naming
-  publicTitle       String // "Sign up for Bros & Brews!"
-  publicDescription String? // "Fill out the form below to let us know..."
-  
-  // Pipeline Integration
-  targetStage  String // Where contacts land when they submit this form (maps to EventAttendee.currentStage)
-  // Examples: "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid"
-  
-  // Form Configuration - RELATIONAL FIELDS!
-  customFields CustomField[] // Custom fields created by admins
-  styling      Json? // Custom styling
-  
-  // Standard Contact Fields (auto-populated by frontend)
+  // Standard Contact Fields (hardcoded for MVP1)
   collectName     Boolean @default(true) // "Full Name" field
   collectEmail    Boolean @default(true) // "Email Address" field  
   collectPhone    Boolean @default(true) // "Phone Number" field
+  
+  // MUTATION INSTRUCTIONS - Backend uses these on submission
+  audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
+  targetStage  String // "soft_commit", "paid", etc. - maps to EventAttendee.currentStage
+  
+  // Relations
+  customFields CustomField[] // Custom fields attached to this public form
+  eventForms   EventForm[]   // Multiple internal EventForms can reference same PublicForm
   
   // Status & Analytics
   isActive          Boolean @default(true)
@@ -304,6 +299,31 @@ model EventForm {
   @@index([eventId])
   @@index([orgId])
   @@index([audienceType])
+}
+
+// EVENT FORM - Internal CRM tracking
+// Links to PublicForm for external submissions
+model EventForm {
+  id              String @id @default(cuid())
+  publicFormId    String
+  publicForm      PublicForm @relation(fields: [publicFormId], references: [id], onDelete: Cascade)
+  orgId           String  // For relational integrity
+  eventId         String  // For relational integrity
+  event           Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  // Internal CRM fields
+  internalName     String  // "Bros & Brews Soft Commit Form"
+  internalPurpose  String? // "Collect soft commits for Bros & Brews event"
+  
+  // CRM customization
+  styling      Json? // Custom styling overrides
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([publicFormId])
+  @@index([eventId])
+  @@index([orgId])
 }
 
 // NEW: Admin - Admin users with permissions
@@ -332,14 +352,15 @@ model Admin {
 }
 
 // NEW: CustomField - Custom form fields created by admins
+// Links to PublicForm (not EventForm) for clean external hydration
 model CustomField {
-  id        String @id @default(cuid())
-  eventFormId String
-  eventForm   EventForm @relation(fields: [eventFormId], references: [id], onDelete: Cascade)
-  eventId    String
-  event      Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  adminId    String?
-  admin      Admin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  id           String @id @default(cuid())
+  publicFormId String
+  publicForm   PublicForm @relation(fields: [publicFormId], references: [id], onDelete: Cascade)
+  eventId      String
+  event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  adminId      String?
+  admin        Admin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
   
   // Field Configuration
   label        String // "How likely to attend?"
@@ -366,7 +387,7 @@ model CustomField {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  @@index([eventFormId])
+  @@index([publicFormId])
   @@index([eventId])
   @@index([adminId])
   @@index([fieldType])

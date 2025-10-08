@@ -18,7 +18,8 @@ import emailRouter from './routes/emailRoute.js';
 import contactListsRouter from './routes/contactListsRoute.js';
 import eventTasksRouter from './routes/eventTasksRoute.js';
 import formSubmissionRouter from './routes/formSubmissionRoute.js';
-import formsRouter from './routes/formsRoute.js';
+import formsHydratorRouter from './routes/formsHydratorRoute.js';
+import formsSaverRouter from './routes/formsSaverRoute.js';
 import adminRouter from './routes/adminRoute.js';
 import hydrationRouter from './routes/hydrationRoute.js';
 // import stageRouter from './routes/stageRoute.js'; // TODO: Create this route
@@ -59,7 +60,8 @@ app.use('/api/email', emailRouter);             // Email sending
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/events', eventTasksRouter);       // Event tasks
 app.use('/api/public', formSubmissionRouter);   // Form submissions (no auth) - generic endpoint that reads form config!
-app.use('/api/forms', formsRouter);             // Form CRUD (authenticated)
+app.use('/api/forms/hydrator', formsHydratorRouter); // Form loading (public + edit)
+app.use('/api/forms/saver', formsSaverRouter);       // Form save/update/delete (authenticated)
 app.use('/api/admins', adminRouter);            // Admin operations
 app.use('/api/hydration', hydrationRouter);     // Universal hydration
 // app.use('/api', stageRouter);                   // Stage definitions (hydrated from database) // TODO: Create this route
