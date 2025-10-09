@@ -24,8 +24,7 @@ import formsPublicRouter from './routes/formsPublicRoute.js';
 import adminRouter from './routes/adminRoute.js';
 import hydrationRouter from './routes/hydrationRoute.js';
 // import stageRouter from './routes/stageRoute.js'; // TODO: Create this route
-// import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // TODO: Create this route
-// import pipelineRouter from './routes/pipelineRoute.js'; // TODO: Create this route
+import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // NEW: EventAttendee-based pipeline (no EventPipeline model)
 
 dotenv.config();
 
@@ -66,9 +65,8 @@ app.use('/api/forms/hydrator', formsHydratorRouter); // Form loading (CRM admin 
 app.use('/api/forms/saver', formsSaverRouter);       // Form save/update/delete (CRM admin)
 app.use('/api/admins', adminRouter);            // Admin operations
 app.use('/api/hydration', hydrationRouter);     // Universal hydration
+app.use('/api/events', pipelineHydrationRouter); // Pipeline hydration (EventAttendee-based, no EventPipeline model)
 // app.use('/api', stageRouter);                   // Stage definitions (hydrated from database) // TODO: Create this route
-// app.use('/api', pipelineHydrationRouter);       // Pipeline hydration (stages + attendees) // TODO: Create this route
-// app.use('/api', pipelineRouter);                 // Pipeline management (7-stage system) // TODO: Create this route
 
 // Health check
 app.get('/health', (req, res) => {
