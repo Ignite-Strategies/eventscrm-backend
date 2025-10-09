@@ -15,7 +15,7 @@ router.get('/:slug', async (req, res) => {
     
     console.log('🔍 Loading public form for slug:', slug);
     
-    // Get PublicForm from database
+    // Get PublicForm - it has everything we need!
     const publicForm = await prisma.publicForm.findUnique({
       where: { slug }
     });
@@ -49,9 +49,10 @@ router.get('/:slug', async (req, res) => {
       title: publicForm.title,
       description: publicForm.description,
       fields: allFields, // Standard + Custom
-      eventId: publicForm.eventId,
-      audienceType: publicForm.audienceType,
-      targetStage: publicForm.targetStage
+      orgId: publicForm.orgId,           // ← From PublicForm
+      eventId: publicForm.eventId,       // ← From PublicForm
+      audienceType: publicForm.audienceType, // ← From PublicForm
+      targetStage: publicForm.targetStage    // ← From PublicForm (maps to currentStage)
     });
     
   } catch (error) {

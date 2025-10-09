@@ -11,7 +11,7 @@ const prisma = getPrismaClient();
  */
 router.post('/', async (req, res) => {
   try {
-    const { slug, formData } = req.body;
+    const { slug, orgId, eventId, formData } = req.body;
     const submissionData = formData;
     
     console.log('📝 Form submission received for:', slug);
@@ -47,7 +47,7 @@ router.post('/', async (req, res) => {
     let contact = await prisma.contact.findUnique({
       where: { 
         orgId_email: {
-          orgId: publicForm.orgId,
+          orgId: orgId,  // ← From localStorage
           email: email
         }
       }
@@ -61,7 +61,7 @@ router.post('/', async (req, res) => {
           lastName,
           email,
           phone,
-          orgId: publicForm.orgId
+          orgId: orgId  // ← From localStorage
         }
       });
     } else {
@@ -113,11 +113,11 @@ router.post('/', async (req, res) => {
       // Create new attendee
       attendee = await prisma.eventAttendee.create({
         data: {
-          orgId: publicForm.orgId,
-          eventId: publicForm.eventId,
+          orgId: orgId,  // ← From localStorage (frontend)
+          eventId: eventId,  // ← From localStorage (frontend)
           contactId: contact.id,
-          currentStage: publicForm.targetStage,
-          audienceType: publicForm.audienceType,
+          currentStage: publicForm.targetStage,  // ← From form
+          audienceType: publicForm.audienceType, // ← From form
           notes: JSON.stringify(customFieldResponses)
         }
       });

@@ -126,30 +126,31 @@ Currently exists but **not actively used**.
 **Key Concept:** Same person can be in multiple events at different stages!
 
 **Key Fields:**
-- `orgMemberId` - Links to master contact (OrgMember)
+- `contactId` - Links to universal person record (Contact)
 - `eventId` - Which event
-- `stage` - Pipeline stage for THIS event
+- `currentStage` - Pipeline stage for THIS event
   - `"in_funnel"`, `"general_awareness"`, `"personal_invite"`, etc.
 - `audienceType` - How they were added
-  - `"org_members"`, `"friends_family"`, `"cold_outreach"`
+  - `"org_members"`, `"friends_family"`, `"landing_page_public"`, `"community_partners"`, `"cold_outreach"`
 - `attended` - Did they show up?
 - `amountPaid` - Ticket cost
 - `ticketType` - VIP, General, etc.
+- `notes` - JSON with custom form field responses
 
 **Example:**
 ```
 John Smith (OrgMember) invited to 3 events:
 
 Event A (Bros & Brews):
-  stage: "paid"
+  currentStage: "paid"
   attended: true
   
 Event B (Golf Tournament):
-  stage: "expressed_interest"
+  currentStage: "expressed_interest"
   attended: false
   
 Event C (Gala):
-  stage: "personal_invite"
+  currentStage: "personal_invite"
   attended: false
 ```
 
@@ -233,12 +234,12 @@ Individual events/fundraisers.
 ### Event Pipeline Tracking
 
 ```
-OrgMember: John Smith
+Contact: John Smith
   ↓
 EventAttendee (Bros & Brews):
-  stage: "in_funnel" → "personal_invite" → "soft_commit" → "paid"
+  currentStage: "in_funnel" → "personal_invite" → "soft_commit" → "paid"
   ↓
-Update stage as John moves through funnel
+Update currentStage as John moves through funnel
   ↓
 EventAttendee.attended = true (when he shows up)
 ```
