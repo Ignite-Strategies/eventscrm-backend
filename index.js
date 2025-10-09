@@ -15,10 +15,10 @@ import templatesRouter from './routes/templatesRoute.js';
 import emailRouter from './routes/emailRoute.js';
 import contactListsRouter from './routes/contactListsRoute.js';
 import eventTasksRouter from './routes/eventTasksRoute.js';
-import formSubmissionRouter from './routes/formSubmissionRoute.js';
-import formsHydratorRouter from './routes/formsHydratorRoute.js';
-import formsSaverRouter from './routes/formsSaverRoute.js';
-import formsPublicRouter from './routes/formsPublicRoute.js';
+import publicFormSubmissionRouter from './routes/publicFormSubmissionRoute.js';
+import formDashHydratorRouter from './routes/formDashHydratorRoute.js';
+import formCreatorSaverRouter from './routes/formCreatorSaverRoute.js';
+import formsPublicHydrateRouter from './routes/formsPublicHydrateRoute.js';
 import adminRouter from './routes/adminRoute.js';
 import dashboardHydrationRouter from './routes/dashboardHydrationRoute.js';
 import contactHydrateRouter from './routes/contactHydrateRoute.js';
@@ -58,10 +58,10 @@ app.use('/api/templates', templatesRouter);     // Email templates
 app.use('/api/email', emailRouter);             // Email sending
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/events', eventTasksRouter);       // Event tasks
-app.use('/api/contacts', formSubmissionRouter); // Contact creation from form submissions
-app.use('/api/forms/public', formsPublicRouter);    // Public form display (external users)
-app.use('/api/forms/hydrator', formsHydratorRouter); // Form loading (CRM admin edit)
-app.use('/api/forms/saver', formsSaverRouter);       // Form save/update/delete (CRM admin)
+app.use('/api/contacts', publicFormSubmissionRouter); // Public form submission (external users)
+app.use('/api/forms/public', formsPublicHydrateRouter); // Public form hydration (external users)
+app.use('/api/forms', formDashHydratorRouter); // Form loading (CRM admin dashboard - list & edit)
+app.use('/api/forms/saver', formCreatorSaverRouter);       // Form save/update/delete (CRM admin)
 app.use('/api/admins', adminRouter);            // Admin operations
 app.use('/api/hydration', dashboardHydrationRouter);     // Dashboard universal data load
 app.use('/api/contacts', contactHydrateRouter);   // Contact hydration (GET)
