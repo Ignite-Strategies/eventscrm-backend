@@ -55,9 +55,9 @@ export function parseFormFields(fields) {
   const customFields = [];
 
   fields.forEach(field => {
-    const isStandardField = isStandardField(field);
+    const isStandard = isStandardField(field);
     
-    if (isStandardField) {
+    if (isStandard) {
       standardFields.push(field);
     } else {
       customFields.push(field);
