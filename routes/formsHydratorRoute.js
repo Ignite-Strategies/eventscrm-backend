@@ -146,19 +146,106 @@ router.get('/:formId/edit', async (req, res) => {
         return res.status(404).json({ error: 'Form not found' });
       }
       
+      // Add standard fields to publicForm.customFields for frontend
+      const allFields = [];
+      
+      // Add standard fields based on flags
+      if (publicForm.collectName) {
+        allFields.push({
+          id: 'name',
+          fieldType: 'text',
+          label: 'Full Name',
+          placeholder: 'Enter your full name',
+          isRequired: true,
+          displayOrder: 1
+        });
+      }
+      
+      if (publicForm.collectEmail) {
+        allFields.push({
+          id: 'email',
+          fieldType: 'email',
+          label: 'Email Address',
+          placeholder: 'email@example.com',
+          isRequired: true,
+          displayOrder: 2
+        });
+      }
+      
+      if (publicForm.collectPhone) {
+        allFields.push({
+          id: 'phone',
+          fieldType: 'tel',
+          label: 'Phone Number',
+          placeholder: '(555) 555-5555',
+          isRequired: true,
+          displayOrder: 3
+        });
+      }
+      
+      // Add custom fields
+      allFields.push(...publicForm.customFields);
+      
       // Return PublicForm data with first EventForm (or empty if none)
       return res.json({
-        publicForm,
+        publicForm: {
+          ...publicForm,
+          customFields: allFields // Contains both standard + custom
+        },
         eventForm: publicForm.eventForms[0] || null
       });
     }
     
     console.log('✅ Form loaded for edit:', eventForm.internalName);
     
-    // Return combined EventForm + PublicForm data
+    // Add standard fields to publicForm.customFields for frontend
+    const publicForm = eventForm.publicForm;
+    const allFields = [];
+    
+    // Add standard fields based on flags
+    if (publicForm.collectName) {
+      allFields.push({
+        id: 'name',
+        fieldType: 'text',
+        label: 'Full Name',
+        placeholder: 'Enter your full name',
+        isRequired: true,
+        displayOrder: 1
+      });
+    }
+    
+    if (publicForm.collectEmail) {
+      allFields.push({
+        id: 'email',
+        fieldType: 'email',
+        label: 'Email Address',
+        placeholder: 'email@example.com',
+        isRequired: true,
+        displayOrder: 2
+      });
+    }
+    
+    if (publicForm.collectPhone) {
+      allFields.push({
+        id: 'phone',
+        fieldType: 'tel',
+        label: 'Phone Number',
+        placeholder: '(555) 555-5555',
+        isRequired: true,
+        displayOrder: 3
+      });
+    }
+    
+    // Add custom fields
+    allFields.push(...publicForm.customFields);
+    
+    // Return combined EventForm + PublicForm data with all fields
     res.json({
       eventForm,
-      publicForm: eventForm.publicForm
+      publicForm: {
+        ...publicForm,
+        customFields: allFields // Contains both standard + custom
+      }
     });
     
   } catch (error) {
