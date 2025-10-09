@@ -17,6 +17,7 @@
     "postinstall": "npx prisma generate && npx prisma db push --accept-data-loss"
   },
   "dependencies": {
+    "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "^6.16.3",
     "axios": "^1.6.2",
     "cors": "^2.8.5",
