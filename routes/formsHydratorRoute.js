@@ -150,25 +150,14 @@ router.get('/:formId/edit', async (req, res) => {
       const allFields = [];
       
       // Add standard fields based on flags
-      if (publicForm.collectFirstName) {
+      if (publicForm.collectName) {
         allFields.push({
-          id: 'firstName',
+          id: 'name',
           fieldType: 'text',
-          label: 'First Name',
-          placeholder: 'Enter your first name',
+          label: 'Full Name',
+          placeholder: 'Enter your full name',
           isRequired: true,
           displayOrder: 1
-        });
-      }
-      
-      if (publicForm.collectLastName) {
-        allFields.push({
-          id: 'lastName',
-          fieldType: 'text',
-          label: 'Last Name',
-          placeholder: 'Enter your last name',
-          isRequired: true,
-          displayOrder: 2
         });
       }
       
@@ -179,7 +168,7 @@ router.get('/:formId/edit', async (req, res) => {
           label: 'Email Address',
           placeholder: 'email@example.com',
           isRequired: true,
-          displayOrder: 3
+          displayOrder: 2
         });
       }
       
@@ -190,7 +179,7 @@ router.get('/:formId/edit', async (req, res) => {
           label: 'Phone Number',
           placeholder: '(555) 555-5555',
           isRequired: true,
-          displayOrder: 4
+          displayOrder: 3
         });
       }
       
@@ -214,25 +203,14 @@ router.get('/:formId/edit', async (req, res) => {
     const allFields = [];
     
     // Add standard fields based on flags
-    if (publicForm.collectFirstName) {
+    if (publicForm.collectName) {
       allFields.push({
-        id: 'firstName',
+        id: 'name',
         fieldType: 'text',
-        label: 'First Name',
-        placeholder: 'Enter your first name',
+        label: 'Full Name',
+        placeholder: 'Enter your full name',
         isRequired: true,
         displayOrder: 1
-      });
-    }
-    
-    if (publicForm.collectLastName) {
-      allFields.push({
-        id: 'lastName',
-        fieldType: 'text',
-        label: 'Last Name',
-        placeholder: 'Enter your last name',
-        isRequired: true,
-        displayOrder: 2
       });
     }
     
@@ -243,7 +221,7 @@ router.get('/:formId/edit', async (req, res) => {
         label: 'Email Address',
         placeholder: 'email@example.com',
         isRequired: true,
-        displayOrder: 3
+        displayOrder: 2
       });
     }
     
@@ -254,7 +232,7 @@ router.get('/:formId/edit', async (req, res) => {
         label: 'Phone Number',
         placeholder: '(555) 555-5555',
         isRequired: true,
-        displayOrder: 4
+        displayOrder: 3
       });
     }
     
