@@ -144,12 +144,21 @@ router.get('/:formId/edit', async (req, res) => {
       
       // Always add standard fields (hardcoded)
       allFields.push({
-        id: 'name',
+        id: 'firstName',
         type: 'text',
-        label: 'Full Name',
-        placeholder: 'Enter your full name',
+        label: 'First Name',
+        placeholder: 'Enter first name',
         required: true,
         order: 1
+      });
+      
+      allFields.push({
+        id: 'lastName',
+        type: 'text',
+        label: 'Last Name',
+        placeholder: 'Enter last name',
+        required: true,
+        order: 2
       });
       
       allFields.push({
@@ -158,7 +167,7 @@ router.get('/:formId/edit', async (req, res) => {
         label: 'Email Address',
         placeholder: 'email@example.com',
         required: true,
-        order: 2
+        order: 3
       });
       
       allFields.push({
@@ -167,7 +176,7 @@ router.get('/:formId/edit', async (req, res) => {
         label: 'Phone Number',
         placeholder: '(555) 555-5555',
         required: publicForm.collectPhone || true, // Use flag if exists, default true
-        order: 3
+        order: 4
       });
       
       // Add custom fields from JSON

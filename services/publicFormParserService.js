@@ -11,7 +11,7 @@
 export function parsePublicFormToClean(publicForm) {
   if (!publicForm) return null;
 
-  // Build the clean public form
+  // Build the clean public form - just return what's in the database!
   const cleanForm = {
     id: publicForm.id,
     slug: publicForm.slug,
@@ -19,43 +19,8 @@ export function parsePublicFormToClean(publicForm) {
     description: publicForm.description,
     targetStage: publicForm.targetStage,
     audienceType: publicForm.audienceType,
-    
-    // Combine standard fields + custom fields from JSON
-    fields: []
+    fields: publicForm.fields || [] // Just return the fields JSON as-is from database
   };
-
-  // Always add standard fields (hardcoded)
-  cleanForm.fields.push({
-    id: 'name',
-    type: 'text',
-    label: 'Full Name',
-    placeholder: 'Enter your full name',
-    required: true,
-    order: 1
-  });
-
-  cleanForm.fields.push({
-    id: 'email',
-    type: 'email', 
-    label: 'Email Address',
-    placeholder: 'email@example.com',
-    required: true,
-    order: 2
-  });
-
-  cleanForm.fields.push({
-    id: 'phone',
-    type: 'tel',
-    label: 'Phone Number',
-    placeholder: '(555) 555-5555',
-    required: publicForm.collectPhone || true, // Use flag if exists, default true
-    order: 3
-  });
-
-  // Add custom fields from JSON array
-  if (publicForm.fields && Array.isArray(publicForm.fields)) {
-    cleanForm.fields.push(...publicForm.fields);
-  }
 
   // Sort fields by order
   cleanForm.fields.sort((a, b) => (a.order || 0) - (b.order || 0));
