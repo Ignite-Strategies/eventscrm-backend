@@ -5,13 +5,14 @@ const router = express.Router();
 const prisma = getPrismaClient();
 
 /**
- * POST /forms/:slug/submit - Public form submission
+ * POST /contacts - Create contact from form submission
  * No auth required - this is for external form submissions
+ * Body should include: { slug, formData }
  */
-router.post('/:slug/submit', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const { slug } = req.params;
-    const submissionData = req.body;
+    const { slug, formData } = req.body;
+    const submissionData = formData;
     
     console.log('📝 Form submission received for:', slug);
     console.log('📋 Submission data:', submissionData);
