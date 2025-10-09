@@ -25,14 +25,25 @@ export function parsePublicFormToClean(publicForm) {
   };
 
   // Add standard fields if enabled
-  if (publicForm.collectName) {
+  if (publicForm.collectFirstName) {
     cleanForm.fields.push({
-      id: 'name',
+      id: 'firstName',
       type: 'text',
-      label: 'Full Name',
-      placeholder: 'Enter your full name',
+      label: 'First Name',
+      placeholder: 'Enter your first name',
       required: true,
       order: 1
+    });
+  }
+
+  if (publicForm.collectLastName) {
+    cleanForm.fields.push({
+      id: 'lastName',
+      type: 'text',
+      label: 'Last Name',
+      placeholder: 'Enter your last name',
+      required: true,
+      order: 2
     });
   }
 
@@ -43,7 +54,7 @@ export function parsePublicFormToClean(publicForm) {
       label: 'Email Address',
       placeholder: 'email@example.com',
       required: true,
-      order: 2
+      order: 3
     });
   }
 
@@ -54,7 +65,7 @@ export function parsePublicFormToClean(publicForm) {
       label: 'Phone Number',
       placeholder: '(555) 555-5555',
       required: true,
-      order: 3
+      order: 4
     });
   }
 

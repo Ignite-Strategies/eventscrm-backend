@@ -276,9 +276,10 @@ model PublicForm {
   description String? // "Fill out the form below to let us know..."
   
   // Standard Contact Fields (hardcoded for MVP1)
-  collectName     Boolean @default(true) // "Full Name" field
-  collectEmail    Boolean @default(true) // "Email Address" field  
-  collectPhone    Boolean @default(true) // "Phone Number" field
+  collectFirstName Boolean @default(true) // "First Name" field
+  collectLastName  Boolean @default(true) // "Last Name" field
+  collectEmail     Boolean @default(true) // "Email Address" field  
+  collectPhone     Boolean @default(true) // "Phone Number" field
   
   // MUTATION INSTRUCTIONS - Backend uses these on submission
   audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"

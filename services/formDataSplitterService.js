@@ -16,7 +16,8 @@ export function splitFormData(formData) {
     slug: formData.slug,
     title: formData.publicTitle || formData.title || formData.name, // Flexible
     description: formData.publicDescription || formData.description,
-    collectName: formData.collectName !== undefined ? formData.collectName : true,
+    collectFirstName: formData.collectFirstName !== undefined ? formData.collectFirstName : true,
+    collectLastName: formData.collectLastName !== undefined ? formData.collectLastName : true,
     collectEmail: formData.collectEmail !== undefined ? formData.collectEmail : true,
     collectPhone: formData.collectPhone !== undefined ? formData.collectPhone : true,
     audienceType: formData.audienceType,
