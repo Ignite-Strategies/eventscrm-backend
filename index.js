@@ -11,7 +11,6 @@ import eventsRouter from './routes/eventsRoute.js';
 import eventAttendeeListRouter from './routes/eventAttendeeListRoute.js';
 // import eventPipelinesRouter from './routes/eventPipelinesRoute.js'; // REMOVED - deprecated for now
 // import eventPipelineActionsRouter from './routes/eventPipelineActionsRoute.js'; // REMOVED - duplicate of eventPipelinesRouter
-import webhooksRouter from './routes/webhooksRoute.js';
 import templatesRouter from './routes/templatesRoute.js';
 import emailRouter from './routes/emailRoute.js';
 import contactListsRouter from './routes/contactListsRoute.js';
@@ -55,7 +54,6 @@ app.use('/api/events', eventsRouter);           // Event operations
 app.use('/api/events', eventAttendeeListRouter); // Attendee list (paid/soft_commit) for attendance tracking
 // app.use('/api/events', eventPipelinesRouter);   // REMOVED - Pipeline routes deprecated for now
 // app.use('/api/events', eventPipelineActionsRouter); // REMOVED - duplicate functionality in eventPipelinesRouter
-app.use('/api/webhooks', webhooksRouter);
 app.use('/api/templates', templatesRouter);     // Email templates
 app.use('/api/email', emailRouter);             // Email sending
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
