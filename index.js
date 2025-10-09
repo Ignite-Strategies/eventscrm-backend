@@ -20,6 +20,7 @@ import eventTasksRouter from './routes/eventTasksRoute.js';
 import formSubmissionRouter from './routes/formSubmissionRoute.js';
 import formsHydratorRouter from './routes/formsHydratorRoute.js';
 import formsSaverRouter from './routes/formsSaverRoute.js';
+import formsPublicRouter from './routes/formsPublicRoute.js';
 import adminRouter from './routes/adminRoute.js';
 import hydrationRouter from './routes/hydrationRoute.js';
 // import stageRouter from './routes/stageRoute.js'; // TODO: Create this route
@@ -60,8 +61,9 @@ app.use('/api/email', emailRouter);             // Email sending
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/events', eventTasksRouter);       // Event tasks
 app.use('/api/contacts', formSubmissionRouter); // Contact creation from form submissions
-app.use('/api/forms/hydrator', formsHydratorRouter); // Form loading (public + edit)
-app.use('/api/forms/saver', formsSaverRouter);       // Form save/update/delete (authenticated)
+app.use('/api/forms/public', formsPublicRouter);    // Public form display (external users)
+app.use('/api/forms/hydrator', formsHydratorRouter); // Form loading (CRM admin edit)
+app.use('/api/forms/saver', formsSaverRouter);       // Form save/update/delete (CRM admin)
 app.use('/api/admins', adminRouter);            // Admin operations
 app.use('/api/hydration', hydrationRouter);     // Universal hydration
 // app.use('/api', stageRouter);                   // Stage definitions (hydrated from database) // TODO: Create this route

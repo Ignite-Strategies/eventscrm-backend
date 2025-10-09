@@ -1,6 +1,5 @@
 import express from 'express';
 import { getPrismaClient } from '../config/database.js';
-import { parsePublicFormToClean } from '../services/publicFormParserService.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
