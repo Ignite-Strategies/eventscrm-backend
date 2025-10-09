@@ -127,78 +127,137 @@ router.post('/:orgId/supporters/csv', upload.single('file'), async (req, res) =>
   }
 });
 
-// List supporters
+// List supporters (PRISMA - Contact + OrgMember)
 router.get('/:orgId/supporters', async (req, res) => {
   try {
     const { orgId } = req.params;
-    console.log('📋 GET: Fetching supporters for orgId:', orgId);
+    console.log('📋 GET: Fetching org members (contacts with OrgMember) for orgId:', orgId);
     
-    const result = await getSupportersByOrg(orgId);
-    console.log('📋 GET: Database result:', result);
+    // Query Contacts with OrgMember relation
+    const contacts = await prisma.contact.findMany({
+      where: { 
+        orgId,
+        orgMember: { isNot: null }  // Only contacts with OrgMember
+      },
+      include: {
+        orgMember: true
+      }
+    });
     
-    if (result.success) {
-      console.log('📋 GET: Returning', result.supporters.length, 'supporters');
-      res.json(result.supporters);
-    } else {
-      console.error('📋 GET: Database error:', result.error);
-      res.status(400).json({ error: result.error });
-    }
+    // Format for frontend compatibility (merge Contact + OrgMember)
+    const formatted = contacts.map(c => ({
+      _id: c.id,  // contactId as _id for frontend
+      contactId: c.id,
+      orgMemberId: c.orgMember?.id,
+      firstName: c.firstName,
+      lastName: c.lastName,
+      email: c.email,
+      phone: c.phone,
+      goesBy: c.orgMember?.goesBy,
+      street: c.orgMember?.street,
+      city: c.orgMember?.city,
+      state: c.orgMember?.state,
+      zip: c.orgMember?.zip,
+      employer: c.orgMember?.employer,
+      yearsWithOrganization: c.orgMember?.yearsWithOrganization,
+      categoryOfEngagement: c.orgMember?.categoryOfEngagement || 'medium',
+      tags: c.orgMember?.tags || []
+    }));
+    
+    console.log('📋 GET: Returning', formatted.length, 'org members');
+    res.json(formatted);
   } catch (error) {
     console.error('📋 GET: Route error:', error);
     res.status(400).json({ error: error.message });
   }
 });
 
-// Update supporter field (inline editing)
+// Update supporter field (PRISMA - contactId = supporterId for compatibility)
 router.post('/supporters/:supporterId/update', async (req, res) => {
   try {
-    const { supporterId } = req.params;
+    const contactId = req.params.supporterId;  // supporterId is actually contactId
     const { field, value } = req.body;
     
-    console.log('✏️ PATCH: Updating supporter', supporterId, 'field:', field, 'value:', value);
-    console.log('✏️ PATCH: Request body:', req.body);
+    console.log('✏️ PATCH: Updating contact/orgMember', contactId, 'field:', field, 'value:', value);
     
-    // Validate required fields
     if (!field) {
       return res.status(400).json({ error: 'Field is required' });
     }
     
+    // Determine if field is Contact or OrgMember field
+    const contactFields = ['firstName', 'lastName', 'email', 'phone'];
     const updateData = { [field]: value };
-    console.log('✏️ PATCH: Update data:', updateData);
     
-    const supporter = await prisma.supporter.update({
-      where: { id: supporterId },
-      data: updateData
+    if (contactFields.includes(field)) {
+      // Update Contact
+      await prisma.contact.update({
+        where: { id: contactId },
+        data: updateData
+      });
+    } else {
+      // Update OrgMember (or create if doesn't exist)
+      const contact = await prisma.contact.findUnique({
+        where: { id: contactId },
+        include: { orgMember: true }
+      });
+      
+      if (contact.orgMember) {
+        await prisma.orgMember.update({
+          where: { id: contact.orgMember.id },
+          data: updateData
+        });
+      }
+    }
+    
+    // Return updated contact with orgMember
+    const updated = await prisma.contact.findUnique({
+      where: { id: contactId },
+      include: { orgMember: true }
     });
     
-    console.log('✏️ PATCH: Successfully updated supporter:', supporter.id);
+    console.log('✏️ PATCH: Successfully updated');
     res.json({
       success: true,
-      supporter
+      supporter: {
+        _id: updated.id,
+        ...updated,
+        ...updated.orgMember
+      }
     });
   } catch (error) {
     console.error('✏️ PATCH ERROR:', error);
-    console.error('✏️ PATCH ERROR Stack:', error.stack);
     res.status(400).json({ error: error.message });
   }
 });
 
-// Delete supporter
+// Delete supporter (PRISMA - contactId = supporterId for compatibility)
 router.delete('/supporters/:supporterId', async (req, res) => {
   try {
-    const { supporterId } = req.params;
-    const result = await deleteSupporter(supporterId);
+    const contactId = req.params.supporterId;  // supporterId is actually contactId
     
-    if (result.success) {
-      res.json({ 
-        success: true, 
-        message: 'Supporter deleted',
-        deletedSupporter: result.deletedSupporter
-      });
-    } else {
-      res.status(404).json({ error: result.error });
+    console.log('🗑️ DELETE: Deleting contact:', contactId);
+    
+    const contact = await prisma.contact.findUnique({
+      where: { id: contactId }
+    });
+    
+    if (!contact) {
+      return res.status(404).json({ error: 'Contact not found' });
     }
+    
+    // Delete contact (cascades to OrgMember, EventAttendee, Admin)
+    await prisma.contact.delete({
+      where: { id: contactId }
+    });
+    
+    console.log('✅ DELETE: Contact deleted successfully');
+    res.json({ 
+      success: true, 
+      message: 'Contact deleted',
+      deletedSupporter: contact
+    });
   } catch (error) {
+    console.error('❌ DELETE ERROR:', error);
     res.status(400).json({ error: error.message });
   }
 });

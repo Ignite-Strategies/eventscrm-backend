@@ -289,6 +289,7 @@ model PublicForm {
   
   // Relations
   eventForms   EventForm[]   // Multiple internal EventForms can reference same PublicForm
+  eventAttendees EventAttendee[] // Track which attendees came from this form
   
   // Status & Analytics
   isActive          Boolean @default(true)
@@ -388,6 +389,7 @@ model EventAttendee {
   
   // Form tracking
   submittedFormId String? // Which form created this attendee?
+  submittedForm   PublicForm? @relation(fields: [submittedFormId], references: [id])
   
   // Final attendance data
   attended    Boolean @default(false)

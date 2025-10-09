@@ -4,10 +4,9 @@ import dotenv from 'dotenv';
 import connectDatabase from './config/database.js';
 
 // Import routes
-import authRouter from './routes/authRoute.js';
+import adminUserAuthRouter from './routes/adminUserAuthRoute.js';
 import orgsRouter from './routes/orgsRoute.js';
-import orgMembersRouter from './routes/orgMembersRoute.js';
-import supportersRouter from './routes/supportersRoute.js';
+import orgMembersListRouter from './routes/orgMembersListRoute.js';
 import eventsRouter from './routes/eventsRoute.js';
 // import eventPipelinesRouter from './routes/eventPipelinesRoute.js'; // REMOVED - deprecated for now
 import eventAttendeesRouter from './routes/eventAttendeesRoute.js';
@@ -22,8 +21,10 @@ import formsHydratorRouter from './routes/formsHydratorRoute.js';
 import formsSaverRouter from './routes/formsSaverRoute.js';
 import formsPublicRouter from './routes/formsPublicRoute.js';
 import adminRouter from './routes/adminRoute.js';
-import hydrationRouter from './routes/hydrationRoute.js';
-import contactsRouter from './routes/contactsRoute.js';
+import dashboardHydrationRouter from './routes/dashboardHydrationRoute.js';
+import contactHydrateRouter from './routes/contactHydrateRoute.js';
+import contactSaveRouter from './routes/contactSaveRoute.js';
+import contactDeleteRouter from './routes/contactDeleteRoute.js';
 // import stageRouter from './routes/stageRoute.js'; // TODO: Create this route
 import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // NEW: EventAttendee-based pipeline (no EventPipeline model)
 
@@ -45,11 +46,10 @@ app.use(express.urlencoded({ extended: true }));
 await connectDatabase();
 
 // Routes
-app.use('/api/auth', authRouter);               // Firebase auth (findOrCreate)
+app.use('/api/auth', adminUserAuthRouter);      // Admin user auth (OrgMember mirage - may refactor later)
 app.use('/api/orgs', orgsRouter);
-app.use('/api/org-members', orgMembersRouter);  // OrgMember CRUD
-app.use('/api/orgs', supportersRouter);         // Contact CSV upload
-app.use('/api', supportersRouter);              // Delete route not nested
+app.use('/api/orgs', orgMembersListRouter);     // List/CSV upload
+app.use('/api', orgMembersListRouter);          // Delete route not nested
 app.use('/api/orgs', eventsRouter);             // Event creation nested under orgs
 app.use('/api/events', eventsRouter);           // Event operations
 // app.use('/api/events', eventPipelinesRouter);   // REMOVED - Pipeline routes deprecated for now
@@ -65,8 +65,10 @@ app.use('/api/forms/public', formsPublicRouter);    // Public form display (exte
 app.use('/api/forms/hydrator', formsHydratorRouter); // Form loading (CRM admin edit)
 app.use('/api/forms/saver', formsSaverRouter);       // Form save/update/delete (CRM admin)
 app.use('/api/admins', adminRouter);            // Admin operations
-app.use('/api/hydration', hydrationRouter);     // Universal hydration
-app.use('/api/contacts', contactsRouter);       // Contact event history
+app.use('/api/hydration', dashboardHydrationRouter);     // Dashboard universal data load
+app.use('/api/contacts', contactHydrateRouter);   // Contact hydration (GET)
+app.use('/api/contacts', contactSaveRouter);      // Contact save (POST/PATCH)  
+app.use('/api/contacts', contactDeleteRouter);    // Contact delete (DELETE)
 app.use('/api/events', pipelineHydrationRouter); // Pipeline hydration (EventAttendee-based, no EventPipeline model)
 // app.use('/api', stageRouter);                   // Stage definitions (hydrated from database) // TODO: Create this route
 

@@ -93,30 +93,17 @@ router.get('/:contactId/events', async (req, res) => {
     console.log(`✅ Found ${eventAttendees.length} events for contact`);
 
     // Format for frontend
-    const formattedEvents = eventAttendees.map(ea => {
-      // Parse submission data from notes field
-      let submissionData = {};
-      if (ea.notes) {
-        try {
-          submissionData = JSON.parse(ea.notes);
-        } catch (e) {
-          console.log('⚠️ Could not parse submission notes for attendee:', ea.id);
-        }
-      }
-
-      return {
-        eventId: ea.eventId,
-        eventName: ea.event.name,
-        eventDate: ea.event.date,
-        currentStage: ea.currentStage,
-        audienceType: ea.audienceType,
-        attended: ea.attended,
-        amountPaid: ea.amountPaid,
-        ticketType: ea.ticketType,
-        addedAt: ea.createdAt,
-        submissionData // What they submitted on the form (custom fields)
-      };
-    });
+    const formattedEvents = eventAttendees.map(ea => ({
+      eventId: ea.eventId,
+      eventName: ea.event.name,
+      eventDate: ea.event.date,
+      currentStage: ea.currentStage,
+      audienceType: ea.audienceType,
+      attended: ea.attended,
+      amountPaid: ea.amountPaid,
+      ticketType: ea.ticketType,
+      addedAt: ea.createdAt
+    }));
 
     res.json(formattedEvents);
 

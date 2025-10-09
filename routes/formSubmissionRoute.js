@@ -106,6 +106,7 @@ router.post('/', async (req, res) => {
         data: {
           currentStage: targetStage,
           audienceType: audienceType,
+          submittedFormId: publicForm.id, // Track which form they used
           notes: JSON.stringify(customFieldResponses)
         }
       });
@@ -119,6 +120,7 @@ router.post('/', async (req, res) => {
           contactId: contact.id,
           currentStage: targetStage,  // ← From frontend
           audienceType: audienceType, // ← From frontend
+          submittedFormId: publicForm.id, // Track which form they used
           notes: JSON.stringify(customFieldResponses)
         }
       });
