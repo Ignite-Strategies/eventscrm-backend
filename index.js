@@ -23,6 +23,7 @@ import formsSaverRouter from './routes/formsSaverRoute.js';
 import formsPublicRouter from './routes/formsPublicRoute.js';
 import adminRouter from './routes/adminRoute.js';
 import hydrationRouter from './routes/hydrationRoute.js';
+import contactsRouter from './routes/contactsRoute.js';
 // import stageRouter from './routes/stageRoute.js'; // TODO: Create this route
 import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // NEW: EventAttendee-based pipeline (no EventPipeline model)
 
@@ -65,6 +66,7 @@ app.use('/api/forms/hydrator', formsHydratorRouter); // Form loading (CRM admin 
 app.use('/api/forms/saver', formsSaverRouter);       // Form save/update/delete (CRM admin)
 app.use('/api/admins', adminRouter);            // Admin operations
 app.use('/api/hydration', hydrationRouter);     // Universal hydration
+app.use('/api/contacts', contactsRouter);       // Contact event history
 app.use('/api/events', pipelineHydrationRouter); // Pipeline hydration (EventAttendee-based, no EventPipeline model)
 // app.use('/api', stageRouter);                   // Stage definitions (hydrated from database) // TODO: Create this route
 
