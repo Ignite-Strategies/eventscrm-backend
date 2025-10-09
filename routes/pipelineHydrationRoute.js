@@ -45,6 +45,8 @@ router.get('/:eventId/pipeline', async (req, res) => {
       // Map to frontend-friendly format
       stageGroups[stage].push({
         _id: attendee.contact.id,  // Use contactId as _id for frontend compatibility
+        contactId: attendee.contact.id,  // Explicit contactId for clarity
+        attendeeId: attendee.id,  // EventAttendee ID for updates
         firstName: attendee.contact.firstName,
         lastName: attendee.contact.lastName,
         email: attendee.contact.email,
