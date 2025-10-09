@@ -2,7 +2,6 @@ import express from 'express';
 import { getPrismaClient } from '../config/database.js';
 import { splitFormData, splitFormUpdates, validateFormData } from '../services/formDataSplitterService.js';
 import { 
-  parseFormFields, 
   validateCustomFields, 
   formatCustomFieldsForDB 
 } from '../services/formFieldParserService.js';
@@ -46,8 +45,8 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    // Parse fields to separate standard vs custom
-    const { standardFields, customFields } = parseFormFields(req.body.fields || []);
+    // Frontend already filters out standard fields, so req.body.fields contains ONLY custom fields
+    const customFields = req.body.fields || [];
     
     // Validate custom fields
     const fieldValidation = validateCustomFields(customFields);
@@ -162,7 +161,8 @@ router.patch('/:formId', async (req, res) => {
     
     // Update custom fields if provided
     if (req.body.fields) {
-      const { customFields } = parseFormFields(req.body.fields);
+      // Frontend already filtered - these are ONLY custom fields
+      const customFields = req.body.fields;
       
       // Validate custom fields
       const fieldValidation = validateCustomFields(customFields);
