@@ -105,3 +105,4 @@ This is the CURRENT, CORRECT architecture as of Day 200.
    - Log when `/supporters` is called
    - Return deprecation notice in response
 
+
