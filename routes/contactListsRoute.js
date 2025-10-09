@@ -1,8 +1,9 @@
 import express from "express";
-import ContactList from "../models/ContactList.js";
+import { getPrismaClient } from "../config/database.js";
 import ContactListService from "../services/contactListService.js";
 
 const router = express.Router();
+const prisma = getPrismaClient();
 
 // GET /contact-lists - Get all contact lists for org
 router.get("/", async (req, res) => {
@@ -13,8 +14,10 @@ router.get("/", async (req, res) => {
       return res.status(400).json({ error: "orgId is required" });
     }
     
-    const contactLists = await ContactList.find({ orgId, isActive: true })
-      .sort({ createdAt: -1 });
+    const contactLists = await prisma.contactList.findMany({
+      where: { orgId, isActive: true },
+      orderBy: { createdAt: 'desc' }
+    });
     
     res.json(contactLists);
   } catch (error) {
@@ -28,7 +31,9 @@ router.get("/:listId", async (req, res) => {
   try {
     const { listId } = req.params;
     
-    const contactList = await ContactList.findById(listId);
+    const contactList = await prisma.contactList.findUnique({
+      where: { id: listId }
+    });
     
     if (!contactList) {
       return res.status(404).json({ error: "Contact list not found" });
@@ -79,7 +84,8 @@ router.patch("/:listId", async (req, res) => {
     delete updates.usageCount;
     delete updates.lastUsed;
     
-    const contactList = await ContactList.findByIdAndUpdate(
+    const contactList = await prisma.contactList.update({
+      where: { id:
       listId,
       updates,
       { new: true, runValidators: true }
@@ -104,7 +110,8 @@ router.delete("/:listId", async (req, res) => {
   try {
     const { listId } = req.params;
     
-    const contactList = await ContactList.findByIdAndUpdate(
+    const contactList = await prisma.contactList.update({
+      where: { id:
       listId,
       { isActive: false },
       { new: true }
