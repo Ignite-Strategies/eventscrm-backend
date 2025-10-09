@@ -8,7 +8,7 @@ class ContactListService {
    * Create a new contact list with proper validation and setup
    */
   static async createContactList(listData) {
-    const { orgId, name, type, criteria } = listData;
+    const { orgId, name, type } = listData;
     
     // Validate required fields
     if (!orgId || !name || !type) {
@@ -16,7 +16,9 @@ class ContactListService {
     }
     
     // Check for duplicate names
-    const existingList = await ContactList.findOne({ orgId, name });
+    const existingList = await prisma.contactList.findFirst({ 
+      where: { orgId, name } 
+    });
     if (existingList) {
       throw new Error("Contact list name already exists for this organization");
     }
@@ -25,8 +27,9 @@ class ContactListService {
     const contactListData = await this.buildListData(listData);
     
     // Create the list
-    const contactList = new ContactList(contactListData);
-    await contactList.save();
+    const contactList = await prisma.contactList.create({
+      data: contactListData
+    });
     
     // Calculate initial contact count
     await this.updateContactCount(contactList);
@@ -38,7 +41,9 @@ class ContactListService {
    * Get all contacts for a specific list (THE MAIN MAGIC!)
    */
   static async getContactsForList(listId) {
-    const contactList = await ContactList.findById(listId);
+    const contactList = await prisma.contactList.findUnique({
+      where: { id: listId }
+    });
     if (!contactList) {
       throw new Error("Contact list not found");
     }
@@ -46,20 +51,16 @@ class ContactListService {
     let contacts = [];
     
     switch (contactList.type) {
-      case "manual":
-        contacts = await this.getManualContacts(contactList);
+      case "contact":
+        contacts = await this.getGeneralContacts(contactList);
         break;
         
-      case "pipeline":
-        contacts = await this.getPipelineContacts(contactList);
+      case "org_member":
+        contacts = await this.getOrgMemberContacts(contactList);
         break;
         
-      case "tag_based":
-        contacts = await this.getTagBasedContacts(contactList);
-        break;
-        
-      case "dynamic":
-        contacts = await this.getDynamicContacts(contactList);
+      case "event_attendee":
+        contacts = await this.getEventAttendeeContacts(contactList);
         break;
         
       default:
@@ -73,91 +74,112 @@ class ContactListService {
   }
   
   /**
-   * Get contacts from manual list (supporterIds + prospectIds)
+   * Get general contacts (everyone in the CRM)
    */
-  static async getManualContacts(contactList) {
-    const contacts = [];
-    
-    // Get supporters
-    if (contactList.supporterIds?.length > 0) {
-      const supporters = await Supporter.find({
-        _id: { $in: contactList.supporterIds }
-      });
-      contacts.push(...supporters.map(s => ({ 
-        ...s.toObject(), 
-        type: 'supporter',
-        source: 'manual'
-      })));
-    }
-    
-    // Get prospects
-    if (contactList.prospectIds?.length > 0) {
-      const prospects = await FamilyProspect.find({
-        _id: { $in: contactList.prospectIds }
-      });
-      contacts.push(...prospects.map(p => ({ 
-        ...p.toObject(), 
-        type: 'prospect',
-        source: 'manual'
-      })));
-    }
-    
-    return contacts;
+  static async getGeneralContacts(contactList) {
+    return await prisma.contact.findMany({
+      where: { orgId: contactList.orgId },
+      include: {
+        orgMember: true,
+        eventAttendees: {
+          include: {
+            event: true
+          }
+        }
+      }
+    });
   }
   
   /**
-   * Get contacts from pipeline registry (THE REGISTRY MAGIC!)
+   * Get event attendee contacts (event pipeline)
    */
-  static async getPipelineContacts(contactList) {
+  static async getEventAttendeeContacts(contactList) {
     const { eventId, audienceType, stages } = contactList;
     
-    if (!eventId || !audienceType || !stages?.length) {
-      throw new Error("Pipeline lists require eventId, audienceType, and stages");
+    if (!eventId) {
+      throw new Error("Event ID is required for event attendee lists");
     }
     
-    // Get all pipeline registry entries for this event/audience/stages
-    const pipelineEntries = await EventPipeline.find({
+    // Build where clause
+    const whereClause = {
       eventId,
-      audienceType,
-      stage: { $in: stages }
+      contact: {
+        orgId: contactList.orgId
+      }
+    };
+    
+    // Filter by audience type if specified
+    if (audienceType) {
+      whereClause.audienceType = audienceType;
+    }
+    
+    // Filter by stages if specified
+    if (stages && stages.length > 0) {
+      whereClause.currentStage = { in: stages };
+    }
+    
+    return await prisma.contact.findMany({
+      where: {
+        eventAttendees: {
+          some: whereClause
+        }
+      },
+      include: {
+        orgMember: true,
+        eventAttendees: {
+          where: whereClause,
+          include: {
+            event: true
+          }
+        }
+      }
     });
-    
-    const contacts = [];
-    const allContactIds = new Set(); // Prevent duplicates
-    
-    // Collect all unique contact IDs from pipeline entries
-    for (const entry of pipelineEntries) {
-      entry.supporterIds.forEach(id => allContactIds.add(id));
-    }
-    
-    // Fetch contacts based on audience type
-    if (audienceType === "org_member") {
-      const supporters = await Supporter.find({
-        _id: { $in: Array.from(allContactIds) }
-      });
-      contacts.push(...supporters.map(s => ({ 
-        ...s.toObject(), 
-        type: 'supporter',
-        source: 'pipeline',
-        pipelineStage: this.getContactStage(s._id, pipelineEntries)
-      })));
-    } else if (audienceType === "family_prospect") {
-      const prospects = await FamilyProspect.find({
-        _id: { $in: Array.from(allContactIds) }
-      });
-      contacts.push(...prospects.map(p => ({ 
-        ...p.toObject(), 
-        type: 'prospect',
-        source: 'pipeline',
-        pipelineStage: this.getContactStage(p._id, pipelineEntries)
-      })));
-    }
-    
-    return contacts;
   }
   
   /**
-   * Get contacts based on tag criteria
+   * Build contact list data based on type
+   */
+  static async buildListData(listData) {
+    const { orgId, name, description, type, criteria } = listData;
+    
+    const baseData = {
+      orgId,
+      name,
+      description,
+      type,
+      isActive: true,
+      totalContacts: 0,
+      usageCount: 0
+    };
+    
+    switch (type) {
+      case "contact":
+        // General contacts - no additional fields needed
+        break;
+        
+      case "org_member":
+        // Org member contacts - no additional fields needed
+        break;
+        
+      case "event_attendee":
+        // Event attendee contacts - need event and filters
+        if (!criteria?.eventId) {
+          throw new Error("Event ID is required for event attendee lists");
+        }
+        baseData.eventId = criteria.eventId;
+        baseData.audienceType = criteria.audienceType;
+        baseData.stages = criteria.stages || [];
+        break;
+        
+      default:
+        throw new Error(`Unknown list type: ${type}`);
+    }
+    
+    return baseData;
+  }
+
+  /**
+   * Get contacts based on tag criteria (DEPRECATED - keeping for compatibility)
    */
   static async getTagBasedContacts(contactList) {
     const { filters } = contactList;
