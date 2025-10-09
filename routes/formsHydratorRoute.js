@@ -6,6 +6,61 @@ const router = express.Router();
 const prisma = getPrismaClient();
 
 /**
+ * GET /forms (with query params) - List forms for an org
+ * Used by admin dashboard
+ */
+router.get('/', async (req, res) => {
+  try {
+    const { orgId } = req.query;
+    
+    if (!orgId) {
+      return res.status(400).json({ error: 'orgId is required' });
+    }
+    
+    console.log('📋 Listing forms for org:', orgId);
+    
+    // Get all PublicForms with their EventForms
+    const publicForms = await prisma.publicForm.findMany({
+      where: { orgId },
+      include: {
+        event: true,
+        eventForms: true,
+        customFields: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    
+    // Map to a clean structure for the frontend
+    const formsList = publicForms.map(pf => {
+      const eventForm = pf.eventForms[0]; // Get first EventForm (should only be one)
+      return {
+        id: eventForm?.id || pf.id, // Use EventForm ID if exists, otherwise PublicForm ID
+        publicFormId: pf.id,
+        slug: pf.slug,
+        name: eventForm?.internalName || pf.title,
+        publicTitle: pf.title,
+        audienceType: pf.audienceType,
+        targetStage: pf.targetStage,
+        isActive: pf.isActive,
+        submissionCount: pf.submissionCount,
+        customFieldsCount: pf.customFields.length,
+        event: pf.event,
+        createdAt: pf.createdAt,
+        updatedAt: pf.updatedAt
+      };
+    });
+    
+    console.log('✅ Found', formsList.length, 'forms');
+    
+    res.json(formsList);
+    
+  } catch (error) {
+    console.error('❌ Forms list error:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
  * GET /forms/:slug - Get public form config for external users
  * No auth required - this is for public form rendering
  */
