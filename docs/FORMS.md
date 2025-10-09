@@ -108,7 +108,34 @@ When a user submits a public form:
 
 ## 🚀 **TODO**
 
-- [ ] Create `routes/formsPublicRoute.js`
-- [ ] Register route in `index.js` as `app.use('/api/forms/public', formsPublicRoute)`
-- [ ] Update frontend `ignite-ticketing` to call `/api/forms/public/:slug`
-- [ ] Test that it returns EXACTLY what's in `PublicForm.fields`
+- [x] Create `routes/formsPublicRoute.js`
+- [x] Register route in `index.js` as `app.use('/api/forms/public', formsPublicRoute)`
+- [x] Update frontend `ignite-ticketing` to call `/api/forms/public/:slug`
+- [x] Test that it returns EXACTLY what's in `PublicForm.fields`
+- [x] Run Prisma migration to add `collectFirstName`/`collectLastName` columns
+- [x] Delete old `collectName` column from database
+- [x] Create fresh form with correct schema
+
+## ✅ **COMPLETED**
+
+### **Database Schema Fixed**
+- ✅ Added `collectFirstName` and `collectLastName` columns to `PublicForm`
+- ✅ Removed deprecated `collectName` column
+- ✅ Standard fields now properly supported in schema
+
+### **Routes Working**
+- ✅ `/api/forms/public/:slug` - Returns raw database fields (no parsing)
+- ✅ `/api/forms/hydrator` - CRM admin form list and edit
+- ✅ `/api/contacts` - Contact creation from form submissions
+
+### **Form Creation Flow**
+- ✅ FormBuilder creates forms with standard + custom fields
+- ✅ Standard fields (firstName, lastName, email, phone) are hardcoded in backend
+- ✅ Custom fields are stored in `PublicForm.fields` JSON array
+- ✅ Database schema matches Prisma schema
+
+### **Test Results**
+- ✅ Form created successfully with slug: `test`
+- ✅ Database contains custom field: `{"id": "test_short_answer", "type": "text", "label": "Test Short Answer", ...}`
+- ✅ Public form URL: `https://ignite-ticketing.vercel.app/forms/test`
+- ✅ Standard fields added by backend during hydration
