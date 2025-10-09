@@ -3,8 +3,18 @@ import { google } from 'googleapis';
 // Gmail API service for sending emails
 export class GmailService {
   constructor(accessToken) {
-    this.oauth2Client = new google.auth.OAuth2();
-    this.oauth2Client.setCredentials({ access_token: accessToken });
+    this.oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GOOGLE_REDIRECT_URI
+    );
+    
+    // Set the access token with Gmail sending scope
+    this.oauth2Client.setCredentials({ 
+      access_token: accessToken,
+      scope: 'https://www.googleapis.com/auth/gmail.send'
+    });
+    
     this.gmail = google.gmail({ version: 'v1', auth: this.oauth2Client });
   }
 
