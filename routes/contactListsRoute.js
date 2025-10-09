@@ -85,11 +85,9 @@ router.patch("/:listId", async (req, res) => {
     delete updates.lastUsed;
     
     const contactList = await prisma.contactList.update({
-      where: { id:
-      listId,
-      updates,
-      { new: true, runValidators: true }
-    );
+      where: { id: listId },
+      data: updates
+    });
     
     if (!contactList) {
       return res.status(404).json({ error: "Contact list not found" });
@@ -111,11 +109,9 @@ router.delete("/:listId", async (req, res) => {
     const { listId } = req.params;
     
     const contactList = await prisma.contactList.update({
-      where: { id:
-      listId,
-      { isActive: false },
-      { new: true }
-    );
+      where: { id: listId },
+      data: { isActive: false }
+    });
     
     if (!contactList) {
       return res.status(404).json({ error: "Contact list not found" });
