@@ -38,13 +38,16 @@ router.get('/', async (req, res) => {
         publicFormId: pf.id,
         slug: pf.slug,
         name: eventForm?.internalName || pf.title,
+        description: eventForm?.internalPurpose || pf.description, // Show internal purpose or public description
         publicTitle: pf.title,
+        publicDescription: pf.description,
         audienceType: pf.audienceType,
         targetStage: pf.targetStage,
         isActive: pf.isActive,
         submissionCount: pf.submissionCount,
         customFieldsCount: customFieldsCount,
         event: pf.event,
+        eventId: pf.eventId,
         createdAt: pf.createdAt,
         updatedAt: pf.updatedAt
       };
