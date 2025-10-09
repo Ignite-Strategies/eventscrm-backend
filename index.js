@@ -59,7 +59,7 @@ app.use('/api/templates', templatesRouter);     // Email templates
 app.use('/api/email', emailRouter);             // Email sending
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/events', eventTasksRouter);       // Event tasks
-app.use('/api/public', formSubmissionRouter);   // Form submissions (no auth) - generic endpoint that reads form config!
+app.use('/api/forms', formSubmissionRouter);    // Form submissions (no auth) - matches frontend calls
 app.use('/api/forms/hydrator', formsHydratorRouter); // Form loading (public + edit)
 app.use('/api/forms/saver', formsSaverRouter);       // Form save/update/delete (authenticated)
 app.use('/api/admins', adminRouter);            // Admin operations

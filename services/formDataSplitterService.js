@@ -16,7 +16,8 @@ export function splitFormData(formData) {
     slug: formData.slug,
     title: formData.publicTitle || formData.title || formData.name, // Flexible
     description: formData.publicDescription || formData.description,
-    collectName: formData.collectName !== undefined ? formData.collectName : true,
+    collectFirstName: formData.collectFirstName !== undefined ? formData.collectFirstName : true,
+    collectLastName: formData.collectLastName !== undefined ? formData.collectLastName : true,
     collectEmail: formData.collectEmail !== undefined ? formData.collectEmail : true,
     collectPhone: formData.collectPhone !== undefined ? formData.collectPhone : true,
     audienceType: formData.audienceType,
@@ -51,7 +52,8 @@ export function splitFormUpdates(updateData) {
   if (updateData.title !== undefined && !updateData.publicTitle) publicFormUpdates.title = updateData.title;
   if (updateData.publicDescription !== undefined) publicFormUpdates.description = updateData.publicDescription;
   if (updateData.description !== undefined && !updateData.publicDescription) publicFormUpdates.description = updateData.description;
-  if (updateData.collectName !== undefined) publicFormUpdates.collectName = updateData.collectName;
+  if (updateData.collectFirstName !== undefined) publicFormUpdates.collectFirstName = updateData.collectFirstName;
+  if (updateData.collectLastName !== undefined) publicFormUpdates.collectLastName = updateData.collectLastName;
   if (updateData.collectEmail !== undefined) publicFormUpdates.collectEmail = updateData.collectEmail;
   if (updateData.collectPhone !== undefined) publicFormUpdates.collectPhone = updateData.collectPhone;
   if (updateData.audienceType !== undefined) publicFormUpdates.audienceType = updateData.audienceType;
