@@ -5,7 +5,7 @@
 
 /**
  * Parse PublicForm into clean structure for external rendering
- * @param {Object} publicForm - Full PublicForm with CustomFields
+ * @param {Object} publicForm - Full PublicForm with fields JSON
  * @returns {Object} - Clean public form structure
  */
 export function parsePublicFormToClean(publicForm) {
@@ -20,73 +20,41 @@ export function parsePublicFormToClean(publicForm) {
     targetStage: publicForm.targetStage,
     audienceType: publicForm.audienceType,
     
-    // Standard fields (always included if collectName/collectEmail/collectPhone is true)
+    // Combine standard fields + custom fields from JSON
     fields: []
   };
 
-  // Add standard fields if enabled
-  if (publicForm.collectName) {
-    cleanForm.fields.push({
-      id: 'name',
-      type: 'text',
-      label: 'Full Name',
-      placeholder: 'Enter your full name',
-      required: true,
-      order: 1
-    });
-  }
+  // Always add standard fields (hardcoded)
+  cleanForm.fields.push({
+    id: 'name',
+    type: 'text',
+    label: 'Full Name',
+    placeholder: 'Enter your full name',
+    required: true,
+    order: 1
+  });
 
-  if (publicForm.collectEmail) {
-    cleanForm.fields.push({
-      id: 'email',
-      type: 'email', 
-      label: 'Email Address',
-      placeholder: 'email@example.com',
-      required: true,
-      order: 2
-    });
-  }
+  cleanForm.fields.push({
+    id: 'email',
+    type: 'email', 
+    label: 'Email Address',
+    placeholder: 'email@example.com',
+    required: true,
+    order: 2
+  });
 
-  if (publicForm.collectPhone) {
-    cleanForm.fields.push({
-      id: 'phone',
-      type: 'tel',
-      label: 'Phone Number',
-      placeholder: '(555) 555-5555',
-      required: true,
-      order: 3
-    });
-  }
+  cleanForm.fields.push({
+    id: 'phone',
+    type: 'tel',
+    label: 'Phone Number',
+    placeholder: '(555) 555-5555',
+    required: publicForm.collectPhone || true, // Use flag if exists, default true
+    order: 3
+  });
 
-  // Add custom fields
-  if (publicForm.customFields && publicForm.customFields.length > 0) {
-    publicForm.customFields.forEach((customField, index) => {
-      const field = {
-        id: customField.id,
-        type: customField.fieldType,
-        label: customField.label,
-        placeholder: customField.placeholder,
-        required: customField.isRequired,
-        order: customField.displayOrder || (cleanForm.fields.length + 1)
-      };
-
-      // Add options for select/radio/checkbox fields
-      if (customField.options) {
-        try {
-          field.options = JSON.parse(customField.options);
-        } catch (e) {
-          console.warn('Failed to parse options for field:', customField.label);
-        }
-      }
-
-      // Add validation rules
-      if (customField.minLength) field.minLength = customField.minLength;
-      if (customField.maxLength) field.maxLength = customField.maxLength;
-      if (customField.minValue) field.minValue = customField.minValue;
-      if (customField.maxValue) field.maxValue = customField.maxValue;
-
-      cleanForm.fields.push(field);
-    });
+  // Add custom fields from JSON array
+  if (publicForm.fields && Array.isArray(publicForm.fields)) {
+    cleanForm.fields.push(...publicForm.fields);
   }
 
   // Sort fields by order

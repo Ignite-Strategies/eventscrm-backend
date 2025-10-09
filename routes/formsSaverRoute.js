@@ -1,4 +1,5 @@
 import express from 'express';
+import { cuid } from '@paralleldrive/cuid2';
 import { getPrismaClient } from '../config/database.js';
 import { splitFormData, splitFormUpdates, validateFormData } from '../services/formDataSplitterService.js';
 
@@ -41,15 +42,35 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    // Create PublicForm
+    // Process custom fields - generate IDs and format for JSON storage
+    const customFields = req.body.fields || [];
+    const fieldsArray = customFields.map((field, index) => ({
+      id: field.id || `custom_${cuid()}`, // Generate ID if not provided
+      type: field.type,
+      label: field.label,
+      placeholder: field.placeholder || '',
+      required: field.required || false,
+      options: field.options || undefined,
+      order: field.order || index + 4, // Start at 4 (after name, email, phone)
+      helpText: field.helpText || undefined,
+      minLength: field.minLength || undefined,
+      maxLength: field.maxLength || undefined,
+      min: field.min || undefined,
+      max: field.max || undefined
+    }));
+    
+    // Create PublicForm with fields JSON
     const publicForm = await prisma.publicForm.create({
-      data: publicFormData,
+      data: {
+        ...publicFormData,
+        fields: fieldsArray // JSON array of custom fields
+      },
       include: {
         event: true
       }
     });
     
-    console.log('✅ PublicForm created:', publicForm.slug);
+    console.log('✅ PublicForm created:', publicForm.slug, 'with', fieldsArray.length, 'custom fields');
     
     // Create EventForm (linked to PublicForm)
     const eventForm = await prisma.eventForm.create({
@@ -61,41 +82,10 @@ router.post('/', async (req, res) => {
     
     console.log('✅ EventForm created:', eventForm.internalName);
     
-    // Create CustomField records (linked to PublicForm)
-    const customFields = req.body.fields || [];
-    if (customFields.length > 0) {
-      const adminId = req.headers['x-admin-id'] || null;
-      
-      const dbCustomFields = customFields.map((field, index) => ({
-        publicFormId: publicForm.id,
-        eventId: publicForm.eventId,
-        adminId,
-        fieldType: field.type,
-        label: field.label,
-        placeholder: field.placeholder || null,
-        helpText: field.helpText || null,
-        isRequired: field.required || false,
-        minLength: field.minLength || null,
-        maxLength: field.maxLength || null,
-        minValue: field.min || null,
-        maxValue: field.max || null,
-        options: field.options ? JSON.stringify(field.options) : null,
-        displayOrder: field.order || index,
-        isActive: true
-      }));
-      
-      await prisma.customField.createMany({
-        data: dbCustomFields
-      });
-      
-      console.log('✅ CustomFields created:', customFields.length, 'fields');
-    }
-    
     // Return combined data
     res.json({
       publicForm,
-      eventForm,
-      customFieldsCount: customFields.length
+      eventForm
     });
     
   } catch (error) {
@@ -159,43 +149,31 @@ router.patch('/:formId', async (req, res) => {
       console.log('✅ EventForm updated');
     }
     
-    // Update custom fields if provided
-    if (req.body.fields) {
-      const customFields = req.body.fields;
+    // Update custom fields if provided (stored as JSON in PublicForm.fields)
+    if (req.body.fields !== undefined) {
+      const customFields = req.body.fields || [];
+      const fieldsArray = customFields.map((field, index) => ({
+        id: field.id || `custom_${cuid()}`,
+        type: field.type,
+        label: field.label,
+        placeholder: field.placeholder || '',
+        required: field.required || false,
+        options: field.options || undefined,
+        order: field.order || index + 4,
+        helpText: field.helpText || undefined,
+        minLength: field.minLength || undefined,
+        maxLength: field.maxLength || undefined,
+        min: field.min || undefined,
+        max: field.max || undefined
+      }));
       
-      // Delete existing custom fields for this PublicForm
-      await prisma.customField.deleteMany({
-        where: { publicFormId: publicForm.id }
+      // Update PublicForm with new fields array
+      publicForm = await prisma.publicForm.update({
+        where: { id: publicForm.id },
+        data: { fields: fieldsArray }
       });
       
-      // Create new custom fields
-      if (customFields.length > 0) {
-        const adminId = req.headers['x-admin-id'] || null;
-        
-        const dbCustomFields = customFields.map((field, index) => ({
-          publicFormId: publicForm.id,
-          eventId: publicForm.eventId,
-          adminId,
-          fieldType: field.type,
-          label: field.label,
-          placeholder: field.placeholder || null,
-          helpText: field.helpText || null,
-          isRequired: field.required || false,
-          minLength: field.minLength || null,
-          maxLength: field.maxLength || null,
-          minValue: field.min || null,
-          maxValue: field.max || null,
-          options: field.options ? JSON.stringify(field.options) : null,
-          displayOrder: field.order || index,
-          isActive: true
-        }));
-        
-        await prisma.customField.createMany({
-          data: dbCustomFields
-        });
-        
-        console.log('✅ CustomFields updated:', customFields.length, 'fields');
-      }
+      console.log('✅ Custom fields updated:', fieldsArray.length, 'fields');
     }
     
     res.json({
@@ -212,7 +190,7 @@ router.patch('/:formId', async (req, res) => {
 
 /**
  * DELETE /forms/:formId - Delete form
- * Deletes PublicForm (EventForm + CustomFields cascade)
+ * Deletes PublicForm (EventForm cascades, fields JSON is deleted with PublicForm)
  */
 router.delete('/:formId', async (req, res) => {
   try {
@@ -241,7 +219,7 @@ router.delete('/:formId', async (req, res) => {
       publicFormId = formId;
     }
     
-    // Delete PublicForm (this cascades to CustomFields and remaining EventForms)
+    // Delete PublicForm (this cascades to remaining EventForms, fields JSON deleted automatically)
     await prisma.publicForm.delete({
       where: { id: publicFormId }
     });

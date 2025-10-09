@@ -248,7 +248,6 @@ model Event {
   tasks           EventTask[]
   publicForms     PublicForm[]  // Public forms for external submissions
   eventForms      EventForm[]   // Internal CRM tracking forms
-  customFields    CustomField[] // Custom fields for this event
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -276,17 +275,18 @@ model PublicForm {
   description String? // "Fill out the form below to let us know..."
   
   // Standard Contact Fields (hardcoded for MVP1)
-  collectFirstName Boolean @default(true) // "First Name" field
-  collectLastName  Boolean @default(true) // "Last Name" field
-  collectEmail     Boolean @default(true) // "Email Address" field  
-  collectPhone     Boolean @default(true) // "Phone Number" field
+  collectName     Boolean @default(true) // "Full Name" field
+  collectEmail    Boolean @default(true) // "Email Address" field  
+  collectPhone    Boolean @default(true) // "Phone Number" field
   
   // MUTATION INSTRUCTIONS - Backend uses these on submission
   audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
   targetStage  String // "soft_commit", "paid", etc. - maps to EventAttendee.currentStage
   
+  // Custom Fields - JAMMED INTO PUBLICFORM for easy hydration!
+  fields Json? // Array of custom field objects: [{ id, type, label, placeholder, required, options, order }]
+  
   // Relations
-  customFields CustomField[] // Custom fields attached to this public form
   eventForms   EventForm[]   // Multiple internal EventForms can reference same PublicForm
   
   // Status & Analytics
@@ -340,9 +340,6 @@ model Admin {
   permissions Json?  // What they can do
   isActive    Boolean @default(true)
   
-  // Relations
-  customFields CustomField[]
-  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -350,48 +347,6 @@ model Admin {
   @@index([contactId])
   @@index([orgId])
   @@index([isActive])
-}
-
-// NEW: CustomField - Custom form fields created by admins
-// Links to PublicForm (not EventForm) for clean external hydration
-model CustomField {
-  id           String @id @default(cuid())
-  publicFormId String
-  publicForm   PublicForm @relation(fields: [publicFormId], references: [id], onDelete: Cascade)
-  eventId      String
-  event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  adminId      String?
-  admin        Admin? @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  
-  // Field Configuration
-  label        String // "How likely to attend?"
-  fieldType    String // "select", "radio", "checkbox", "text", "textarea", "number"
-  placeholder  String?
-  helpText     String?
-  
-  // Validation
-  isRequired   Boolean @default(false)
-  minLength    Int?
-  maxLength    Int?
-  minValue     Float?
-  maxValue     Float?
-  
-  // Options (for select/radio/checkbox)
-  options      Json? // [{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]
-  
-  // Display Order
-  displayOrder Int @default(0)
-  
-  // Field Settings
-  isActive     Boolean @default(true)
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@index([publicFormId])
-  @@index([eventId])
-  @@index([adminId])
-  @@index([fieldType])
 }
 
 // OLD: Legacy model, to be deprecated

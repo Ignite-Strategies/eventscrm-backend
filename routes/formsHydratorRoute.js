@@ -24,8 +24,7 @@ router.get('/', async (req, res) => {
       where: { orgId },
       include: {
         event: true,
-        eventForms: true,
-        customFields: true
+        eventForms: true
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -33,6 +32,7 @@ router.get('/', async (req, res) => {
     // Map to a clean structure for the frontend
     const formsList = publicForms.map(pf => {
       const eventForm = pf.eventForms[0]; // Get first EventForm (should only be one)
+      const customFieldsCount = pf.fields ? (Array.isArray(pf.fields) ? pf.fields.length : 0) : 0;
       return {
         id: eventForm?.id || pf.id, // Use EventForm ID if exists, otherwise PublicForm ID
         publicFormId: pf.id,
@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
         targetStage: pf.targetStage,
         isActive: pf.isActive,
         submissionCount: pf.submissionCount,
-        customFieldsCount: pf.customFields.length,
+        customFieldsCount: customFieldsCount,
         event: pf.event,
         createdAt: pf.createdAt,
         updatedAt: pf.updatedAt
@@ -70,15 +70,11 @@ router.get('/:slug', async (req, res) => {
     
     console.log('🔍 Loading public form for slug:', slug);
     
-    // Get PublicForm with all custom fields
+    // Get PublicForm (fields are in JSON, no need to include customFields relation)
     const publicForm = await prisma.publicForm.findUnique({
       where: { slug },
       include: {
-        event: true,
-        customFields: {
-          where: { isActive: true },
-          orderBy: { displayOrder: 'asc' }
-        }
+        event: true
       }
     });
     
@@ -90,7 +86,7 @@ router.get('/:slug', async (req, res) => {
       return res.status(400).json({ error: 'Form is not active' });
     }
     
-    // Convert to clean public form structure (combines standard + custom fields)
+    // Convert to clean public form structure (combines standard + custom fields from JSON)
     const cleanForm = parsePublicFormToClean(publicForm);
     
     console.log('✅ Public form loaded:', cleanForm.title, 'with', cleanForm.fields.length, 'fields');
@@ -120,9 +116,6 @@ router.get('/:formId/edit', async (req, res) => {
       include: {
         publicForm: {
           include: {
-            customFields: {
-              orderBy: { displayOrder: 'asc' }
-            },
             event: true
           }
         }
@@ -134,9 +127,6 @@ router.get('/:formId/edit', async (req, res) => {
       const publicForm = await prisma.publicForm.findUnique({
         where: { id: formId },
         include: {
-          customFields: {
-            orderBy: { displayOrder: 'asc' }
-          },
           event: true,
           eventForms: true // Get all EventForms linked to this PublicForm
         }
@@ -146,45 +136,41 @@ router.get('/:formId/edit', async (req, res) => {
         return res.status(404).json({ error: 'Form not found' });
       }
       
-      // Add standard fields to publicForm.customFields for frontend
+      // Combine standard fields + custom fields from JSON
       const allFields = [];
       
-      // Add standard fields based on flags
-      if (publicForm.collectName) {
-        allFields.push({
-          id: 'name',
-          fieldType: 'text',
-          label: 'Full Name',
-          placeholder: 'Enter your full name',
-          isRequired: true,
-          displayOrder: 1
-        });
-      }
+      // Always add standard fields (hardcoded)
+      allFields.push({
+        id: 'name',
+        type: 'text',
+        label: 'Full Name',
+        placeholder: 'Enter your full name',
+        required: true,
+        order: 1
+      });
       
-      if (publicForm.collectEmail) {
-        allFields.push({
-          id: 'email',
-          fieldType: 'email',
-          label: 'Email Address',
-          placeholder: 'email@example.com',
-          isRequired: true,
-          displayOrder: 2
-        });
-      }
+      allFields.push({
+        id: 'email',
+        type: 'email',
+        label: 'Email Address',
+        placeholder: 'email@example.com',
+        required: true,
+        order: 2
+      });
       
-      if (publicForm.collectPhone) {
-        allFields.push({
-          id: 'phone',
-          fieldType: 'tel',
-          label: 'Phone Number',
-          placeholder: '(555) 555-5555',
-          isRequired: true,
-          displayOrder: 3
-        });
-      }
+      allFields.push({
+        id: 'phone',
+        type: 'tel',
+        label: 'Phone Number',
+        placeholder: '(555) 555-5555',
+        required: publicForm.collectPhone || true, // Use flag if exists, default true
+        order: 3
+      });
       
-      // Add custom fields
-      allFields.push(...publicForm.customFields);
+      // Add custom fields from JSON
+      if (publicForm.fields && Array.isArray(publicForm.fields)) {
+        allFields.push(...publicForm.fields);
+      }
       
       // Return PublicForm data with first EventForm (or empty if none)
       return res.json({
@@ -198,46 +184,42 @@ router.get('/:formId/edit', async (req, res) => {
     
     console.log('✅ Form loaded for edit:', eventForm.internalName);
     
-    // Add standard fields to publicForm.customFields for frontend
+    // Combine standard fields + custom fields from JSON
     const publicForm = eventForm.publicForm;
     const allFields = [];
     
-    // Add standard fields based on flags
-    if (publicForm.collectName) {
-      allFields.push({
-        id: 'name',
-        fieldType: 'text',
-        label: 'Full Name',
-        placeholder: 'Enter your full name',
-        isRequired: true,
-        displayOrder: 1
-      });
-    }
+    // Always add standard fields (hardcoded)
+    allFields.push({
+      id: 'name',
+      type: 'text',
+      label: 'Full Name',
+      placeholder: 'Enter your full name',
+      required: true,
+      order: 1
+    });
     
-    if (publicForm.collectEmail) {
-      allFields.push({
-        id: 'email',
-        fieldType: 'email',
-        label: 'Email Address',
-        placeholder: 'email@example.com',
-        isRequired: true,
-        displayOrder: 2
-      });
-    }
+    allFields.push({
+      id: 'email',
+      type: 'email',
+      label: 'Email Address',
+      placeholder: 'email@example.com',
+      required: true,
+      order: 2
+    });
     
-    if (publicForm.collectPhone) {
-      allFields.push({
-        id: 'phone',
-        fieldType: 'tel',
-        label: 'Phone Number',
-        placeholder: '(555) 555-5555',
-        isRequired: true,
-        displayOrder: 3
-      });
-    }
+    allFields.push({
+      id: 'phone',
+      type: 'tel',
+      label: 'Phone Number',
+      placeholder: '(555) 555-5555',
+      required: publicForm.collectPhone || true,
+      order: 3
+    });
     
-    // Add custom fields
-    allFields.push(...publicForm.customFields);
+    // Add custom fields from JSON
+    if (publicForm.fields && Array.isArray(publicForm.fields)) {
+      allFields.push(...publicForm.fields);
+    }
     
     // Return combined EventForm + PublicForm data with all fields
     res.json({
