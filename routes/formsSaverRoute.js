@@ -1,10 +1,6 @@
 import express from 'express';
 import { getPrismaClient } from '../config/database.js';
 import { splitFormData, splitFormUpdates, validateFormData } from '../services/formDataSplitterService.js';
-import { 
-  validateCustomFields, 
-  formatCustomFieldsForDB 
-} from '../services/formFieldParserService.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -45,15 +41,6 @@ router.post('/', async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    // Frontend already filters out standard fields, so req.body.fields contains ONLY custom fields
-    const customFields = req.body.fields || [];
-    
-    // Validate custom fields
-    const fieldValidation = validateCustomFields(customFields);
-    if (!fieldValidation.isValid) {
-      return res.status(400).json({ error: fieldValidation.error });
-    }
-    
     // Create PublicForm
     const publicForm = await prisma.publicForm.create({
       data: publicFormData,
@@ -75,14 +62,27 @@ router.post('/', async (req, res) => {
     console.log('✅ EventForm created:', eventForm.internalName);
     
     // Create CustomField records (linked to PublicForm)
+    const customFields = req.body.fields || [];
     if (customFields.length > 0) {
       const adminId = req.headers['x-admin-id'] || null;
-      const dbCustomFields = formatCustomFieldsForDB(
-        customFields, 
-        publicForm.id,  // Link to publicForm, not eventForm!
-        publicForm.eventId, 
-        adminId
-      );
+      
+      const dbCustomFields = customFields.map((field, index) => ({
+        publicFormId: publicForm.id,
+        eventId: publicForm.eventId,
+        adminId,
+        fieldType: field.type,
+        label: field.label,
+        placeholder: field.placeholder || null,
+        helpText: field.helpText || null,
+        isRequired: field.required || false,
+        minLength: field.minLength || null,
+        maxLength: field.maxLength || null,
+        minValue: field.min || null,
+        maxValue: field.max || null,
+        options: field.options ? JSON.stringify(field.options) : null,
+        displayOrder: field.order || index,
+        isActive: true
+      }));
       
       await prisma.customField.createMany({
         data: dbCustomFields
@@ -161,14 +161,7 @@ router.patch('/:formId', async (req, res) => {
     
     // Update custom fields if provided
     if (req.body.fields) {
-      // Frontend already filtered - these are ONLY custom fields
       const customFields = req.body.fields;
-      
-      // Validate custom fields
-      const fieldValidation = validateCustomFields(customFields);
-      if (!fieldValidation.isValid) {
-        return res.status(400).json({ error: fieldValidation.error });
-      }
       
       // Delete existing custom fields for this PublicForm
       await prisma.customField.deleteMany({
@@ -178,12 +171,24 @@ router.patch('/:formId', async (req, res) => {
       // Create new custom fields
       if (customFields.length > 0) {
         const adminId = req.headers['x-admin-id'] || null;
-        const dbCustomFields = formatCustomFieldsForDB(
-          customFields, 
-          publicForm.id, 
-          publicForm.eventId, 
-          adminId
-        );
+        
+        const dbCustomFields = customFields.map((field, index) => ({
+          publicFormId: publicForm.id,
+          eventId: publicForm.eventId,
+          adminId,
+          fieldType: field.type,
+          label: field.label,
+          placeholder: field.placeholder || null,
+          helpText: field.helpText || null,
+          isRequired: field.required || false,
+          minLength: field.minLength || null,
+          maxLength: field.maxLength || null,
+          minValue: field.min || null,
+          maxValue: field.max || null,
+          options: field.options ? JSON.stringify(field.options) : null,
+          displayOrder: field.order || index,
+          isActive: true
+        }));
         
         await prisma.customField.createMany({
           data: dbCustomFields
