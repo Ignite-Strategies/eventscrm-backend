@@ -1,9 +1,10 @@
 import express from "express";
 import verifyGmailToken from "../middleware/verifyFirebaseToken.js";
 import { GmailService } from "../services/gmailService.js";
-import Template from "../models/Template.js";
+import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();
+const prisma = getPrismaClient();
 
 // POST /email/send - Send single email
 router.post("/send", verifyGmailToken, async (req, res) => {
@@ -22,7 +23,10 @@ router.post("/send", verifyGmailToken, async (req, res) => {
     let emailBody = body;
 
     if (templateId) {
-      const template = await Template.findById(templateId);
+      const template = await prisma.template.findUnique({
+        where: { id: templateId }
+      });
+      
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
@@ -40,9 +44,12 @@ router.post("/send", verifyGmailToken, async (req, res) => {
       }
 
       // Increment template usage
-      await Template.findByIdAndUpdate(templateId, {
-        $inc: { usageCount: 1 },
-        lastUsed: new Date()
+      await prisma.template.update({
+        where: { id: templateId },
+        data: {
+          usageCount: { increment: 1 },
+          lastUsed: new Date()
+        }
       });
     }
 
@@ -85,7 +92,10 @@ router.post("/send-bulk", verifyGmailToken, async (req, res) => {
     let emailBody = body;
 
     if (templateId) {
-      const template = await Template.findById(templateId);
+      const template = await prisma.template.findUnique({
+        where: { id: templateId }
+      });
+      
       if (!template) {
         return res.status(404).json({ error: "Template not found" });
       }
@@ -94,9 +104,12 @@ router.post("/send-bulk", verifyGmailToken, async (req, res) => {
       emailBody = template.body;
 
       // Increment template usage
-      await Template.findByIdAndUpdate(templateId, {
-        $inc: { usageCount: 1 },
-        lastUsed: new Date()
+      await prisma.template.update({
+        where: { id: templateId },
+        data: {
+          usageCount: { increment: 1 },
+          lastUsed: new Date()
+        }
       });
     }
 
@@ -150,11 +163,16 @@ router.get("/templates", verifyGmailToken, async (req, res) => {
       return res.status(400).json({ error: "orgId is required" });
     }
 
-    const templates = await Template.find({ 
-      orgId, 
-      isActive: true,
-      type: { $in: ["email", "invitation", "reminder", "follow_up"] }
-    }).sort({ name: 1 });
+    const templates = await prisma.template.findMany({ 
+      where: {
+        orgId, 
+        isActive: true,
+        type: { in: ["email", "invitation", "reminder", "follow_up"] }
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
 
     res.json(templates);
   } catch (error) {
