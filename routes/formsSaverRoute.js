@@ -1,5 +1,5 @@
 import express from 'express';
-import { cuid } from '@paralleldrive/cuid2';
+import { createId } from '@paralleldrive/cuid2';
 import { getPrismaClient } from '../config/database.js';
 import { splitFormData, splitFormUpdates, validateFormData } from '../services/formDataSplitterService.js';
 
@@ -45,7 +45,7 @@ router.post('/', async (req, res) => {
     // Process custom fields - generate IDs and format for JSON storage
     const customFields = req.body.fields || [];
     const fieldsArray = customFields.map((field, index) => ({
-      id: field.id || `custom_${cuid()}`, // Generate ID if not provided
+      id: field.id || `custom_${createId()}`, // Generate ID if not provided
       type: field.type,
       label: field.label,
       placeholder: field.placeholder || '',
@@ -153,7 +153,7 @@ router.patch('/:formId', async (req, res) => {
     if (req.body.fields !== undefined) {
       const customFields = req.body.fields || [];
       const fieldsArray = customFields.map((field, index) => ({
-        id: field.id || `custom_${cuid()}`,
+        id: field.id || `custom_${createId()}`,
         type: field.type,
         label: field.label,
         placeholder: field.placeholder || '',
