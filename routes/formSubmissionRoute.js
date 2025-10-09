@@ -82,9 +82,10 @@ router.post('/', async (req, res) => {
     // Check if EventAttendee already exists
     let attendee = await prisma.eventAttendee.findUnique({
       where: {
-        eventId_contactId: {
-          eventId: publicForm.eventId,
-          contactId: contact.id
+        eventId_contactId_audienceType: {
+          eventId: eventId,
+          contactId: contact.id,
+          audienceType: publicForm.audienceType
         }
       }
     });
