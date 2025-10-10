@@ -60,6 +60,10 @@ model Contact {
   email     String
   phone     String?
   
+  // Contact List Relationship (THE CLEAN WAY!)
+  contactListId String?
+  contactList   ContactList? @relation(fields: [contactListId], references: [id])
+  
   // Relations
   eventAttendees   EventAttendee[] // Events they're attending
   orgMember        OrgMember? // If promoted to master list
@@ -73,6 +77,7 @@ model Contact {
   @@unique([orgId, email])
   @@index([orgId])
   @@index([email])
+  @@index([contactListId]) // FAST LOOKUPS!
 }
 
 // NEW: OrgMember - Promoted contacts in master list
@@ -518,6 +523,7 @@ model ContactList {
   tags          String[]
   
   // Relations
+  contacts  Contact[]  // Contacts in this list (THE CLEAN WAY!)
   campaigns Campaign[] // Campaigns using this list
   
   createdAt DateTime @default(now())

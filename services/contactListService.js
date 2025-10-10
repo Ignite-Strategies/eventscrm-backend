@@ -31,46 +31,83 @@ class ContactListService {
       data: contactListData
     });
     
-    // Calculate initial contact count
-    await this.updateContactCount(contactList);
+    // Find matching contacts and set their contactListId
+    await this.populateContactList(contactList);
     
     return contactList;
   }
   
   /**
-   * Get all contacts for a specific list (THE MAIN MAGIC!)
+   * Get all contacts for a specific list (THE CLEAN WAY!)
    */
   static async getContactsForList(listId) {
+    // SIMPLE QUERY - Just look for contacts with this contactListId!
+    const contacts = await prisma.contact.findMany({
+      where: { contactListId: listId },
+      include: {
+        orgMember: true,
+        eventAttendees: {
+          include: {
+            event: true
+          }
+        }
+      }
+    });
+    
+    // Update usage tracking
     const contactList = await prisma.contactList.findUnique({
       where: { id: listId }
     });
-    if (!contactList) {
-      throw new Error("Contact list not found");
+    if (contactList) {
+      await this.trackUsage(contactList);
     }
     
-    let contacts = [];
+    return contacts;
+  }
+  
+  /**
+   * Populate contact list by setting contactListId on matching contacts
+   */
+  static async populateContactList(contactList) {
+    let matchingContacts = [];
     
     switch (contactList.type) {
       case "contact":
-        contacts = await this.getGeneralContacts(contactList);
+        matchingContacts = await this.getGeneralContacts(contactList);
         break;
         
       case "org_member":
-        contacts = await this.getOrgMemberContacts(contactList);
+        matchingContacts = await this.getOrgMemberContacts(contactList);
         break;
         
       case "event_attendee":
-        contacts = await this.getEventAttendeeContacts(contactList);
+        matchingContacts = await this.getEventAttendeeContacts(contactList);
         break;
         
       default:
         throw new Error(`Unknown list type: ${contactList.type}`);
     }
     
-    // Update usage tracking
-    await this.trackUsage(contactList);
+    // Set contactListId on all matching contacts
+    const contactIds = matchingContacts.map(c => c.id);
     
-    return contacts;
+    await prisma.contact.updateMany({
+      where: { id: { in: contactIds } },
+      data: { contactListId: contactList.id }
+    });
+    
+    console.log(`✅ Populated ${contactIds.length} contacts in list "${contactList.name}"`);
+    
+    // Update contact count
+    await prisma.contactList.update({
+      where: { id: contactList.id },
+      data: { 
+        totalContacts: contactIds.length,
+        lastUpdated: new Date()
+      }
+    });
+    
+    return contactIds.length;
   }
   
   /**
