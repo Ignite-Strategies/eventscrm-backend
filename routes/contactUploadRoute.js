@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { readCSV } from '../services/csvReader.js';
+import { normalizeRecord } from '../services/csvNormalizer.js';
 import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();
@@ -33,17 +34,20 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: readResult.error });
     }
     
-    // 2. Simple Contact field mapping (just the basics)
+    // 2. Normalize field names (existing service)
+    const normalizedRecords = readResult.records.map(record => normalizeRecord(record));
+    
+    // 3. Filter for Contact fields only
     const contactRecords = [];
     const errors = [];
     
-    for (const record of readResult.records) {
-      // Map CSV fields to Contact fields (simple mapping)
+    for (const record of normalizedRecords) {
+      // Extract only Contact fields
       const contactData = {
-        firstName: record['first name'] || record['firstname'] || record['firstName'] || record['fname'] || '',
-        lastName: record['last name'] || record['lastname'] || record['lastName'] || record['lname'] || '',
-        email: record['email'] || record['email address'] || record['e-mail'] || '',
-        phone: record['phone'] || record['phone number'] || record['mobile'] || record['cell'] || null
+        firstName: record.firstName || '',
+        lastName: record.lastName || '',
+        email: record.email || '',
+        phone: record.phone || null
       };
       
       // Basic validation
