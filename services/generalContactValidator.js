@@ -106,3 +106,4 @@ export function validateContactBatch(records) {
     errorCount: errors.length
   };
 }
+

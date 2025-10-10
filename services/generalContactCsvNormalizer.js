@@ -80,3 +80,4 @@ export function getAvailableContactFields() {
     { value: 'phone', label: 'Phone Number' }
   ];
 }
+
