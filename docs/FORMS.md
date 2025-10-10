@@ -58,7 +58,7 @@ router.get('/:slug', async (req, res) => {
   }
   
   // JUST RETURN WHAT'S IN THE DATABASE
-  res.json({
+  res.json({ 
     id: publicForm.id,
     slug: publicForm.slug,
     title: publicForm.title,

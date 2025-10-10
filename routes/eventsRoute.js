@@ -96,33 +96,5 @@ router.patch('/:eventId', async (req, res) => {
   }
 });
 
-// Get pipeline config for event
-router.get('/:eventId/pipeline-config', async (req, res) => {
-  try {
-    const event = await prisma.event.findUnique({
-      where: { id: req.params.eventId },
-      include: { org: true }
-    });
-    if (!event) return res.status(404).json({ error: 'Event not found' });
-    
-    res.json({
-      pipelines: event.pipelines || event.org.pipelineDefaults,
-      pipelineRules: {
-        autoSopOnIntake: event.autoSopOnIntake,
-        sopTriggers: event.sopTriggers,
-        rsvpTriggers: event.rsvpTriggers,
-        paidTriggers: event.paidTriggers,
-        championCriteria: {
-          minEngagement: event.minEngagement,
-          tagsAny: event.championTags,
-          manualOverrideAllowed: event.manualOverrideAllowed
-        }
-      }
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
 export default router;
 

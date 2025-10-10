@@ -1,5 +1,19 @@
 # Database Schema Architecture
 
+## ⚠️ DEPRECATED ROUTES - DO NOT USE
+**These routes are deleted and cause rabbit holes:**
+
+- ~~`GET /api/events/:eventId/pipeline-config`~~ → **DELETED** 
+- ~~Old pipeline config system~~ → **Use EventAttendee data directly**
+
+**Current Approach:**
+- Fetch existing `EventAttendee` records for the event
+- Extract unique `audienceType` and `currentStage` values
+- Use those for dropdowns and validation
+- **Never** use hardcoded pipeline configs
+
+---
+
 ## 🎯 Core Philosophy
 
 This CRM supports **two organizational models**:
@@ -121,21 +135,29 @@ Currently exists but **not actively used**.
 ---
 
 ### `EventAttendee` ⭐ **EVENT-SPECIFIC TRACKING**
-**Links an OrgMember to a specific event with pipeline tracking.**
+**Links a Contact to a specific event with pipeline tracking.**
 
 **Key Concept:** Same person can be in multiple events at different stages!
 
 **Key Fields:**
 - `contactId` - Links to universal person record (Contact)
 - `eventId` - Which event
+- `orgId` - Organization context
 - `currentStage` - Pipeline stage for THIS event
-  - `"in_funnel"`, `"general_awareness"`, `"personal_invite"`, etc.
-- `audienceType` - How they were added
-  - `"org_members"`, `"friends_family"`, `"landing_page_public"`, `"community_partners"`, `"cold_outreach"`
+  - `"in_funnel"`, `"prospect"`, `"registered"`, `"attended"`, etc.
+- `audienceType` - How they were added ⚠️ **FIXED VALUES ONLY:**
+  - `"org_members"` - Internal team members
+  - `"friends_family"` - Personal network
+  - `"landing_page_public"` - Public signups
+  - `"community_partners"` - Partner organizations
+  - `"cold_outreach"` - Cold prospects
+- `submittedFormId` - Links to PublicForm if they filled one out
 - `attended` - Did they show up?
 - `amountPaid` - Ticket cost
 - `ticketType` - VIP, General, etc.
 - `notes` - JSON with custom form field responses
+
+**⚠️ CRITICAL:** Do NOT use old pipeline config routes! Use EventAttendee data directly.
 
 **Example:**
 ```
