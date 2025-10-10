@@ -72,6 +72,8 @@ app.use('/api/contacts', contactHydrateRouter);   // Contact hydration (GET)
 app.use('/api/contacts', contactSaveRouter);      // Contact save (POST/PATCH)  
 app.use('/api/contacts', contactDeleteRouter);    // Contact delete (DELETE)
 app.use('/api/contacts', contactUploadRouter);    // Contact CSV upload
+app.use('/api/contacts', generalContactUploadRouter);    // General Contact preview
+app.use('/api/contacts', generalContactSaverRouter);    // General Contact save
 app.use('/api/events', pipelineHydrationRouter); // Pipeline hydration (EventAttendee-based, no EventPipeline model)
 // app.use('/api', stageRouter);                   // Stage definitions (hydrated from database) // TODO: Create this route
 
