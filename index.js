@@ -14,6 +14,8 @@ import eventAttendeeListRouter from './routes/eventAttendeeListRoute.js';
 import templatesRouter from './routes/templatesRoute.js';
 import emailRouter from './routes/emailRoute.js';
 import contactListsRouter from './routes/contactListsRoute.js';
+import campaignRouter from './routes/campaignRoute.js';
+import sequenceRouter from './routes/sequenceRoute.js';
 import eventTasksRouter from './routes/eventTasksRoute.js';
 import publicFormSubmissionRouter from './routes/publicFormSubmissionRoute.js';
 import formDashHydratorRouter from './routes/formDashHydratorRoute.js';
@@ -57,6 +59,8 @@ app.use('/api/events', eventAttendeeListRouter); // Attendee list (paid/soft_com
 app.use('/api/templates', templatesRouter);     // Email templates
 app.use('/api/email', emailRouter);             // Email sending
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
+app.use('/api/campaigns', campaignRouter);      // Campaigns (bulk email)
+app.use('/api/sequences', sequenceRouter);      // Sequences (individual emails in campaigns)
 app.use('/api/events', eventTasksRouter);       // Event tasks
 app.use('/api/contacts', publicFormSubmissionRouter); // Public form submission (external users)
 app.use('/api/forms/public', formsPublicHydrateRouter); // Public form hydration (external users)

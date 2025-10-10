@@ -1,9 +1,27 @@
 import express from "express";
 import { getPrismaClient } from "../config/database.js";
 import ContactListService from "../services/contactListService.js";
+import ContactListFormHydrator from "../services/contactListFormHydrator.js";
 
 const router = express.Router();
 const prisma = getPrismaClient();
+
+// GET /contact-lists/form-data - Get form hydration data (MUST BE BEFORE /:listId)
+router.get("/form-data", async (req, res) => {
+  try {
+    const { orgId } = req.query;
+    
+    if (!orgId) {
+      return res.status(400).json({ error: "orgId is required" });
+    }
+    
+    const formData = await ContactListFormHydrator.getFormData(orgId);
+    res.json(formData);
+  } catch (error) {
+    console.error("Error fetching form data:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // GET /contact-lists - Get all contact lists for org
 router.get("/", async (req, res) => {

@@ -42,6 +42,7 @@ model Organization {
   templates     Template[]
   contactLists  ContactList[]
   admins        Admin[]
+  campaigns     Campaign[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -60,9 +61,11 @@ model Contact {
   phone     String?
   
   // Relations
-  eventAttendees EventAttendee[] // Events they're attending
-  orgMember      OrgMember? // If promoted to master list
-  admin          Admin?     // If they're an admin
+  eventAttendees   EventAttendee[] // Events they're attending
+  orgMember        OrgMember? // If promoted to master list
+  admin            Admin?     // If they're an admin
+  sequenceContacts SequenceContact[] // Campaign tracking
+  emailEvents      EmailEvent[] // Email engagement
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -119,9 +122,6 @@ model OrgMember {
   
   // Engagement Tracking
   categoryOfEngagement String @default("medium") // "high", "medium", "low", "inactive"
-  
-  // Relations
-  contactListMembers ContactListMember[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -445,7 +445,6 @@ model FamilyProspect {
   
   // Relations
   tags         FamilyProspectTag[]
-  contactListMembers ContactListMember[]
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -481,6 +480,9 @@ model Template {
   isActive    Boolean @default(true)
   createdBy   String?
   
+  // Relations
+  sequences   Sequence[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
@@ -493,9 +495,9 @@ model ContactList {
   org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name        String
   description String?
-  type        String // "manual", "pipeline", "tag_based", "dynamic"
+  type        String // "contact", "org_member", "event_attendee"
   
-  // Pipeline lists
+  // Event attendee filtering
   eventId     String?
   audienceType String?
   stages      String[]
@@ -516,7 +518,7 @@ model ContactList {
   tags          String[]
   
   // Relations
-  members ContactListMember[]
+  campaigns Campaign[] // Campaigns using this list
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -525,22 +527,119 @@ model ContactList {
   @@index([orgId])
 }
 
-model ContactListMember {
-  id            String @id @default(cuid())
-  contactListId String
-  contactList   ContactList @relation(fields: [contactListId], references: [id], onDelete: Cascade)
+// CAMPAIGN - The overall campaign (e.g., "Bros & Brews 2025 Outreach")
+model Campaign {
+  id          String @id @default(cuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   
-  // Can link to either OrgMember OR Supporter OR Prospect
-  orgMemberId   String?
-  orgMember     OrgMember? @relation(fields: [orgMemberId], references: [id], onDelete: Cascade)
-  prospectId    String?
-  prospect      FamilyProspect? @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  name        String // "Bros & Brews 2025 Outreach"
+  description String?
   
-  addedAt DateTime @default(now())
+  // Targeting - applies to all sequences in campaign
+  contactListId String?
+  contactList   ContactList? @relation(fields: [contactListId], references: [id])
   
-  @@index([contactListId])
-  @@index([orgMemberId])
-  @@index([prospectId])
+  // Status
+  status      String @default("draft") // "draft", "active", "paused", "completed"
+  
+  // Relations
+  sequences   Sequence[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([orgId, name])
+  @@index([orgId])
+  @@index([status])
+}
+
+// SEQUENCE - Individual email in a campaign (e.g., "Initial Invite", "Follow-up")
+model Sequence {
+  id          String @id @default(cuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  name        String // "Initial Invite", "Follow-up 4 days later"
+  subject     String
+  html        String
+  
+  // Template support
+  templateId  String?
+  template    Template? @relation(fields: [templateId], references: [id])
+  
+  // Timing
+  delayDays   Int @default(0) // 0 for first email, 4 for follow-up, 7 for last call
+  order       Int // 1, 2, 3... for sequence order
+  
+  // Status
+  status      String @default("draft") // "draft", "sending", "sent", "paused"
+  sentAt      DateTime?
+  
+  // Relations
+  sequenceContacts SequenceContact[]
+  emailEvents      EmailEvent[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([campaignId, name])
+  @@index([campaignId, order])
+  @@index([status])
+}
+
+// SEQUENCE CONTACT - Junction table with status tracking
+model SequenceContact {
+  id          String @id @default(cuid())
+  sequenceId  String
+  sequence    Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  contactId   String
+  contact     Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  
+  // Status tracking
+  status      String @default("pending") // "pending", "sent", "delivered", "opened", "clicked", "responded", "suppressed"
+  
+  // SendGrid tracking
+  sgMessageId String?
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  respondedAt DateTime?
+  
+  // Suppression logic
+  suppressReason String? // "responded", "bounced", "unsubscribed", "spam_report"
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // CONSTRAINTS - Surgical precision
+  @@unique([sequenceId, contactId]) // One contact per sequence
+  @@index([sequenceId, status])
+  @@index([contactId, status])
+  @@index([sgMessageId])
+}
+
+// EMAIL EVENT - SendGrid webhook events
+model EmailEvent {
+  id          String @id @default(cuid())
+  sequenceId  String?
+  sequence    Sequence? @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  contactId   String?
+  contact     Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  
+  email       String
+  eventType   String // "delivered", "open", "click", "bounce", "unsubscribe", "spam_report"
+  timestamp   DateTime
+  url         String? // For click events
+  sgMessageId String? // SendGrid message ID
+  
+  createdAt DateTime @default(now())
+  
+  @@index([email])
+  @@index([sequenceId])
+  @@index([eventType])
+  @@index([sgMessageId])
 }
 
 // EventLocation - BREADCRUMB for future venue reuse feature
