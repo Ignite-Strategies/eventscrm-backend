@@ -1,0 +1,20 @@
+[33m10d6a1f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Also make Admin.orgId optional - same reason as Contact
+[33m965c5da[m Make Contact.orgId optional - fixes auth and upload flows
+[33m814708c[m  CLEAN CONTACT LIST RELATIONSHIPS
+[33mfe8fb50[m  SURGICAL CAMPAIGN SYSTEM - Apollo-style bulk email
+[33me23b7c5[m Refactor: Contact-First Architecture - modular routes, cleanup deprecated files
+[33m721a78f[m FIX SCHEMA: Add collectFirstName/collectLastName, fix form submission route registration
+[33m3dd1f83[m REFACTOR: Replace CustomField table with JSON fields array in PublicForm - Kill CustomField model entirely - Store custom fields as JSON array in PublicForm.fields - Update formsSaverRoute to generate field IDs and save to JSON - Update formsHydratorRoute to combine hardcoded standard fields + JSON custom fields - Update publicFormParserService to read from JSON instead of relations - Hardcode name/email/phone as always-present standard fields - Hydration now works with one query, no joins needed
+[33m8e5206b[m Change collectName to collectFirstName + collectLastName - better data collection
+[33m37c1614[m MAJOR: Split EventForm into PublicForm + EventForm for clean separation
+[33mc17b86d[m Add missing GET route for OrgMember by ID - fix Welcome.jsx hydration
+[33m9839eb6[m Fix schema validation errors - add @unique to Admin.contactId and customFields relation to Event
+[33mc0273ed[m Add Admin and CustomField models - full relational approach for custom form fields
+[33mba2518d[m Make internalName optional for migration - fix deployment issue
+[33m9a458b9[m Fix forms route to use new schema - internalName, collectName/Email/Phone, FormField records
+[33mbff8e68[m Add DATA_FLOW.md + update schema comments to clarify EventForm.targetStage maps to EventAttendee.currentStage
+[33m24fa077[m NUKE EventPipeline: Remove EventPipeline model, use hardcoded audienceType in EventForm and EventAttendee. Delete eventPipelinesRoute.
+[33ma994735[m SAFE MIGRATION: Make OrgMember.contactId optional + add firstName/lastName/email/phone fields to preserve existing user data
+[33ma1b000d[m Fix Prisma schema - add missing OrgMember relations for Organization.members and ContactListMember
+[33m826a279[m REFACTOR: Add Contact model - universal person record. OrgMember now extends Contact with org-specific data. EventAttendee links to Contact.
+[33ma003a80[m FIX: Add eventPipelineService stub functions and update EventForm model

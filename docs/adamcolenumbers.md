@@ -13,11 +13,13 @@
 - **ID**: `cmgfvz9v10000nt284k875eoc`
 
 ### Contact
-- **ID**: `contact_93046460`
+- **ID**: `contact_531721612`
 - **Email**: `adam.cole.novadude@gmail.com`
+- **Updated**: Oct 10, 2025 (rebuilt after auth issue)
 
 ### Admin
-- **ID**: `admin_bf849502`
+- **ID**: `admin_432599718`
+- **Updated**: Oct 10, 2025 (rebuilt after auth issue)
 
 ### Event
 - **ID**: `cmggljv7z0002nt28gckp1jpe`
