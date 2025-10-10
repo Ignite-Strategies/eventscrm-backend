@@ -11,69 +11,69 @@ datasource db {
 }
 
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  mission   String?
-  website   String?
-  
+  id      String  @id @default(cuid())
+  name    String
+  slug    String  @unique
+  mission String?
+  website String?
+
   // Social media
   x         String?
   instagram String?
   facebook  String?
   linkedin  String?
-  
+
   // Address
-  street    String?
-  city      String?
-  state     String?
-  zip       String?
-  
+  street String?
+  city   String?
+  state  String?
+  zip    String?
+
   // Pipeline defaults
   pipelineDefaults String[] @default(["sop_entry", "rsvp", "paid", "attended", "champion"])
   audienceDefaults String[] @default(["org_members", "friends_family", "community_partners", "local_businesses", "general_public"])
-  
+
   // Relations
-  contacts      Contact[] // Universal person records
-  members       OrgMember[] // Promoted contacts in master list
-  supporters    Supporter[] // Legacy, to be deprecated
+  contacts        Contact[] // Universal person records
+  members         OrgMember[] // Promoted contacts in master list
+  supporters      Supporter[] // Legacy, to be deprecated
   familyProspects FamilyProspect[]
-  events        Event[]
-  templates     Template[]
-  contactLists  ContactList[]
-  admins        Admin[]
-  campaigns     Campaign[]
-  
+  events          Event[]
+  templates       Template[]
+  contactLists    ContactList[]
+  admins          Admin[]
+  campaigns       Campaign[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 // NEW: Contact - Universal person record (everyone starts here)
 model Contact {
-  id        String @id @default(cuid())
-  orgId     String
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  
+  id    String        @id @default(cuid())
+  orgId String?
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
   // Basic Info (minimal)
   firstName String
   lastName  String
   email     String
   phone     String?
-  
+
   // Contact List Relationship (THE CLEAN WAY!)
   contactListId String?
   contactList   ContactList? @relation(fields: [contactListId], references: [id])
-  
+
   // Relations
   eventAttendees   EventAttendee[] // Events they're attending
   orgMember        OrgMember? // If promoted to master list
-  admin            Admin?     // If they're an admin
+  admin            Admin? // If they're an admin
   sequenceContacts SequenceContact[] // Campaign tracking
   emailEvents      EmailEvent[] // Email engagement
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([orgId, email])
   @@index([orgId])
   @@index([email])
@@ -82,162 +82,162 @@ model Contact {
 
 // NEW: OrgMember - Promoted contacts in master list
 model OrgMember {
-  id        String @id @default(cuid())
-  contactId String? @unique
+  id        String   @id @default(cuid())
+  contactId String?  @unique
   contact   Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  
+
   // Organization link (for members relation in Organization model)
-  orgId     String?
-  org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  
+  orgId String?
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
   // Basic auth fields (for users without Contact link yet)
   firstName String?
   lastName  String?
   email     String?
   phone     String?
-  
+
   // Extended Contact Info (beyond basic Contact)
-  goesBy    String?
-  street    String?
-  city      String?
-  state     String?
-  zip       String?
-  
+  goesBy String?
+  street String?
+  city   String?
+  state  String?
+  zip    String?
+
   // Organization Context
   employer              String?
   yearsWithOrganization Int?
-  
+
   // Personal Information
   birthday     String? // Format: "MM/DD"
   married      Boolean @default(false)
   spouseName   String?
   numberOfKids Int     @default(0)
-  
+
   // Story & Notes
   originStory String?
   notes       String?
-  
+
   // App Access (optional - only for team members who can login)
   role       String? // "owner", "manager", or null
   firebaseId String? @unique
   photoURL   String?
-  
+
   // Leadership Tags (Board, Committee, VIP, Donor, Volunteer)
-  tags      String[] @default([])
-  
+  tags String[] @default([])
+
   // Engagement Tracking
   categoryOfEngagement String @default("medium") // "high", "medium", "low", "inactive"
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([contactId])
   @@index([firebaseId])
   @@index([orgId])
 }
 
 model Supporter {
-  id        String @id @default(cuid())
-  orgId     String
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  
+  id    String       @id @default(cuid())
+  orgId String
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
   // Contact Info
   firstName String
   goesBy    String?
   lastName  String
   email     String?
   phone     String?
-  
+
   // Address
-  street    String?
-  city      String?
-  state     String?
-  zip       String?
-  
+  street String?
+  city   String?
+  state  String?
+  zip    String?
+
   // Organization Context
   employer              String?
   yearsWithOrganization Int?
-  
+
   // Engagement Tracking
   categoryOfEngagement String @default("medium") // "high", "medium", "low", "inactive"
-  
+
   // Personal Information
   birthday     String? // Format: "MM/DD"
   married      Boolean @default(false)
   spouseName   String?
   numberOfKids Int     @default(0)
-  
+
   // Story & Notes
   originStory String?
   notes       String?
-  
+
   // Relations
-  tags         SupporterTag[]
+  tags            SupporterTag[]
   pipelineEntries EventPipelineEntry[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([orgId, email])
   @@index([orgId])
 }
 
 model SupporterTag {
-  id         String @id @default(cuid())
+  id          String    @id @default(cuid())
   supporterId String
-  supporter  Supporter @relation(fields: [supporterId], references: [id], onDelete: Cascade)
-  name       String // e.g., "knows_organizer", "high_value"
-  value      String // e.g., "true", "false", "downtown"
-  addedBy    String
-  addedAt    DateTime @default(now())
-  
+  supporter   Supporter @relation(fields: [supporterId], references: [id], onDelete: Cascade)
+  name        String // e.g., "knows_organizer", "high_value"
+  value       String // e.g., "true", "false", "downtown"
+  addedBy     String
+  addedAt     DateTime  @default(now())
+
   @@index([supporterId])
 }
 
 model Event {
-  id        String @id @default(cuid())
-  orgId     String
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  name      String
-  slug      String
+  id          String       @id @default(cuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name        String
+  slug        String
   description String?
-  date      String? // FLEXIBLE: "2025-10-23", "10/23/2025", whatever!
-  time      String? // FLEXIBLE: "6:00 PM - 9:00 PM", "6 PM", "9:00", whatever!
-  
+  date        String? // FLEXIBLE: "2025-10-23", "10/23/2025", whatever!
+  time        String? // FLEXIBLE: "6:00 PM - 9:00 PM", "6 PM", "9:00", whatever!
+
   // MVP1: Single Active Event
-  status    String @default("upcoming") // "upcoming", "active", "past", "draft"
-  
+  status String @default("upcoming") // "upcoming", "active", "past", "draft"
+
   // Event Location (NOT confused with Contact location)
   eventVenueName String?
   eventStreet    String?
   eventCity      String?
   eventState     String?
   eventZip       String?
-  
+
   hasTickets Boolean @default(false)
-  ticketCost  Float   @default(0)
-  
+  ticketCost Float   @default(0)
+
   // Fundraising Goals
   fundraisingGoal    Float @default(0)
   additionalExpenses Float @default(0)
-  
+
   // Pipeline overrides
   pipelines String[] // optional override of org defaults
-  
+
   // Pipeline Rules
-  autoSopOnIntake     Boolean @default(true)
-  sopTriggers         String[] @default(["landing_form", "csv", "qr", "admin_add"])
-  rsvpTriggers        String[] @default(["form_rsvp", "button_click"])
-  paidTriggers        String[] @default(["stripe_webhook"])
-  minEngagement       Int     @default(3)
-  championTags        String[] @default(["role:ao_q", "role:influencer", "shared_media"])
-  manualOverrideAllowed Boolean @default(true)
-  
+  autoSopOnIntake       Boolean  @default(true)
+  sopTriggers           String[] @default(["landing_form", "csv", "qr", "admin_add"])
+  rsvpTriggers          String[] @default(["form_rsvp", "button_click"])
+  paidTriggers          String[] @default(["stripe_webhook"])
+  minEngagement         Int      @default(3)
+  championTags          String[] @default(["role:ao_q", "role:influencer", "shared_media"])
+  manualOverrideAllowed Boolean  @default(true)
+
   // Goals
   totalFundraise Float @default(0)
   ticketTarget   Int   @default(0)
   costs          Float @default(0)
-  
+
   // Audience Segmentation
   membersConversionRate Float @default(0.25) // 25%
   membersTargetCount    Int   @default(0)
@@ -246,21 +246,20 @@ model Event {
   adsConversionRate     Float @default(0.05) // 5%
   adsTargetCount        Int   @default(0)
   totalOutreachTarget   Int   @default(0)
-  
+
   // Relations
   pipelineEntries EventPipelineEntry[] // OLD: Legacy, to be deprecated
   attendees       EventAttendee[]
   tasks           EventTask[]
-  publicForms     PublicForm[]  // Public forms for external submissions
-  eventForms      EventForm[]   // Internal CRM tracking forms
-  
+  publicForms     PublicForm[] // Public forms for external submissions
+  eventForms      EventForm[] // Internal CRM tracking forms
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([orgId, slug])
   @@index([orgId])
 }
-
 
 // REMOVED: EventPipeline - Deprecated for MVP1
 // Audience types are now hardcoded strings in EventForm.audienceType and EventAttendee.audienceType
@@ -269,40 +268,40 @@ model Event {
 // PUBLIC FORM - External-facing form for submissions
 // This is what external users interact with
 model PublicForm {
-  id          String @id @default(cuid())
-  orgId       String  // For relational integrity
-  eventId     String  // For relational integrity
-  event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
+  id      String @id @default(cuid())
+  orgId   String // For relational integrity
+  eventId String // For relational integrity
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   // Public fields (what users see)
-  slug        String @unique // "bros-soft-commit"
+  slug        String  @unique // "bros-soft-commit"
   title       String // "Sign up for Bros & Brews!"
   description String? // "Fill out the form below to let us know..."
-  
+
   // Standard Contact Fields (hardcoded for MVP1)
-  collectFirstName    Boolean @default(true) // "First Name" field
-  collectLastName     Boolean @default(true) // "Last Name" field
-  collectEmail        Boolean @default(true) // "Email Address" field  
-  collectPhone        Boolean @default(true) // "Phone Number" field
-  
+  collectFirstName Boolean @default(true) // "First Name" field
+  collectLastName  Boolean @default(true) // "Last Name" field
+  collectEmail     Boolean @default(true) // "Email Address" field  
+  collectPhone     Boolean @default(true) // "Phone Number" field
+
   // MUTATION INSTRUCTIONS - Backend uses these on submission
   audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
   targetStage  String // "soft_commit", "paid", etc. - maps to EventAttendee.currentStage
-  
+
   // Custom Fields - JAMMED INTO PUBLICFORM for easy hydration!
   fields Json? // Array of custom field objects: [{ id, type, label, placeholder, required, options, order }]
-  
+
   // Relations
-  eventForms   EventForm[]   // Multiple internal EventForms can reference same PublicForm
+  eventForms     EventForm[] // Multiple internal EventForms can reference same PublicForm
   eventAttendees EventAttendee[] // Track which attendees came from this form
-  
+
   // Status & Analytics
-  isActive          Boolean @default(true)
-  submissionCount   Int @default(0)
-  
+  isActive        Boolean @default(true)
+  submissionCount Int     @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([slug])
   @@index([eventId])
   @@index([orgId])
@@ -312,23 +311,23 @@ model PublicForm {
 // EVENT FORM - Internal CRM tracking
 // Links to PublicForm for external submissions
 model EventForm {
-  id              String @id @default(cuid())
-  publicFormId    String
-  publicForm      PublicForm @relation(fields: [publicFormId], references: [id], onDelete: Cascade)
-  orgId           String  // For relational integrity
-  eventId         String  // For relational integrity
-  event           Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
+  id           String     @id @default(cuid())
+  publicFormId String
+  publicForm   PublicForm @relation(fields: [publicFormId], references: [id], onDelete: Cascade)
+  orgId        String // For relational integrity
+  eventId      String // For relational integrity
+  event        Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   // Internal CRM fields
-  internalName     String  // "Bros & Brews Soft Commit Form"
-  internalPurpose  String? // "Collect soft commits for Bros & Brews event"
-  
+  internalName    String // "Bros & Brews Soft Commit Form"
+  internalPurpose String? // "Collect soft commits for Bros & Brews event"
+
   // CRM customization
-  styling      Json? // Custom styling overrides
-  
+  styling Json? // Custom styling overrides
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([publicFormId])
   @@index([eventId])
   @@index([orgId])
@@ -336,20 +335,20 @@ model EventForm {
 
 // NEW: Admin - Admin users with permissions
 model Admin {
-  id        String @id @default(cuid())
-  contactId String @unique
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  id        String       @id @default(cuid())
+  contactId String       @unique
+  contact   Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
   orgId     String
   org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  
+
   // Admin Configuration
   role        String // "super_admin", "admin", "manager", etc.
-  permissions Json?  // What they can do
+  permissions Json? // What they can do
   isActive    Boolean @default(true)
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([contactId, orgId])
   @@index([contactId])
   @@index([orgId])
@@ -358,54 +357,54 @@ model Admin {
 
 // OLD: Legacy model, to be deprecated
 model EventPipelineEntry {
-  id           String @id @default(cuid())
-  orgId        String
-  eventId      String
-  event        Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  supporterId  String
-  supporter    Supporter @relation(fields: [supporterId], references: [id], onDelete: Cascade)
-  
+  id          String    @id @default(cuid())
+  orgId       String
+  eventId     String
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  supporterId String
+  supporter   Supporter @relation(fields: [supporterId], references: [id], onDelete: Cascade)
+
   audienceType String // "org_member", "friend_spouse", "community_partner", "business_sponsor", "champion"
   stage        String // "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid", "cant_attend"
   source       String? // "admin_add", "csv", "bulk_add", etc.
   notes        String?
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([eventId, supporterId, audienceType])
   @@index([eventId, audienceType, stage])
   @@index([orgId])
 }
 
 model EventAttendee {
-  id          String @id @default(cuid())
-  orgId       String
-  eventId     String
-  event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
+  id      String @id @default(cuid())
+  orgId   String
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   // Links to Contact (the universal person record)
   contactId String
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  
+
   // Pipeline tracking (hardcoded - no EventPipeline model)
   currentStage String @default("in_funnel") // Current position in funnel
   audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
-  
+
   // Form tracking
   submittedFormId String? // Which form created this attendee?
   submittedForm   PublicForm? @relation(fields: [submittedFormId], references: [id])
-  
+
   // Final attendance data
-  attended    Boolean @default(false)
+  attended    Boolean   @default(false)
   checkedInAt DateTime?
   ticketType  String?
-  amountPaid  Float   @default(0)
+  amountPaid  Float     @default(0)
   notes       String? // JSON with custom form fields
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // NOTE: One contact per event+audienceType combo
   @@unique([eventId, contactId, audienceType])
   @@index([eventId, currentStage])
@@ -416,145 +415,145 @@ model EventAttendee {
 }
 
 model FamilyProspect {
-  id        String @id @default(cuid())
-  orgId     String
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  
+  id    String       @id @default(cuid())
+  orgId String
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
   // Contact Info
   firstName String
   goesBy    String?
   lastName  String
   email     String?
   phone     String?
-  
+
   // Address
-  street    String?
-  city      String?
-  state     String?
-  zip       String?
-  
+  street String?
+  city   String?
+  state  String?
+  zip    String?
+
   // Relationship Context
   relationshipToMember String? // "friend", "co_worker", "neighbor", "family"
   howDidYouMeet        String? // "work", "neighborhood", "mutual_friend"
   eventInterest        String? // "high", "medium", "low"
-  
+
   // Personal Information
   birthday     String? // Format: "MM/DD"
   married      Boolean @default(false)
   spouseName   String?
   numberOfKids Int     @default(0)
-  
+
   // Story & Notes
   originStory String?
   notes       String?
-  
+
   // Relations
-  tags         FamilyProspectTag[]
-  
+  tags FamilyProspectTag[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([orgId, email])
   @@index([orgId])
 }
 
 model FamilyProspectTag {
-  id         String @id @default(cuid())
+  id         String         @id @default(cuid())
   prospectId String
   prospect   FamilyProspect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
   name       String
   value      String
   addedBy    String
-  addedAt    DateTime @default(now())
-  
+  addedAt    DateTime       @default(now())
+
   @@index([prospectId])
 }
 
 model Template {
-  id          String @id @default(cuid())
+  id          String       @id @default(cuid())
   orgId       String
   org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name        String
   description String?
   subject     String
   body        String
-  type        String @default("email")
-  variables   Json   @default("[]")
-  usageCount  Int    @default(0)
+  type        String       @default("email")
+  variables   Json         @default("[]")
+  usageCount  Int          @default(0)
   lastUsed    DateTime?
-  isActive    Boolean @default(true)
+  isActive    Boolean      @default(true)
   createdBy   String?
-  
+
   // Relations
-  sequences   Sequence[]
-  
+  sequences Sequence[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([orgId])
 }
 
 model ContactList {
-  id          String @id @default(cuid())
+  id          String       @id @default(cuid())
   orgId       String
   org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   name        String
   description String?
   type        String // "contact", "org_member", "event_attendee"
-  
+
   // Event attendee filtering
-  eventId     String?
+  eventId      String?
   audienceType String?
-  stages      String[]
-  
+  stages       String[]
+
   // Tag-based lists
-  tagFilters  Json? // Complex tag filtering criteria
-  
+  tagFilters Json? // Complex tag filtering criteria
+
   // Dynamic lists
-  filters     Json? // Complex filtering criteria
-  
+  filters Json? // Complex filtering criteria
+
   // Stats
-  totalContacts Int      @default(0)
-  lastUpdated   DateTime @default(now())
-  usageCount    Int      @default(0)
+  totalContacts Int       @default(0)
+  lastUpdated   DateTime  @default(now())
+  usageCount    Int       @default(0)
   lastUsed      DateTime?
-  isActive      Boolean  @default(true)
+  isActive      Boolean   @default(true)
   createdBy     String?
   tags          String[]
-  
+
   // Relations
-  contacts  Contact[]  // Contacts in this list (THE CLEAN WAY!)
+  contacts  Contact[] // Contacts in this list (THE CLEAN WAY!)
   campaigns Campaign[] // Campaigns using this list
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([orgId, name])
   @@index([orgId])
 }
 
 // CAMPAIGN - The overall campaign (e.g., "Bros & Brews 2025 Outreach")
 model Campaign {
-  id          String @id @default(cuid())
-  orgId       String
-  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  
+  id    String       @id @default(cuid())
+  orgId String
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
   name        String // "Bros & Brews 2025 Outreach"
   description String?
-  
+
   // Targeting - applies to all sequences in campaign
   contactListId String?
   contactList   ContactList? @relation(fields: [contactListId], references: [id])
-  
+
   // Status
-  status      String @default("draft") // "draft", "active", "paused", "completed"
-  
+  status String @default("draft") // "draft", "active", "paused", "completed"
+
   // Relations
-  sequences   Sequence[]
-  
+  sequences Sequence[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([orgId, name])
   @@index([orgId])
   @@index([status])
@@ -562,33 +561,33 @@ model Campaign {
 
 // SEQUENCE - Individual email in a campaign (e.g., "Initial Invite", "Follow-up")
 model Sequence {
-  id          String @id @default(cuid())
-  campaignId  String
-  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  
-  name        String // "Initial Invite", "Follow-up 4 days later"
-  subject     String
-  html        String
-  
+  id         String   @id @default(cuid())
+  campaignId String
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  name    String // "Initial Invite", "Follow-up 4 days later"
+  subject String
+  html    String
+
   // Template support
-  templateId  String?
-  template    Template? @relation(fields: [templateId], references: [id])
-  
+  templateId String?
+  template   Template? @relation(fields: [templateId], references: [id])
+
   // Timing
-  delayDays   Int @default(0) // 0 for first email, 4 for follow-up, 7 for last call
-  order       Int // 1, 2, 3... for sequence order
-  
+  delayDays Int @default(0) // 0 for first email, 4 for follow-up, 7 for last call
+  order     Int // 1, 2, 3... for sequence order
+
   // Status
-  status      String @default("draft") // "draft", "sending", "sent", "paused"
-  sentAt      DateTime?
-  
+  status String    @default("draft") // "draft", "sending", "sent", "paused"
+  sentAt DateTime?
+
   // Relations
   sequenceContacts SequenceContact[]
   emailEvents      EmailEvent[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@unique([campaignId, name])
   @@index([campaignId, order])
   @@index([status])
@@ -596,15 +595,15 @@ model Sequence {
 
 // SEQUENCE CONTACT - Junction table with status tracking
 model SequenceContact {
-  id          String @id @default(cuid())
-  sequenceId  String
-  sequence    Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
-  contactId   String
-  contact     Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  
+  id         String   @id @default(cuid())
+  sequenceId String
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  contactId  String
+  contact    Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
   // Status tracking
-  status      String @default("pending") // "pending", "sent", "delivered", "opened", "clicked", "responded", "suppressed"
-  
+  status String @default("pending") // "pending", "sent", "delivered", "opened", "clicked", "responded", "suppressed"
+
   // SendGrid tracking
   sgMessageId String?
   sentAt      DateTime?
@@ -612,13 +611,13 @@ model SequenceContact {
   openedAt    DateTime?
   clickedAt   DateTime?
   respondedAt DateTime?
-  
+
   // Suppression logic
   suppressReason String? // "responded", "bounced", "unsubscribed", "spam_report"
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   // CONSTRAINTS - Surgical precision
   @@unique([sequenceId, contactId]) // One contact per sequence
   @@index([sequenceId, status])
@@ -628,20 +627,20 @@ model SequenceContact {
 
 // EMAIL EVENT - SendGrid webhook events
 model EmailEvent {
-  id          String @id @default(cuid())
-  sequenceId  String?
-  sequence    Sequence? @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
-  contactId   String?
-  contact     Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  
+  id         String    @id @default(cuid())
+  sequenceId String?
+  sequence   Sequence? @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  contactId  String?
+  contact    Contact?  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
   email       String
   eventType   String // "delivered", "open", "click", "bounce", "unsubscribe", "spam_report"
   timestamp   DateTime
   url         String? // For click events
   sgMessageId String? // SendGrid message ID
-  
+
   createdAt DateTime @default(now())
-  
+
   @@index([email])
   @@index([sequenceId])
   @@index([eventType])
@@ -652,27 +651,27 @@ model EmailEvent {
 // For MVP 1: Use Event.eventVenueName, eventStreet, etc. directly
 
 model EventTask {
-  id          String @id @default(cuid())
-  eventId     String
-  event       Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
   // Task Details
   title       String
   description String?
   category    String // "design", "marketing", "tech", "logistics", "finance"
-  completed   Boolean @default(false)
+  completed   Boolean   @default(false)
   dueDate     DateTime?
-  
+
   // Assignment
-  assignedTo  String? // Future: link to team member
-  priority    String @default("medium") // "low", "medium", "high"
-  
+  assignedTo String? // Future: link to team member
+  priority   String  @default("medium") // "low", "medium", "high"
+
   // Order
-  orderIndex  Int @default(0)
-  
+  orderIndex Int @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([eventId])
   @@index([eventId, completed])
 }
