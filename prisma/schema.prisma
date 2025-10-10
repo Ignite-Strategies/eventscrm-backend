@@ -335,11 +335,11 @@ model EventForm {
 
 // NEW: Admin - Admin users with permissions
 model Admin {
-  id        String       @id @default(cuid())
-  contactId String       @unique
-  contact   Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  orgId     String
-  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  id        String        @id @default(cuid())
+  contactId String        @unique
+  contact   Contact       @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  orgId     String?
+  org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   // Admin Configuration
   role        String // "super_admin", "admin", "manager", etc.
