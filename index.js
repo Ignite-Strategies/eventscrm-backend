@@ -26,7 +26,10 @@ import dashboardHydrationRouter from './routes/dashboardHydrationRoute.js';
 import contactHydrateRouter from './routes/contactHydrateRoute.js';
 import contactSaveRouter from './routes/contactSaveRoute.js';
 import contactDeleteRouter from './routes/contactDeleteRoute.js';
-// import stageRouter from './routes/stageRoute.js'; // TODO: Create this route
+import contactUploadRouter from './routes/contactUploadRoute.js';    // Contact CSV upload
+import generalContactUploadRouter from './routes/generalContactUploadRoute.js';    // General Contact preview
+import generalContactSaverRouter from './routes/generalContactSaverRoute.js';    // General Contact save
+// import stageRouter from './routes/stageRouter.js'; // TODO: Create this route
 import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // NEW: EventAttendee-based pipeline (no EventPipeline model)
 
 dotenv.config();
