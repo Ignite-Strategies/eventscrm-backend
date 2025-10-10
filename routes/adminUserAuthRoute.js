@@ -74,43 +74,8 @@ router.post('/findOrCreate', async (req, res) => {
     
     console.log('✅ AUTH: New user created:', orgMember.id);
     
-    // Create Contact record for the new OrgMember
-    const contact = await prisma.contact.create({
-      data: {
-        orgId: orgMember.orgId, // Will be null initially, updated later
-        firstName: orgMember.firstName,
-        lastName: orgMember.lastName,
-        email: orgMember.email,
-        phone: orgMember.phone
-      }
-    });
-    
-    // Link OrgMember to Contact
-    await prisma.orgMember.update({
-      where: { id: orgMember.id },
-      data: { contactId: contact.id }
-    });
-    
-    console.log('✅ AUTH: Contact created and linked:', contact.id);
-    
-    // Create Admin record for all users who use authRoute (they're all admin users)
-    const admin = await prisma.admin.create({
-      data: {
-        contactId: contact.id,
-        orgId: orgMember.orgId, // Will be null initially, updated later
-        role: 'super_admin',
-        permissions: {
-          canCreateForms: true,
-          canEditForms: true,
-          canDeleteForms: true,
-          canManageUsers: true,
-          canViewAnalytics: true
-        },
-        isActive: true
-      }
-    });
-    
-    console.log('✅ AUTH: Admin created for admin user:', admin.id);
+    // Don't create Contact/Admin until they have an org
+    // Will be created when they create/join an org
     
     res.status(201).json(orgMember);
     
