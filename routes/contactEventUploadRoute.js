@@ -98,7 +98,12 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
       return res.status(500).json({ error: mutationResult.error });
     }
 
-    // 5. Create EventAttendee records for each valid contact
+    // 5. Get event data to extract audienceType
+    const event = await prisma.event.findUnique({
+      where: { id: eventId }
+    });
+    
+    // 6. Create EventAttendee records for each valid contact
     const eventAttendeeResults = [];
     const defaultStage = parsedAssignments.defaultStage || 'prospect';
 
@@ -122,7 +127,7 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
               contactId: contact.id,
               eventId: eventId,
               currentStage: stage,
-              audienceType: parsedAssignments.audienceType || 'general',
+              audienceType: event?.audienceType || 'general',
               orgId: orgId
             }
           });
