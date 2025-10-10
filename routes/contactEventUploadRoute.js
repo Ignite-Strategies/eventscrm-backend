@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { readCSV } from '../services/generalContactCsvReader.js';
-import { getFieldMapping, normalizeRecord } from '../services/generalContactCsvNormalizer.js';
+import { getContactFieldMapping, normalizeContactRecord } from '../services/generalContactCsvNormalizer.js';
 import { validateBatch } from '../services/generalContactValidator.js';
 import { bulkUpsertGeneralContacts } from '../services/generalContactMutation.js';
 import { getPrismaClient } from '../config/database.js';
@@ -27,10 +27,10 @@ router.post('/event/preview', upload.single('file'), async (req, res) => {
     }
 
     // 2. Get field mapping
-    const fieldMapping = getFieldMapping(readResult.headers);
+    const fieldMapping = getContactFieldMapping(readResult.headers);
 
     // 3. Normalize records for preview
-    const normalizedRecords = readResult.records.map(record => normalizeRecord(record));
+    const normalizedRecords = readResult.records.map(record => normalizeContactRecord(record));
 
     // 4. Validate records (basic validation for Contact fields)
     const validationResult = validateBatch(normalizedRecords);
@@ -78,7 +78,7 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
     }
 
     // 2. Normalize records
-    const normalizedRecords = readResult.records.map(record => normalizeRecord(record));
+    const normalizedRecords = readResult.records.map(record => normalizeContactRecord(record));
 
     // 3. Validate records
     const validationResult = validateBatch(normalizedRecords);
