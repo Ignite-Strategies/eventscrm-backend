@@ -1,8 +1,6 @@
 import express from 'express';
 import multer from 'multer';
 import { readCSV } from '../services/csvReader.js';
-import { normalizeRecord } from '../services/csvNormalizer.js';
-import { validateBatch } from '../services/csvValidator.js';
 import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();
@@ -35,22 +33,41 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: readResult.error });
     }
     
-    // 2. Normalize field names (existing service)
-    const normalizedRecords = readResult.records.map(record => normalizeRecord(record));
-    
-    // 3. Validate records (existing service)
-    const validationResult = validateBatch(normalizedRecords);
-    console.log('📊 CSV Processing Results:', { 
-      total: validationResult.totalProcessed,
-      valid: validationResult.validCount,
-      errors: validationResult.errorCount 
-    });
-    
-    // 4. Create Contact records only (Prisma)
-    const createdContacts = [];
+    // 2. Simple Contact field mapping (just the basics)
+    const contactRecords = [];
     const errors = [];
     
-    for (const record of validationResult.validRecords) {
+    for (const record of readResult.records) {
+      // Map CSV fields to Contact fields (simple mapping)
+      const contactData = {
+        firstName: record['first name'] || record['firstname'] || record['firstName'] || record['fname'] || '',
+        lastName: record['last name'] || record['lastname'] || record['lastName'] || record['lname'] || '',
+        email: record['email'] || record['email address'] || record['e-mail'] || '',
+        phone: record['phone'] || record['phone number'] || record['mobile'] || record['cell'] || null
+      };
+      
+      // Basic validation
+      if (!contactData.firstName || !contactData.lastName || !contactData.email) {
+        errors.push({
+          record: contactData,
+          error: 'Missing required fields (firstName, lastName, email)'
+        });
+        continue;
+      }
+      
+      contactRecords.push(contactData);
+    }
+    
+    console.log('📊 Contact Processing Results:', { 
+      total: readResult.records.length,
+      valid: contactRecords.length,
+      errors: errors.length 
+    });
+    
+    // 3. Create Contact records only (Prisma)
+    const createdContacts = [];
+    
+    for (const record of contactRecords) {
       try {
         const contact = await prisma.contact.create({
           data: {
@@ -81,7 +98,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       success: true,
       contacts: createdContacts,
       count: createdContacts.length,
-      errors: errors.concat(validationResult.errors)
+      errors: errors
     });
     
   } catch (error) {
