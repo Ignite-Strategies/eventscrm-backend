@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import { readCSV } from '../services/generalContactCsvReader.js';
 import { getContactFieldMapping, normalizeContactRecord } from '../services/generalContactCsvNormalizer.js';
-import { validateBatch } from '../services/generalContactValidator.js';
+import { validateContactBatch } from '../services/generalContactValidator.js';
 import { bulkUpsertGeneralContacts } from '../services/generalContactMutation.js';
 import { getPrismaClient } from '../config/database.js';
 
@@ -33,7 +33,7 @@ router.post('/event/preview', upload.single('file'), async (req, res) => {
     const normalizedRecords = readResult.records.map(record => normalizeContactRecord(record));
 
     // 4. Validate records (basic validation for Contact fields)
-    const validationResult = validateBatch(normalizedRecords);
+    const validationResult = validateContactBatch(normalizedRecords);
 
     // Prepare preview data (first 5 valid records)
     const preview = validationResult.validRecords.slice(0, 5).map(record => ({
@@ -81,7 +81,7 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
     const normalizedRecords = readResult.records.map(record => normalizeContactRecord(record));
 
     // 3. Validate records
-    const validationResult = validateBatch(normalizedRecords);
+    const validationResult = validateContactBatch(normalizedRecords);
 
     if (validationResult.errorCount > 0) {
       return res.status(400).json({
