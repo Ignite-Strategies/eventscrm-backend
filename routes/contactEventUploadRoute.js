@@ -121,7 +121,8 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
             data: {
               contactId: contact.id,
               eventId: eventId,
-              stage: stage,
+              currentStage: stage,
+              audienceType: parsedAssignments.audienceType || 'general',
               orgId: orgId
             }
           });
