@@ -3,7 +3,7 @@ import multer from 'multer';
 import { readCSV } from '../services/generalContactCsvReader.js';
 import { getFieldMapping, normalizeRecord } from '../services/generalContactCsvNormalizer.js';
 import { validateBatch } from '../services/generalContactValidator.js';
-import { bulkUpsertContacts } from '../services/generalContactMutation.js';
+import { bulkUpsertGeneralContacts } from '../services/generalContactMutation.js';
 import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();
@@ -92,35 +92,45 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
     }
 
     // 4. Bulk upsert Contacts
-    const mutationResult = await bulkUpsertContacts(orgId, validationResult.validRecords);
+    const mutationResult = await bulkUpsertGeneralContacts(orgId, validationResult.validRecords);
 
     if (!mutationResult.success) {
       return res.status(500).json({ error: mutationResult.error });
     }
 
-    // 5. Create EventAttendee records for each contact
+    // 5. Create EventAttendee records for each valid contact
     const eventAttendeeResults = [];
     const defaultStage = parsedAssignments.defaultStage || 'prospect';
 
-    for (const contact of mutationResult.contacts) {
+    for (const contactData of validationResult.validRecords) {
       try {
-        const stage = parsedAssignments.mode === 'individual' 
-          ? (parsedAssignments.individualAssignments[contact.email] || defaultStage)
-          : defaultStage;
-
-        const eventAttendee = await prisma.eventAttendee.create({
-          data: {
-            contactId: contact.id,
-            eventId: eventId,
-            stage: stage,
-            orgId: orgId
+        // Find the contact that was just created/updated
+        const contact = await prisma.contact.findFirst({
+          where: {
+            orgId: orgId,
+            email: contactData.email
           }
         });
 
-        eventAttendeeResults.push(eventAttendee);
+        if (contact) {
+          const stage = parsedAssignments.mode === 'individual' 
+            ? (parsedAssignments.individualAssignments[contactData.email] || defaultStage)
+            : defaultStage;
+
+          const eventAttendee = await prisma.eventAttendee.create({
+            data: {
+              contactId: contact.id,
+              eventId: eventId,
+              stage: stage,
+              orgId: orgId
+            }
+          });
+
+          eventAttendeeResults.push(eventAttendee);
+        }
 
       } catch (error) {
-        console.error('❌ Error creating EventAttendee for contact:', contact.email, error);
+        console.error('❌ Error creating EventAttendee for contact:', contactData.email, error);
         // Continue with other contacts even if one fails
       }
     }
@@ -128,7 +138,6 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
     res.json({
       success: true,
       message: 'Contacts uploaded and assigned to event successfully',
-      contacts: mutationResult.contacts,
       eventAttendees: eventAttendeeResults,
       inserted: mutationResult.inserted,
       updated: mutationResult.updated,
