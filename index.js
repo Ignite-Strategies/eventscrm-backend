@@ -26,9 +26,10 @@ import dashboardHydrationRouter from './routes/dashboardHydrationRoute.js';
 import contactHydrateRouter from './routes/contactHydrateRoute.js';
 import contactSaveRouter from './routes/contactSaveRoute.js';
 import contactDeleteRouter from './routes/contactDeleteRoute.js';
-import contactUploadRouter from './routes/contactUploadRoute.js';    // Contact CSV upload
+// import contactUploadRouter from './routes/contactUploadRoute.js';    // Contact CSV upload - DEPRECATED
 import generalContactUploadRouter from './routes/generalContactUploadRoute.js';    // General Contact preview
 import generalContactSaverRouter from './routes/generalContactSaverRoute.js';    // General Contact save
+import contactEventUploadRouter from './routes/contactEventUploadRoute.js';    // Event Contact upload
 // import stageRouter from './routes/stageRouter.js'; // TODO: Create this route
 import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // NEW: EventAttendee-based pipeline (no EventPipeline model)
 
@@ -74,9 +75,10 @@ app.use('/api/hydration', dashboardHydrationRouter);     // Dashboard universal 
 app.use('/api/contacts', contactHydrateRouter);   // Contact hydration (GET)
 app.use('/api/contacts', contactSaveRouter);      // Contact save (POST/PATCH)  
 app.use('/api/contacts', contactDeleteRouter);    // Contact delete (DELETE)
-app.use('/api/contacts', contactUploadRouter);    // Contact CSV upload
+// app.use('/api/contacts', contactUploadRouter);    // Contact CSV upload - DEPRECATED
 app.use('/api/contacts', generalContactUploadRouter);    // General Contact preview
 app.use('/api/contacts', generalContactSaverRouter);    // General Contact save
+app.use('/api/contacts', contactEventUploadRouter);    // Event Contact upload
 app.use('/api/events', pipelineHydrationRouter); // Pipeline hydration (EventAttendee-based, no EventPipeline model)
 // app.use('/api', stageRouter);                   // Stage definitions (hydrated from database) // TODO: Create this route
 
