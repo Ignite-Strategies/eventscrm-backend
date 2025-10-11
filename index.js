@@ -6,7 +6,8 @@ import connectDatabase from './config/database.js';
 // Import routes
 import adminUserAuthRouter from './routes/adminUserAuthRoute.js';
 import orgsRouter from './routes/orgsRoute.js';
-import orgMembersListRouter from './routes/orgMembersListRoute.js';
+import orgMembersSaverouter from './routes/orgMembersSaveroute.js';
+import orgMembersHydraterouter from './routes/orgMembersHydrateRoute.js';
 import eventsRouter from './routes/eventsRoute.js';
 import eventAttendeeListRouter from './routes/eventAttendeeListRoute.js';
 // import eventPipelinesRouter from './routes/eventPipelinesRoute.js'; // REMOVED - deprecated for now
@@ -53,8 +54,8 @@ await connectDatabase();
 // Routes
 app.use('/api/auth', adminUserAuthRouter);      // Admin user auth (OrgMember mirage - may refactor later)
 app.use('/api/orgs', orgsRouter);
-app.use('/api/orgs', orgMembersListRouter);     // List/CSV upload
-app.use('/api', orgMembersListRouter);          // Delete route not nested
+app.use('/api', orgMembersSaverouter);           // OrgMember CSV upload (Contact-First, no orgId in URL)
+app.use('/api', orgMembersHydraterouter);        // OrgMember list/detail hydration
 app.use('/api/orgs', eventsRouter);             // Event creation nested under orgs
 app.use('/api/events', eventsRouter);           // Event operations
 app.use('/api/events', eventAttendeeListRouter); // Attendee list (paid/soft_commit) for attendance tracking

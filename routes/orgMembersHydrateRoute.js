@@ -1,0 +1,158 @@
+import express from 'express';
+import { getPrismaClient } from '../config/database.js';
+
+const router = express.Router();
+const prisma = getPrismaClient();
+
+// GET /orgmembers?orgId=xxx - Hydrate all org members with their Contact data
+router.get('/orgmembers', async (req, res) => {
+  try {
+    const { orgId } = req.query;
+    console.log('📖 ORG MEMBERS HYDRATE: Getting members for orgId:', orgId);
+
+    if (!orgId) {
+      return res.status(400).json({ error: 'orgId is required' });
+    }
+
+    // Get all OrgMembers for this org, include their Contact data
+    const orgMembers = await prisma.orgMember.findMany({
+      where: { orgId },
+      include: {
+        contact: true  // Include the universal Contact data
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Transform data to flatten Contact into OrgMember for easier frontend use
+    const members = orgMembers.map(member => ({
+      // OrgMember data
+      id: member.id,
+      orgMemberId: member.id,
+      contactId: member.contactId,
+      orgId: member.orgId,
+      
+      // Contact data (from universal Contact)
+      firstName: member.contact?.firstName || member.firstName || '',
+      lastName: member.contact?.lastName || member.lastName || '',
+      email: member.contact?.email || member.email || '',
+      phone: member.contact?.phone || member.phone || '',
+      
+      // Extended OrgMember data
+      goesBy: member.goesBy,
+      street: member.street,
+      city: member.city,
+      state: member.state,
+      zip: member.zip,
+      employer: member.employer,
+      yearsWithOrganization: member.yearsWithOrganization,
+      married: member.married,
+      spouseName: member.spouseName,
+      numberOfKids: member.numberOfKids,
+      originStory: member.originStory,
+      notes: member.notes,
+      categoryOfEngagement: member.categoryOfEngagement,
+      tags: member.tags,
+      
+      // Metadata
+      createdAt: member.createdAt,
+      updatedAt: member.updatedAt
+    }));
+
+    console.log(`✅ ORG MEMBERS HYDRATE: Found ${members.length} members`);
+    
+    res.json({
+      success: true,
+      members,
+      count: members.length
+    });
+
+  } catch (error) {
+    console.error('❌ ORG MEMBERS HYDRATE ERROR:', error);
+    res.status(500).json({ error: 'Failed to load org members: ' + error.message });
+  }
+});
+
+// GET /orgmembers/:orgMemberId - Get single org member details
+router.get('/orgmembers/:orgMemberId', async (req, res) => {
+  try {
+    const { orgMemberId } = req.params;
+    console.log('📖 ORG MEMBER DETAIL: Getting member:', orgMemberId);
+
+    const orgMember = await prisma.orgMember.findUnique({
+      where: { id: orgMemberId },
+      include: {
+        contact: {
+          include: {
+            eventAttendees: {
+              include: {
+                event: true  // Include event details
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!orgMember) {
+      return res.status(404).json({ error: 'Org member not found' });
+    }
+
+    // Transform data
+    const member = {
+      // OrgMember data
+      id: orgMember.id,
+      orgMemberId: orgMember.id,
+      contactId: orgMember.contactId,
+      orgId: orgMember.orgId,
+      
+      // Contact data
+      firstName: orgMember.contact?.firstName || orgMember.firstName || '',
+      lastName: orgMember.contact?.lastName || orgMember.lastName || '',
+      email: orgMember.contact?.email || orgMember.email || '',
+      phone: orgMember.contact?.phone || orgMember.phone || '',
+      
+      // Extended OrgMember data
+      goesBy: orgMember.goesBy,
+      street: orgMember.street,
+      city: orgMember.city,
+      state: orgMember.state,
+      zip: orgMember.zip,
+      employer: orgMember.employer,
+      yearsWithOrganization: orgMember.yearsWithOrganization,
+      married: orgMember.married,
+      spouseName: orgMember.spouseName,
+      numberOfKids: orgMember.numberOfKids,
+      originStory: orgMember.originStory,
+      notes: orgMember.notes,
+      categoryOfEngagement: orgMember.categoryOfEngagement,
+      tags: orgMember.tags,
+      
+      // Event history (from Contact)
+      events: orgMember.contact?.eventAttendees?.map(ea => ({
+        eventId: ea.eventId,
+        eventName: ea.event?.name,
+        audienceType: ea.audienceType,
+        currentStage: ea.currentStage,
+        attendedAt: ea.createdAt
+      })) || [],
+      
+      // Metadata
+      createdAt: orgMember.createdAt,
+      updatedAt: orgMember.updatedAt
+    };
+
+    res.json({
+      success: true,
+      member
+    });
+
+  } catch (error) {
+    console.error('❌ ORG MEMBER DETAIL ERROR:', error);
+    res.status(500).json({ error: 'Failed to load org member: ' + error.message });
+  }
+});
+
+export default router;
+

@@ -34,8 +34,7 @@ model Organization {
   audienceDefaults String[] @default(["org_members", "friends_family", "community_partners", "local_businesses", "general_public"])
 
   // Relations
-  contacts        Contact[] // Universal person records
-  members         OrgMember[] // Promoted contacts in master list
+  members         OrgMember[] // Org members (the bridge to Contact)
   supporters      Supporter[] // Legacy, to be deprecated
   familyProspects FamilyProspect[]
   events          Event[]
@@ -49,15 +48,14 @@ model Organization {
 }
 
 // NEW: Contact - Universal person record (everyone starts here)
+// NO orgId - this is a UNIVERSAL person record
 model Contact {
-  id    String        @id @default(cuid())
-  orgId String?
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
 
   // Basic Info (minimal)
   firstName String
   lastName  String
-  email     String
+  email     String  @unique // Globally unique - one contact per email
   phone     String?
 
   // Contact List Relationship (THE CLEAN WAY!)
@@ -74,8 +72,6 @@ model Contact {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([orgId, email])
-  @@index([orgId])
   @@index([email])
   @@index([contactListId]) // FAST LOOKUPS!
 }
