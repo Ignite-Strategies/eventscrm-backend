@@ -10,6 +10,33 @@ const router = express.Router();
 const prisma = getPrismaClient();
 const upload = multer({ storage: multer.memoryStorage() });
 
+// GET /api/contacts/event/schema - Get valid audience types and stages for event upload
+router.get('/event/schema', async (req, res) => {
+  try {
+    // Return the same schema config as the main schema route
+    res.json({
+      audienceTypes: [
+        'org_members',
+        'friends_family', 
+        'landing_page_public',
+        'community_partners',
+        'cold_outreach'
+      ],
+      stages: [
+        'in_funnel',
+        'general_awareness',
+        'personal_invite',
+        'expressed_interest',
+        'soft_commit',
+        'paid'
+      ]
+    });
+  } catch (error) {
+    console.error('❌ SCHEMA ERROR:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /api/contacts/event/preview - Upload CSV, return preview and field mapping for event upload
 router.post('/event/preview', upload.single('file'), async (req, res) => {
   try {
@@ -67,6 +94,15 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
     const parsedAssignments = JSON.parse(assignments);
     console.log('📝 EVENT SAVE: Contact Save Request for orgId:', orgId, 'eventId:', eventId, 'assignments:', parsedAssignments);
 
+    // Validate required assignment fields
+    if (!parsedAssignments.audienceType || !parsedAssignments.defaultStage) {
+      return res.status(400).json({ 
+        error: 'audienceType and defaultStage are required in assignments',
+        required: ['audienceType', 'defaultStage'],
+        received: Object.keys(parsedAssignments)
+      });
+    }
+
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
@@ -98,14 +134,10 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
       return res.status(500).json({ error: mutationResult.error });
     }
 
-    // 5. Get event data to extract audienceType
-    const event = await prisma.event.findUnique({
-      where: { id: eventId }
-    });
-    
-    // 6. Create EventAttendee records for each valid contact
+    // 5. Create EventAttendee records for each valid contact with proper audience type and stage
     const eventAttendeeResults = [];
-    const defaultStage = parsedAssignments.defaultStage || 'prospect';
+    const orgMemberResults = [];
+    const defaultStage = parsedAssignments.defaultStage;
 
     for (const contactData of validationResult.validRecords) {
       try {
@@ -122,17 +154,43 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
             ? (parsedAssignments.individualAssignments[contactData.email] || defaultStage)
             : defaultStage;
 
+          // Create EventAttendee with proper audience type and stage from assignments
           const eventAttendee = await prisma.eventAttendee.create({
             data: {
               contactId: contact.id,
               eventId: eventId,
               currentStage: stage,
-              audienceType: event?.audienceType || 'general',
+              audienceType: parsedAssignments.audienceType, // Use assigned audience type
               orgId: orgId
             }
           });
 
           eventAttendeeResults.push(eventAttendee);
+
+          // OPTIONALLY create OrgMember if requested in assignments
+          if (parsedAssignments.createOrgMembers === true) {
+            try {
+              const orgMember = await prisma.orgMember.create({
+                data: {
+                  contactId: contact.id,
+                  orgId: orgId,
+                  // Add any additional OrgMember fields from the CSV if available
+                  employer: contactData.employer || null,
+                  street: contactData.street || null,
+                  city: contactData.city || null,
+                  state: contactData.state || null,
+                  zip: contactData.zip || null,
+                  notes: contactData.notes || null
+                }
+              });
+              orgMemberResults.push(orgMember);
+              console.log('✅ Created OrgMember for contact:', contact.email);
+            } catch (orgMemberError) {
+              console.error('❌ Error creating OrgMember for contact:', contact.email, orgMemberError);
+              // Continue even if OrgMember creation fails
+            }
+          }
+
         }
 
       } catch (error) {
@@ -145,10 +203,18 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
       success: true,
       message: 'Contacts uploaded and assigned to event successfully',
       eventAttendees: eventAttendeeResults,
+      orgMembers: orgMemberResults,
       inserted: mutationResult.inserted,
       updated: mutationResult.updated,
       totalProcessed: validationResult.totalProcessed,
       validCount: validationResult.validCount,
+      eventAttendeesCreated: eventAttendeeResults.length,
+      orgMembersCreated: orgMemberResults.length,
+      assignments: {
+        audienceType: parsedAssignments.audienceType,
+        defaultStage: parsedAssignments.defaultStage,
+        createOrgMembers: parsedAssignments.createOrgMembers || false
+      },
       errors: validationResult.errors
     });
 
