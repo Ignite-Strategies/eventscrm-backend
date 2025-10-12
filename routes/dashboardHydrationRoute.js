@@ -65,56 +65,12 @@ router.get('/:firebaseId', async (req, res) => {
       });
     }
     
-    // Return all hydrated data
+    // Return ONLY the 3 things needed for navigation
     const hydrationData = {
       // NAVIGATION KEYS (source of truth for routing)
-      contactId: orgMember.contactId,
       adminId: admin ? admin.id : null,
       orgId: orgMember.orgId,
-      phone: orgMember.phone || orgMember.contact?.phone, // Check both sources
-      
-      // CRM DATA (for CRM operations)
-      orgMember: {
-        id: orgMember.id,  // Still needed for CRM operations!
-        contactId: orgMember.contactId,
-        orgId: orgMember.orgId,
-        firstName: orgMember.firstName,
-        lastName: orgMember.lastName,
-        email: orgMember.email,
-        phone: orgMember.phone,
-        role: orgMember.role,
-        firebaseId: orgMember.firebaseId,
-        // Extended CRM fields
-        goesBy: orgMember.goesBy,
-        street: orgMember.street,
-        city: orgMember.city,
-        state: orgMember.state,
-        zip: orgMember.zip,
-        employer: orgMember.employer,
-        yearsWithOrganization: orgMember.yearsWithOrganization,
-        birthday: orgMember.birthday,
-        married: orgMember.married,
-        spouseName: orgMember.spouseName,
-        numberOfKids: orgMember.numberOfKids,
-        originStory: orgMember.originStory,
-        notes: orgMember.notes,
-        tags: orgMember.tags,
-        categoryOfEngagement: orgMember.categoryOfEngagement
-      },
-      
-      // Organization data
-      org: {
-        id: org.id,
-        name: org.name,
-        slug: org.slug
-      },
-      
-      // Events data
-      events: events.map(event => ({
-        id: event.id,
-        name: event.name,
-        slug: event.slug
-      })),
+      eventId: events.length > 0 ? events[0].id : null // First event or null
       
       // Team members (OrgMembers in this org)
       orgMembers: orgMembers.map(member => ({
