@@ -4,6 +4,29 @@ import { getPrismaClient } from '../config/database.js';
 const router = express.Router();
 const prisma = getPrismaClient();
 
+// STAGE MAPPING - Maps old/deprecated stages to official schema stages
+const STAGE_MAPPING = {
+  // Old stages → New stages
+  'soft_commit': 'rsvped',
+  'rsvp': 'rsvped',
+  'sop_entry': 'in_funnel',
+  'aware': 'general_awareness',
+  'interested': 'expressed_interest',
+  // Official stages (no mapping needed)
+  'in_funnel': 'in_funnel',
+  'general_awareness': 'general_awareness',
+  'personal_invite': 'personal_invite',
+  'expressed_interest': 'expressed_interest',
+  'rsvped': 'rsvped',
+  'paid': 'paid',
+  'attended': 'attended'
+};
+
+// Helper function to map stage to official schema stage
+const mapToOfficialStage = (stage) => {
+  return STAGE_MAPPING[stage] || 'in_funnel'; // Default to in_funnel if unknown
+};
+
 /**
  * GET /events/:eventId/pipeline?audienceType=org_members
  * 
@@ -46,12 +69,18 @@ router.get('/:eventId/pipeline', async (req, res) => {
     console.log(`✅ Found ${attendees.length} attendees for audienceType: ${audienceType}`);
     console.log('🔍 Clean attendees data:', JSON.stringify(attendees, null, 2));
 
-    // Group by currentStage
+    // Group by currentStage (mapped to official schema stages)
     const stageGroups = {};
     attendees.forEach(attendee => {
-      const stage = attendee.currentStage || 'in_funnel';
-      if (!stageGroups[stage]) {
-        stageGroups[stage] = [];
+      const rawStage = attendee.currentStage || 'in_funnel';
+      const mappedStage = mapToOfficialStage(rawStage); // Map to official stage
+      
+      if (rawStage !== mappedStage) {
+        console.log(`🔄 Mapping stage: "${rawStage}" → "${mappedStage}" for attendee ${attendee.attendeeId}`);
+      }
+      
+      if (!stageGroups[mappedStage]) {
+        stageGroups[mappedStage] = [];
       }
       
       // Check if contact data exists
@@ -61,7 +90,7 @@ router.get('/:eventId/pipeline', async (req, res) => {
       }
 
       // Map to frontend-friendly format
-      stageGroups[stage].push({
+      stageGroups[mappedStage].push({
         _id: attendee.contactId,  // Use contactId as _id for frontend compatibility
         contactId: attendee.contactId,  // Explicit contactId for clarity
         attendeeId: attendee.attendeeId,  // EventAttendee ID for updates
@@ -70,7 +99,8 @@ router.get('/:eventId/pipeline', async (req, res) => {
         email: attendee.email,
         phone: attendee.phone,
         categoryOfEngagement: 'medium',  // Default to medium
-        currentStage: attendee.currentStage,
+        currentStage: mappedStage,  // Use mapped stage for consistency
+        rawStage: rawStage,  // Keep original for debugging
         audienceType: attendee.audienceType
       });
     });

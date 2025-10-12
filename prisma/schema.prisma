@@ -29,7 +29,8 @@ model Organization {
   state  String?
   zip    String?
 
-  // Pipeline defaults - audience-specific stages
+  // DEPRECATED: pipelineDefaults and audienceDefaults - Schema config is now single source of truth
+  // Kept for backward compatibility but no longer used
   pipelineDefaults String[] @default(["in_funnel", "general_awareness", "personal_invite", "expressed_interest", "rsvped", "paid", "attended"])
   audienceDefaults String[] @default(["org_members", "friends_family", "landing_page_public", "community_partners", "cold_outreach"])
 
@@ -215,8 +216,9 @@ model Event {
   fundraisingGoal    Float @default(0)
   additionalExpenses Float @default(0)
 
-  // Pipeline overrides
-  pipelines String[] // optional override of org defaults
+  // DEPRECATED: pipelines field - Schema config is now single source of truth
+  // Kept for backward compatibility but no longer used
+  pipelines String[]
 
   // Pipeline Rules
   rsvpTriggers          String[] @default(["form_rsvp", "button_click"])
@@ -362,8 +364,8 @@ model EventAttendee {
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   // Pipeline tracking (hardcoded - no EventPipeline model)
-  currentStage String @default("in_funnel") // Current position in funnel
-  audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
+  currentStage String @default("aware") // Current position in funnel
+  audienceType String // "org_members" | "friends_family" | "community_partners" | "business_sponsor" | "champions"
 
   // Form tracking
   submittedFormId String? // Which form created this attendee?
@@ -651,5 +653,4 @@ model EventTask {
 }
 
 // REMOVED: Stage and PipelineStage models - Stages are now hardcoded strings in EventAttendee.currentStage
-// Official stages: "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid"
-// Official audiences: "org_members", "friends_family", "landing_page_public", "community_partners", "cold_outreach"
+// Possible stages: "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid"
