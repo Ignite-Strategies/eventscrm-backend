@@ -29,8 +29,8 @@ model Organization {
   state  String?
   zip    String?
 
-  // Pipeline defaults
-  pipelineDefaults String[] @default(["sop_entry", "rsvp", "paid", "attended", "champion"])
+  // Pipeline defaults - audience-specific stages
+  pipelineDefaults String[] @default(["aware", "interested", "rsvped", "paid", "attended", "champion"])
   audienceDefaults String[] @default(["org_members", "friends_family", "community_partners", "business_sponsor", "champions"])
 
   // Relations
@@ -384,7 +384,7 @@ model EventAttendee {
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   // Pipeline tracking (hardcoded - no EventPipeline model)
-  currentStage String @default("in_funnel") // Current position in funnel
+  currentStage String @default("aware") // Current position in funnel
   audienceType String // "org_members" | "friends_family" | "community_partners" | "business_sponsor" | "champions"
 
   // Form tracking
