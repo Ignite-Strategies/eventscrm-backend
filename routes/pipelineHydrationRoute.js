@@ -59,7 +59,16 @@ router.get('/:eventId/pipeline', async (req, res) => {
     `;
 
     console.log(`✅ Found ${attendees.length} attendees for audienceType: ${audienceType}`);
-    console.log('🔍 Clean attendees data:', JSON.stringify(attendees, null, 2));
+    console.log('🔍 Raw SQL result:', attendees);
+    
+    // DEBUG: Check if contacts are missing
+    attendees.forEach((attendee, index) => {
+      if (!attendee.firstName) {
+        console.log(`❌ Attendee ${index} missing contact data:`, attendee);
+      } else {
+        console.log(`✅ Attendee ${index} has contact:`, attendee.firstName, attendee.lastName);
+      }
+    });
 
     // Group by currentStage (mapped to official schema stages)
     const stageGroups = {};
