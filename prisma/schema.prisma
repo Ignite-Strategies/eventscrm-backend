@@ -337,6 +337,9 @@ model Admin {
   eventId   String?
   event     Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
+  // Admin Authentication (Firebase)
+  firebaseId String? @unique // For Firebase auth lookup
+
   // Admin Configuration
   role        String // "super_admin", "admin", "manager", etc.
   permissions Json? // What they can do
@@ -348,6 +351,7 @@ model Admin {
   @@unique([orgId, eventId])
   @@index([orgId])
   @@index([eventId])
+  @@index([firebaseId])
   @@index([isActive])
 }
 
