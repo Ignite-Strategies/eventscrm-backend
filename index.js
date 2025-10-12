@@ -37,6 +37,7 @@ import contactEventUploadRouter from './routes/contactEventUploadRoute.js';    /
 import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // NEW: EventAttendee-based pipeline (no EventPipeline model)
 import eventAttendeesRouter from './routes/eventAttendeesRoute.js'; // NEW: Simple EventAttendees endpoint
 import pipelineConfigRouter from './routes/pipelineConfigRoute.js'; // Pipeline config from database
+import orgMemberCreateRouter from './routes/orgMemberCreateRoute.js'; // NEW: Create OrgMember from Contact
 
 dotenv.config();
 
@@ -60,6 +61,7 @@ app.use('/api/auth', adminUserAuthRouter);      // Admin user auth (OrgMember mi
 app.use('/api/orgs', orgsRouter);
 app.use('/api', orgMembersSaverouter);           // OrgMember CSV upload (Contact-First, no orgId in URL)
 app.use('/api', orgMembersHydraterouter);        // OrgMember list/detail hydration
+app.use('/api', orgMemberCreateRouter);          // Create OrgMember from existing Contact
 app.use('/api/orgs', eventsRouter);             // Event creation nested under orgs
 app.use('/api/events', eventsRouter);           // Event operations
 app.use('/api/events', eventAttendeeListRouter); // Attendee list (paid/soft_commit) for attendance tracking
