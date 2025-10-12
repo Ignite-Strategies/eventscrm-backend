@@ -71,4 +71,34 @@ router.get('/audience-config', (req, res) => {
   }
 });
 
+/**
+ * GET /api/schema/audience-stages/:audienceType
+ * Returns stages for a specific audience type
+ * For now all audiences use same stages, but structure allows customization
+ */
+router.get('/audience-stages/:audienceType', (req, res) => {
+  try {
+    const { audienceType } = req.params;
+    
+    // Validate audience type exists
+    if (!AUDIENCE_TYPES.includes(audienceType)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Invalid audience type: ${audienceType}` 
+      });
+    }
+    
+    // For now, all audiences use the same stages
+    // In the future, you could customize stages per audience type here
+    res.json({ 
+      success: true, 
+      audienceType,
+      stages: EVENT_ATTENDEE_STAGES
+    });
+  } catch (error) {
+    console.error('Error fetching audience stages:', error);
+    res.status(500).json({ error: 'Failed to fetch audience stages' });
+  }
+});
+
 export default router;
