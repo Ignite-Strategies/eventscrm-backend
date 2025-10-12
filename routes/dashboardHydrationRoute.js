@@ -57,20 +57,9 @@ router.get('/:firebaseId', async (req, res) => {
       }
     });
     
-    // Get admin record if exists
-    let admin = null;
-    if (orgMember.contactId) {
-      admin = await prisma.admin.findFirst({
-        where: { contactId: orgMember.contactId }
-      });
-    }
-    
-    // Return ONLY the 3 things needed for navigation
+    // Return ONLY orgId - Welcome page only needs this to route properly
     const hydrationData = {
-      // NAVIGATION KEYS (source of truth for routing)
-      adminId: admin ? admin.id : null,
-      orgId: orgMember.orgId,
-      eventId: events.length > 0 ? events[0].id : null // First event or null
+      orgId: orgMember.orgId
     };
     
     console.log('✅ Hydration complete:', {
