@@ -219,8 +219,6 @@ model Event {
   pipelines String[] // optional override of org defaults
 
   // Pipeline Rules
-  autoSopOnIntake       Boolean  @default(true)
-  sopTriggers           String[] @default(["landing_form", "csv", "qr", "admin_add"])
   rsvpTriggers          String[] @default(["form_rsvp", "button_click"])
   paidTriggers          String[] @default(["stripe_webhook"])
   minEngagement         Int      @default(3)

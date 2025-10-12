@@ -1,99 +1,57 @@
 import express from 'express';
+import { PrismaClient } from '@prisma/client';
 
 const router = express.Router();
-
-/**
- * UNIVERSAL EVENT ATTENDEE STAGES
- * These are the ACTUAL stages in the EventAttendee model
- * NOT hardcoded - these match the schema!
- */
-const EVENT_ATTENDEE_STAGES = [
-  "in_funnel",           // Initial contact, not yet engaged
-  "general_awareness",   // Aware of the event
-  "personal_invite",     // Personally invited
-  "expressed_interest",  // Showed interest
-  "rsvp",                // Confirmed attendance (soft commit)
-  "paid",                // Payment completed
-  "attended",            // Actually showed up
-  "cant_attend"          // Can't make it
-];
-
-/**
- * UNIVERSAL AUDIENCE TYPES
- * These are the ACTUAL audience types in the EventAttendee model
- */
-const AUDIENCE_TYPES = [
-  "org_members",         // Internal team members
-  "friends_family",      // Personal network
-  "landing_page_public", // Public signups from landing page
-  "community_partners",  // Partner organizations
-  "cold_outreach"        // Cold prospects
-];
+const prisma = new PrismaClient();
 
 /**
  * GET /api/schema/event-attendee
- * Returns the UNIVERSAL schema config for EventAttendee
- * This is what the frontend should use to hydrate dropdowns!
+ * Returns dynamic schema config based on actual EventAttendee data
+ * NO MORE HARDCODED STAGES!
  */
-router.get('/event-attendee', (req, res) => {
+router.get('/event-attendee', async (req, res) => {
   try {
+    // Get audience types from actual EventAttendee data
+    const audienceTypes = await prisma.eventAttendee.findMany({
+      select: { audienceType: true },
+      distinct: ['audienceType']
+    });
+    
+    // Get stages from actual EventAttendee data
+    const stages = await prisma.eventAttendee.findMany({
+      select: { currentStage: true },
+      distinct: ['currentStage']
+    });
+    
     res.json({
-      audienceTypes: AUDIENCE_TYPES,
-      stages: EVENT_ATTENDEE_STAGES
+      audienceTypes: audienceTypes.map(a => a.audienceType),
+      stages: stages.map(s => s.currentStage)
     });
   } catch (error) {
-    console.error('Error fetching event-attendee schema:', error);
+    console.error('Error fetching dynamic schema:', error);
     res.status(500).json({ error: 'Failed to fetch schema' });
-  }
-});
-
-// Legacy route for backward compatibility
-router.get('/audience-types', (req, res) => {
-  try {
-    res.json({ success: true, audienceTypes: AUDIENCE_TYPES });
-  } catch (error) {
-    console.error('Error fetching audience types:', error);
-    res.status(500).json({ error: 'Failed to fetch audience types' });
-  }
-});
-
-// Legacy route for backward compatibility
-router.get('/audience-config', (req, res) => {
-  try {
-    res.json({ 
-      success: true, 
-      audienceTypes: AUDIENCE_TYPES,
-      stages: EVENT_ATTENDEE_STAGES
-    });
-  } catch (error) {
-    console.error('Error fetching audience config:', error);
-    res.status(500).json({ error: 'Failed to fetch audience config' });
   }
 });
 
 /**
  * GET /api/schema/audience-stages/:audienceType
- * Returns stages for a specific audience type
- * For now all audiences use same stages, but structure allows customization
+ * Returns stages for a specific audience type from actual data
  */
-router.get('/audience-stages/:audienceType', (req, res) => {
+router.get('/audience-stages/:audienceType', async (req, res) => {
   try {
     const { audienceType } = req.params;
     
-    // Validate audience type exists
-    if (!AUDIENCE_TYPES.includes(audienceType)) {
-      return res.status(400).json({ 
-        success: false, 
-        error: `Invalid audience type: ${audienceType}` 
-      });
-    }
+    // Get stages for this specific audience type from actual data
+    const stages = await prisma.eventAttendee.findMany({
+      where: { audienceType },
+      select: { currentStage: true },
+      distinct: ['currentStage']
+    });
     
-    // For now, all audiences use the same stages
-    // In the future, you could customize stages per audience type here
     res.json({ 
       success: true, 
       audienceType,
-      stages: EVENT_ATTENDEE_STAGES
+      stages: stages.map(s => s.currentStage)
     });
   } catch (error) {
     console.error('Error fetching audience stages:', error);

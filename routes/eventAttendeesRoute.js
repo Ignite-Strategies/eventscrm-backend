@@ -7,25 +7,40 @@ const prisma = getPrismaClient();
 /**
  * GET /events/:eventId/attendees
  * 
- * Returns ALL EventAttendees for a specific event (no audienceType filter)
+ * Returns ALL EventAttendees with Contact data in one clean query
  */
 router.get('/:eventId/attendees', async (req, res) => {
   try {
     const { eventId } = req.params;
 
-    console.log('🔍 Loading ALL EventAttendees for event:', eventId);
+    console.log('🔍 Loading EventAttendees + Contact data for event:', eventId);
 
-    // Get all EventAttendees for this event (no filters)
-    const attendees = await prisma.eventAttendee.findMany({
-      where: {
-        eventId
-      }
-    });
+    // CLEAN SQL query that joins EventAttendee + Contact in one result
+    const result = await prisma.$queryRaw`
+      SELECT 
+        ea.id as "attendeeId",
+        ea."eventId",
+        ea."contactId",
+        ea."currentStage",
+        ea."audienceType",
+        ea."attended",
+        ea."createdAt",
+        c.id as "contactId",
+        c."firstName",
+        c."lastName", 
+        c.email,
+        c.phone,
+        c."orgId" as "contactOrgId"
+      FROM "EventAttendee" ea
+      LEFT JOIN "Contact" c ON ea."contactId" = c.id
+      WHERE ea."eventId" = ${eventId}
+      ORDER BY ea."createdAt" DESC
+    `;
 
-    console.log(`✅ Found ${attendees.length} EventAttendees for event: ${eventId}`);
-    console.log('🔍 EventAttendees data:', JSON.stringify(attendees, null, 2));
+    console.log(`✅ Found ${result.length} EventAttendees with Contact data`);
+    console.log('🔍 Combined data:', JSON.stringify(result, null, 2));
 
-    res.json(attendees);
+    res.json(result);
 
   } catch (error) {
     console.error('❌ Error loading EventAttendees:', error);

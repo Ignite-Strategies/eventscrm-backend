@@ -21,48 +21,55 @@ router.get('/:eventId/pipeline', async (req, res) => {
       return res.status(400).json({ error: 'audienceType query param required' });
     }
 
-    // Fetch all EventAttendees for this event + audienceType
-    const attendees = await prisma.eventAttendee.findMany({
-      where: {
-        eventId,
-        audienceType
-      },
-      include: {
-        contact: true  // Include contact details (firstName, lastName, email, phone)
-      }
-    });
+    // CLEAN SQL query that joins EventAttendee + Contact in one result
+    const attendees = await prisma.$queryRaw`
+      SELECT 
+        ea.id as "attendeeId",
+        ea."eventId",
+        ea."contactId",
+        ea."currentStage",
+        ea."audienceType",
+        ea."attended",
+        ea."createdAt",
+        c.id as "contactId",
+        c."firstName",
+        c."lastName", 
+        c.email,
+        c.phone,
+        c."orgId" as "contactOrgId"
+      FROM "EventAttendee" ea
+      LEFT JOIN "Contact" c ON ea."contactId" = c.id
+      WHERE ea."eventId" = ${eventId} AND ea."audienceType" = ${audienceType}
+      ORDER BY ea."createdAt" DESC
+    `;
 
     console.log(`✅ Found ${attendees.length} attendees for audienceType: ${audienceType}`);
-    console.log('🔍 Attendees data:', JSON.stringify(attendees, null, 2));
+    console.log('🔍 Clean attendees data:', JSON.stringify(attendees, null, 2));
 
     // Group by currentStage
     const stageGroups = {};
     attendees.forEach(attendee => {
-      console.log('🔍 Processing attendee:', attendee.id, 'contactId:', attendee.contactId);
-      console.log('🔍 Contact exists:', !!attendee.contact);
-      console.log('🔍 Contact data:', attendee.contact);
-      
       const stage = attendee.currentStage || 'in_funnel';
       if (!stageGroups[stage]) {
         stageGroups[stage] = [];
       }
       
-      // Check if contact exists
-      if (!attendee.contact) {
-        console.log('⚠️ EventAttendee missing contact data:', attendee.id, 'contactId:', attendee.contactId);
+      // Check if contact data exists
+      if (!attendee.firstName) {
+        console.log('⚠️ EventAttendee missing contact data:', attendee.attendeeId, 'contactId:', attendee.contactId);
         return; // Skip this attendee
       }
 
       // Map to frontend-friendly format
       stageGroups[stage].push({
-        _id: attendee.contact.id,  // Use contactId as _id for frontend compatibility
-        contactId: attendee.contact.id,  // Explicit contactId for clarity
-        attendeeId: attendee.id,  // EventAttendee ID for updates
-        firstName: attendee.contact.firstName,
-        lastName: attendee.contact.lastName,
-        email: attendee.contact.email,
-        phone: attendee.contact.phone,
-        categoryOfEngagement: attendee.engagementLevel || 'medium',  // Default to medium if not set
+        _id: attendee.contactId,  // Use contactId as _id for frontend compatibility
+        contactId: attendee.contactId,  // Explicit contactId for clarity
+        attendeeId: attendee.attendeeId,  // EventAttendee ID for updates
+        firstName: attendee.firstName,
+        lastName: attendee.lastName,
+        email: attendee.email,
+        phone: attendee.phone,
+        categoryOfEngagement: 'medium',  // Default to medium
         currentStage: attendee.currentStage,
         audienceType: attendee.audienceType
       });
@@ -72,7 +79,7 @@ router.get('/:eventId/pipeline', async (req, res) => {
     const registryData = Object.keys(stageGroups).map(stage => ({
       stage,
       count: stageGroups[stage].length,
-      contacts: stageGroups[stage]  // NEW: contacts (not deprecated supporters)
+      contacts: stageGroups[stage]
     }));
 
     console.log('📋 Registry data:', registryData);
