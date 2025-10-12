@@ -1,31 +1,9 @@
 import express from 'express';
 import { getPrismaClient } from '../config/database.js';
+import { mapToOfficialStage, OFFICIAL_AUDIENCES } from '../config/pipelineConfig.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
-
-// STAGE MAPPING - Maps old/deprecated stages to official schema stages
-const STAGE_MAPPING = {
-  // Old stages → New stages
-  'soft_commit': 'rsvped',
-  'rsvp': 'rsvped',
-  'sop_entry': 'in_funnel',
-  'aware': 'general_awareness',
-  'interested': 'expressed_interest',
-  // Official stages (no mapping needed)
-  'in_funnel': 'in_funnel',
-  'general_awareness': 'general_awareness',
-  'personal_invite': 'personal_invite',
-  'expressed_interest': 'expressed_interest',
-  'rsvped': 'rsvped',
-  'paid': 'paid',
-  'attended': 'attended'
-};
-
-// Helper function to map stage to official schema stage
-const mapToOfficialStage = (stage) => {
-  return STAGE_MAPPING[stage] || 'in_funnel'; // Default to in_funnel if unknown
-};
 
 /**
  * GET /events/:eventId/pipeline?audienceType=org_members

@@ -24,6 +24,7 @@ import formCreatorSaverRouter from './routes/formCreatorSaverRoute.js';
 import formsPublicHydrateRouter from './routes/formsPublicHydrateRoute.js';
 import adminRouter from './routes/adminRoute.js';
 import dashboardHydrationRouter from './routes/dashboardHydrationRoute.js';
+import welcomeHydrationRouter from './routes/welcomeHydrationRoute.js';
 import contactHydrateRouter from './routes/contactHydrateRoute.js';
 import contactSaveRouter from './routes/contactSaveRoute.js';
 import contactDeleteRouter from './routes/contactDeleteRoute.js';
@@ -33,7 +34,6 @@ import orgMemberDeleteRouter from './routes/orgMemberDeleteRoute.js';    // OrgM
 // import generalContactUploadRouter from './routes/generalContactUploadRoute.js';    // DELETED - General Contact preview
 // import generalContactSaverRouter from './routes/generalContactSaverRoute.js';    // DELETED - General Contact save
 import contactEventUploadRouter from './routes/contactEventUploadRoute.js';    // Event Contact upload
-import schemaConfigRouter from './routes/schemaConfigRoute.js'; // Schema definitions (audience types, stages)
 import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // NEW: EventAttendee-based pipeline (no EventPipeline model)
 import eventAttendeesRouter from './routes/eventAttendeesRoute.js'; // NEW: Simple EventAttendees endpoint
 
@@ -76,6 +76,7 @@ app.use('/api/forms', formDashHydratorRouter); // Form loading (CRM admin dashbo
 app.use('/api/forms/saver', formCreatorSaverRouter);       // Form save/update/delete (CRM admin)
 app.use('/api/admins', adminRouter);            // Admin operations
 app.use('/api/hydration', dashboardHydrationRouter);     // Dashboard universal data load
+app.use('/api/welcome', welcomeHydrationRouter);         // Simple welcome hydration (adminId, orgId, eventId)
 app.use('/api/contacts', contactHydrateRouter);   // Contact hydration (GET)
 app.use('/api/contacts', contactSaveRouter);      // Contact save (POST/PATCH)  
 app.use('/api/contacts', contactDeleteRouter);    // Contact delete (DELETE)
@@ -85,7 +86,6 @@ app.use('/api/orgmembers', orgMemberDeleteRouter);    // OrgMember delete (fork-
 // app.use('/api/contacts', generalContactUploadRouter);    // DELETED - General Contact preview
 // app.use('/api/contacts', generalContactSaverRouter);    // DELETED - General Contact save
 app.use('/api/contacts', contactEventUploadRouter);    // Event Contact upload
-app.use('/api/schema', schemaConfigRouter);            // Schema definitions (audience types, stages)
 app.use('/api/events', pipelineHydrationRouter); // Pipeline hydration (EventAttendee-based, no EventPipeline model)
 app.use('/api/events', eventAttendeesRouter); // Simple EventAttendees endpoint
 
