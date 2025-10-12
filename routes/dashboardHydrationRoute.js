@@ -57,25 +57,26 @@ router.get('/:firebaseId', async (req, res) => {
       }
     });
     
-    // Get admin record if exists
-    let admin = null;
-    if (orgMember.contactId) {
-      admin = await prisma.admin.findFirst({
-        where: { contactId: orgMember.contactId }
-      });
+    // Get admin record by firebaseId (Admin has direct orgId and eventId!)
+    const admin = await prisma.admin.findFirst({
+      where: { firebaseId: firebaseId }
+    });
+    
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found for this Firebase user' });
     }
     
-    // Return the 3 core IDs + admin object - Welcome page needs these
+    // Return the 3 core IDs from Admin + admin object
     const hydrationData = {
-      adminId: admin ? admin.id : null,
-      orgId: orgMember.orgId,
-      eventId: events.length > 0 ? events[0].id : null,
-      admin: admin ? {
+      adminId: admin.id,
+      orgId: admin.orgId,
+      eventId: admin.eventId,
+      admin: {
         id: admin.id,
         role: admin.role,
         permissions: admin.permissions,
         isActive: admin.isActive
-      } : null
+      }
     };
     
     console.log('✅ Hydration complete:', {
