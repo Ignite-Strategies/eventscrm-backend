@@ -57,9 +57,25 @@ router.get('/:firebaseId', async (req, res) => {
       }
     });
     
-    // Return ONLY orgId - Welcome page only needs this to route properly
+    // Get admin record if exists
+    let admin = null;
+    if (orgMember.contactId) {
+      admin = await prisma.admin.findFirst({
+        where: { contactId: orgMember.contactId }
+      });
+    }
+    
+    // Return the 3 core IDs + admin object - Welcome page needs these
     const hydrationData = {
-      orgId: orgMember.orgId
+      adminId: admin ? admin.id : null,
+      orgId: orgMember.orgId,
+      eventId: events.length > 0 ? events[0].id : null,
+      admin: admin ? {
+        id: admin.id,
+        role: admin.role,
+        permissions: admin.permissions,
+        isActive: admin.isActive
+      } : null
     };
     
     console.log('✅ Hydration complete:', {
