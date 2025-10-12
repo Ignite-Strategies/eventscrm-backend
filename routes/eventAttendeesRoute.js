@@ -30,7 +30,7 @@ router.get('/:eventId/attendees', async (req, res) => {
         c."lastName", 
         c.email,
         c.phone,
-        c."orgId" as "contactOrgId",
+        ea."orgId" as "contactOrgId",
         c."orgMemberId",
         CASE 
           WHEN c."orgMemberId" IS NOT NULL THEN 'org_member'
