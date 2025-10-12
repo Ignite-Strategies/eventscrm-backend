@@ -22,6 +22,15 @@ router.get('/:eventId/pipeline', async (req, res) => {
       return res.status(400).json({ error: 'audienceType query param required' });
     }
 
+    // DEBUG: Check if EventAttendee table exists and has data
+    try {
+      const testQuery = await prisma.$queryRaw`SELECT COUNT(*) as count FROM "EventAttendee" LIMIT 1`;
+      console.log('🔍 EventAttendee table test:', testQuery);
+    } catch (tableError) {
+      console.error('❌ EventAttendee table error:', tableError);
+      return res.status(500).json({ error: 'EventAttendee table not accessible', details: tableError.message });
+    }
+
     // CLEAN SQL query that joins EventAttendee + Contact in one result
     const attendees = await prisma.$queryRaw`
       SELECT 
