@@ -18,6 +18,19 @@ router.get('/:eventId/pipeline', async (req, res) => {
 
     console.log('📊 Loading pipeline for event:', eventId, 'audienceType:', audienceType);
 
+    // DEBUG: Check what audience types actually exist for this event
+    try {
+      const allAudiences = await prisma.$queryRaw`
+        SELECT DISTINCT "audienceType", COUNT(*) as count 
+        FROM "EventAttendee" 
+        WHERE "eventId" = ${eventId}
+        GROUP BY "audienceType"
+      `;
+      console.log('🔍 ALL AUDIENCE TYPES for this event:', allAudiences);
+    } catch (audienceError) {
+      console.error('❌ Error checking audience types:', audienceError);
+    }
+
     if (!audienceType) {
       return res.status(400).json({ error: 'audienceType query param required' });
     }
