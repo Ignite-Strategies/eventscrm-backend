@@ -243,7 +243,6 @@ model Event {
   totalOutreachTarget   Int   @default(0)
 
   // Relations
-  pipelineEntries EventPipelineEntry[] // OLD: Legacy, to be deprecated
   attendees       EventAttendee[]
   tasks           EventTask[]
   publicForms     PublicForm[] // Public forms for external submissions
