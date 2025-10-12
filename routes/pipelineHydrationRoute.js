@@ -38,6 +38,10 @@ router.get('/:eventId/pipeline', async (req, res) => {
     // Group by currentStage
     const stageGroups = {};
     attendees.forEach(attendee => {
+      console.log('🔍 Processing attendee:', attendee.id, 'contactId:', attendee.contactId);
+      console.log('🔍 Contact exists:', !!attendee.contact);
+      console.log('🔍 Contact data:', attendee.contact);
+      
       const stage = attendee.currentStage || 'in_funnel';
       if (!stageGroups[stage]) {
         stageGroups[stage] = [];
