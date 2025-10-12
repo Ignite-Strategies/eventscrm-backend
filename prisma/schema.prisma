@@ -354,28 +354,6 @@ model Admin {
   @@index([isActive])
 }
 
-// OLD: Legacy model, to be deprecated
-model EventPipelineEntry {
-  id          String    @id @default(cuid())
-  orgId       String
-  eventId     String
-  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  supporterId String
-  supporter   Supporter @relation(fields: [supporterId], references: [id], onDelete: Cascade)
-
-  audienceType String // "org_member", "friend_spouse", "community_partner", "business_sponsor", "champion"
-  stage        String // "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid", "cant_attend"
-  source       String? // "admin_add", "csv", "bulk_add", etc.
-  notes        String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([eventId, supporterId, audienceType])
-  @@index([eventId, audienceType, stage])
-  @@index([orgId])
-}
-
 model EventAttendee {
   id      String @id @default(cuid())
   orgId   String
