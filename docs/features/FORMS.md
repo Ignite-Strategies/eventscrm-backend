@@ -361,3 +361,4 @@ const stages = [
 3. **Form Analytics** - Track form performance
 4. **Conditional Logic** - Dynamic field visibility
 5. **Payment Integration** - Stripe for paid events
+

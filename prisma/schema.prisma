@@ -65,7 +65,6 @@ model Contact {
   // Relations
   eventAttendees   EventAttendee[] // Events they're attending
   orgMember        OrgMember? // If promoted to master list
-  admin            Admin? // If they're an admin
   sequenceContacts SequenceContact[] // Campaign tracking
   emailEvents      EmailEvent[] // Email engagement
 
@@ -249,6 +248,7 @@ model Event {
   tasks           EventTask[]
   publicForms     PublicForm[] // Public forms for external submissions
   eventForms      EventForm[] // Internal CRM tracking forms
+  admins          Admin[] // Admin users with event access
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -332,10 +332,10 @@ model EventForm {
 // NEW: Admin - Admin users with permissions
 model Admin {
   id        String        @id @default(cuid())
-  contactId String        @unique
-  contact   Contact       @relation(fields: [contactId], references: [id], onDelete: Cascade)
   orgId     String?
   org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  eventId   String?
+  event     Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   // Admin Configuration
   role        String // "super_admin", "admin", "manager", etc.
@@ -345,9 +345,9 @@ model Admin {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([contactId, orgId])
-  @@index([contactId])
+  @@unique([orgId, eventId])
   @@index([orgId])
+  @@index([eventId])
   @@index([isActive])
 }
 

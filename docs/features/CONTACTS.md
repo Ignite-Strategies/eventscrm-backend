@@ -277,3 +277,4 @@ OrgMember Detail → "Grant Admin Access" → Create Admin record → System per
 3. **Contact Edit** - Update Contact + OrgMember data
 4. **Add Contact to Event** - Manual event assignment
 5. **Contact Search** - Find contacts across all data
+

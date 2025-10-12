@@ -1,9 +1,9 @@
 import express from 'express';
 import multer from 'multer';
-import { readGeneralContactCSV } from '../services/generalContactCsvReader.js';
-import { getContactFieldMapping, normalizeContactRecord } from '../services/generalContactCsvNormalizer.js';
-import { validateContactBatch } from '../services/generalContactValidator.js';
-import { bulkUpsertGeneralContacts } from '../services/generalContactMutation.js';
+import { readCSV } from '../services/csvReader.js';
+import { getContactFieldMapping, normalizeContactRecord } from '../services/eventAttendeeCsvNormalizer.js';
+import { validateContactBatch } from '../services/eventAttendeeCsvValidator.js';
+import { bulkUpsertContacts } from '../services/eventAttendeeCsvMutation.js';
 import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();
@@ -48,7 +48,7 @@ router.post('/event/preview', upload.single('file'), async (req, res) => {
     }
 
     // 1. Read CSV
-    const readResult = readGeneralContactCSV(req.file.buffer);
+    const readResult = readCSV(req.file.buffer);
     if (!readResult.success) {
       return res.status(400).json({ error: readResult.error });
     }
@@ -108,7 +108,7 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
     }
 
     // 1. Read CSV
-    const readResult = readGeneralContactCSV(req.file.buffer);
+    const readResult = readCSV(req.file.buffer);
     if (!readResult.success) {
       return res.status(400).json({ error: readResult.error });
     }

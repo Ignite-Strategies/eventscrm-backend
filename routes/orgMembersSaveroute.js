@@ -1,8 +1,8 @@
 import express from 'express';
 import multer from 'multer';
 import { readCSV } from '../services/csvReader.js';
-import { normalizeRecord } from '../services/csvNormalizer.js';
-import { validateBatch } from '../services/csvValidator.js';
+import { normalizeRecord } from '../services/orgMemberCsvNormalizer.js';
+import { validateBatch } from '../services/orgMemberCsvValidator.js';
 import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();

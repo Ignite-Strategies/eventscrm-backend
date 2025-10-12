@@ -2,76 +2,69 @@ import express from 'express';
 
 const router = express.Router();
 
-// Audience-specific stage configurations
-const AUDIENCE_STAGES = {
-  org_members: [
-    "aware",           // Know about the event
-    "interested",      // Showing interest
-    "rsvped",         // Confirmed attendance
-    "paid",           // Payment completed
-    "attended",       // Actually showed up
-    "champion"        // Became an advocate
-  ],
-  friends_family: [
-    "aware",           // Heard about the event
-    "interested",      // Thinking about coming
-    "rsvped",         // Said they'll come
-    "paid",           // Bought ticket
-    "attended",       // Actually came
-    "champion"        // Telling others about it
-  ],
-  community_partners: [
-    "aware",           // Know about the event
-    "interested",      // Considering promotion partnership
-    "promoting"        // Agreed to promote us
-  ],
-  business_sponsor: [
-    "aware",           // Know about the event
-    "interested",      // Considering sponsorship
-    "proposal_sent",   // Sent sponsorship package
-    "sponsor_confirmed" // Financial sponsorship confirmed
-  ],
-  champions: [
-    "tentative",       // Tentative about championing
-    "champion_agreed"  // Agreed to champion the event
-  ]
-};
+/**
+ * UNIVERSAL EVENT ATTENDEE STAGES
+ * These are the ACTUAL stages in the EventAttendee model
+ * NOT hardcoded - these match the schema!
+ */
+const EVENT_ATTENDEE_STAGES = [
+  "in_funnel",           // Initial contact, not yet engaged
+  "general_awareness",   // Aware of the event
+  "personal_invite",     // Personally invited
+  "expressed_interest",  // Showed interest
+  "rsvp",                // Confirmed attendance (soft commit)
+  "paid",                // Payment completed
+  "attended",            // Actually showed up
+  "cant_attend"          // Can't make it
+];
 
-// Get all audience types
+/**
+ * UNIVERSAL AUDIENCE TYPES
+ * These are the ACTUAL audience types in the EventAttendee model
+ */
+const AUDIENCE_TYPES = [
+  "org_members",         // Internal team members
+  "friends_family",      // Personal network
+  "landing_page_public", // Public signups from landing page
+  "community_partners",  // Partner organizations
+  "cold_outreach"        // Cold prospects
+];
+
+/**
+ * GET /api/schema/event-attendee
+ * Returns the UNIVERSAL schema config for EventAttendee
+ * This is what the frontend should use to hydrate dropdowns!
+ */
+router.get('/event-attendee', (req, res) => {
+  try {
+    res.json({
+      audienceTypes: AUDIENCE_TYPES,
+      stages: EVENT_ATTENDEE_STAGES
+    });
+  } catch (error) {
+    console.error('Error fetching event-attendee schema:', error);
+    res.status(500).json({ error: 'Failed to fetch schema' });
+  }
+});
+
+// Legacy route for backward compatibility
 router.get('/audience-types', (req, res) => {
   try {
-    const audienceTypes = Object.keys(AUDIENCE_STAGES);
-    res.json({ success: true, audienceTypes });
+    res.json({ success: true, audienceTypes: AUDIENCE_TYPES });
   } catch (error) {
     console.error('Error fetching audience types:', error);
     res.status(500).json({ error: 'Failed to fetch audience types' });
   }
 });
 
-// Get stages for a specific audience
-router.get('/audience-stages/:audienceType', (req, res) => {
-  try {
-    const { audienceType } = req.params;
-    
-    if (!AUDIENCE_STAGES[audienceType]) {
-      return res.status(400).json({ 
-        error: 'Invalid audience type',
-        availableTypes: Object.keys(AUDIENCE_STAGES)
-      });
-    }
-    
-    const stages = AUDIENCE_STAGES[audienceType];
-    res.json({ success: true, audienceType, stages });
-  } catch (error) {
-    console.error('Error fetching audience stages:', error);
-    res.status(500).json({ error: 'Failed to fetch audience stages' });
-  }
-});
-
-// Get all audience configurations (for frontend hydration)
+// Legacy route for backward compatibility
 router.get('/audience-config', (req, res) => {
   try {
-    res.json({ success: true, audienceStages: AUDIENCE_STAGES });
+    res.json({ 
+      success: true, 
+      audienceTypes: AUDIENCE_TYPES,
+      stages: EVENT_ATTENDEE_STAGES
+    });
   } catch (error) {
     console.error('Error fetching audience config:', error);
     res.status(500).json({ error: 'Failed to fetch audience config' });

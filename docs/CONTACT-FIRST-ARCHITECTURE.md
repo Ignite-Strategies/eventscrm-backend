@@ -55,6 +55,7 @@ OrgMember {
 - ✅ `contactId` is unique (one Contact = one OrgMember for MVP1)
 - ✅ `orgId` creates the relationship to Organization
 - ✅ Extended fields live here, not in Contact
+- ✅ **Super Users**: Admin users have OrgMember records with their `orgId`
 - ✅ Future: Can add `@@unique([contactId, orgId])` for multi-org
 
 ---
@@ -209,6 +210,35 @@ npx prisma db push
 
 ---
 
+## 🛡️ Super User Protection
+
+### **Super User Identity:**
+- Super users are regular `Contact` records with `OrgMember` relationships
+- Admin operations use `orgId` from the OrgMember record
+- No special "admin" table needed - leverage existing Contact-First architecture
+
+### **Backend Protection:**
+```javascript
+// Example: Prevent deletion of super user
+const isSuperUser = await prisma.orgMember.findFirst({
+  where: { 
+    contactId: contactIdToDelete,
+    orgId: SUPER_USER_ORG_ID 
+  }
+});
+
+if (isSuperUser) {
+  throw new Error('Cannot delete super user');
+}
+```
+
+### **Key Principle:**
+- **Super User = Contact + OrgMember with specific `orgId`**
+- **Regular User = Contact + OrgMember with regular `orgId`**
+- **Universal personhood maintained** - no special admin tables
+
+---
+
 ## 🔍 Future Considerations
 
 ### **Multi-Org Support:**
@@ -243,4 +273,5 @@ This architecture supports:
 - ✅ Multi-org future
 - ✅ Clean separation of concerns
 - ✅ No duplicate person records
+
 

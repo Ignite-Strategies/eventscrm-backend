@@ -1,7 +1,9 @@
 /**
- * CSV Field Normalizer - Maps various CSV headers to our schema fields
+ * OrgMember CSV Field Mapper - Maps various CSV headers to Contact + OrgMember fields
  * Pure function - no side effects, just field mapping
  */
+
+import { smartNameParse } from '../utils/nameParser.js';
 
 const FIELD_MAP = {
   // First Name variations
@@ -37,6 +39,12 @@ const FIELD_MAP = {
   'mobile': 'phone',
   'cell': 'phone',
   'telephone': 'phone',
+  
+  // Full Name variations (will be parsed into firstName/lastName)
+  'full name': 'fullName',
+  'fullname': 'fullName',
+  'name': 'fullName',
+  'complete name': 'fullName',
   
   // Address variations
   'street': 'street',
@@ -92,6 +100,22 @@ export function normalizeRecord(record) {
     const normalizedKey = normalizeFieldName(key);
     normalized[normalizedKey] = record[key];
   });
+  
+  // Parse fullName if it exists and firstName/lastName are missing
+  if (normalized.fullName && (!normalized.firstName || !normalized.lastName)) {
+    const parsedName = smartNameParse(normalized.fullName);
+    
+    // Only use parsed names if we don't already have firstName/lastName
+    if (!normalized.firstName) {
+      normalized.firstName = parsedName.firstName;
+    }
+    if (!normalized.lastName) {
+      normalized.lastName = parsedName.lastName;
+    }
+    
+    // Remove fullName from final record since we've parsed it
+    delete normalized.fullName;
+  }
   
   return normalized;
 }
