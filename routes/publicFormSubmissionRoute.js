@@ -98,13 +98,16 @@ router.post('/', async (req, res) => {
       }
     });
     
+    // Map old stage names to new ones for backward compatibility
+    const mappedStage = targetStage === 'soft_commit' ? 'rsvp' : targetStage;
+    
     if (attendee) {
       console.log('🔄 Updating existing attendee');
       // Update existing attendee
       attendee = await prisma.eventAttendee.update({
         where: { id: attendee.id },
         data: {
-          currentStage: targetStage,
+          currentStage: mappedStage,
           audienceType: audienceType,
           submittedFormId: publicForm.id, // Track which form they used
           notes: JSON.stringify(customFieldResponses)
@@ -118,7 +121,7 @@ router.post('/', async (req, res) => {
           orgId: orgId,  // ← From localStorage (frontend)
           eventId: eventId,  // ← From localStorage (frontend)
           contactId: contact.id,
-          currentStage: targetStage,  // ← From frontend
+          currentStage: mappedStage,  // ← Mapped stage
           audienceType: audienceType, // ← From frontend
           submittedFormId: publicForm.id, // Track which form they used
           notes: JSON.stringify(customFieldResponses)

@@ -282,7 +282,7 @@ model PublicForm {
 
   // MUTATION INSTRUCTIONS - Backend uses these on submission
   audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
-  targetStage  String // "soft_commit", "paid", etc. - maps to EventAttendee.currentStage
+  targetStage  String // "rsvp", "paid", "attended", "cant_attend", etc. - maps to EventAttendee.currentStage
 
   // Custom Fields - JAMMED INTO PUBLICFORM for easy hydration!
   fields Json? // Array of custom field objects: [{ id, type, label, placeholder, required, options, order }]
