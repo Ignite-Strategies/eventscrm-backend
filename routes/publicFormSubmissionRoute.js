@@ -43,13 +43,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Email is required' });
     }
     
-    // Find or create Contact (needs orgId + email for unique constraint)
+    // Find or create Contact (Contact-First: universal personhood, no orgId!)
     let contact = await prisma.contact.findUnique({
       where: { 
-        orgId_email: {
-          orgId: orgId,  // ← From localStorage
-          email: email
-        }
+        email: email  // Global unique lookup
       }
     });
     
@@ -60,8 +57,7 @@ router.post('/', async (req, res) => {
           firstName,
           lastName,
           email,
-          phone,
-          orgId: orgId  // ← From localStorage
+          phone
         }
       });
     } else {
