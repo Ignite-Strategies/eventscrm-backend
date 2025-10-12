@@ -29,8 +29,8 @@ import contactSaveRouter from './routes/contactSaveRoute.js';
 import contactDeleteRouter from './routes/contactDeleteRoute.js';
 import eventAttendeeDeleteRouter from './routes/eventAttendeeDeleteRoute.js';    // EventAttendee delete (fork-aware)
 import orgMemberDeleteRouter from './routes/orgMemberDeleteRoute.js';    // OrgMember delete (fork-aware)
-// import contactUploadRouter from './routes/contactUploadRoute.js';    // Contact CSV upload - DEPRECATED
-import generalContactUploadRouter from './routes/generalContactUploadRoute.js';    // General Contact preview
+// import contactUploadRouter from './routes/contactUploadRoute.js';    // DELETED - Contact CSV upload - DEPRECATED
+// import generalContactUploadRouter from './routes/generalContactUploadRoute.js';    // DELETED - General Contact preview
 // import generalContactSaverRouter from './routes/generalContactSaverRoute.js';    // DELETED - General Contact save
 import contactEventUploadRouter from './routes/contactEventUploadRoute.js';    // Event Contact upload
 import schemaConfigRouter from './routes/schemaConfigRoute.js'; // Schema definitions (audience types, stages)
@@ -80,8 +80,8 @@ app.use('/api/contacts', contactSaveRouter);      // Contact save (POST/PATCH)
 app.use('/api/contacts', contactDeleteRouter);    // Contact delete (DELETE)
 app.use('/api/event-attendees', eventAttendeeDeleteRouter);    // EventAttendee delete (fork-aware)
 app.use('/api/orgmembers', orgMemberDeleteRouter);    // OrgMember delete (fork-aware)
-// app.use('/api/contacts', contactUploadRouter);    // Contact CSV upload - DEPRECATED
-app.use('/api/contacts', generalContactUploadRouter);    // General Contact preview
+// app.use('/api/contacts', contactUploadRouter);    // DELETED - Contact CSV upload - DEPRECATED
+// app.use('/api/contacts', generalContactUploadRouter);    // DELETED - General Contact preview
 // app.use('/api/contacts', generalContactSaverRouter);    // DELETED - General Contact save
 app.use('/api/contacts', contactEventUploadRouter);    // Event Contact upload
 app.use('/api/schema', schemaConfigRouter);            // Schema definitions (audience types, stages)
