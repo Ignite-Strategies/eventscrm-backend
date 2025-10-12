@@ -168,7 +168,6 @@ model Supporter {
 
   // Relations
   tags            SupporterTag[]
-  pipelineEntries EventPipelineEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
