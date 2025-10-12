@@ -179,6 +179,38 @@ if (admin.role === 'super_admin') {
 - `/middleware/authMiddleware.js` - May use Admin for auth checks
 - `/prisma/schema.prisma` - Admin model definition
 
+## TODO / Future Enhancements
+
+### Profile Completion Flow
+- [ ] Add phone number field to Admin model (currently only in OrgMember)
+- [ ] Add firstName/lastName to Admin model for display purposes
+- [ ] Implement profile completion check in hydration flow
+- [ ] Add `/profile-setup` route that updates Admin profile fields
+- [ ] Consider if Admin should have full profile fields (street, city, state, zip) or just link to OrgMember
+
+### Profile Setup Requirements
+Currently the phone number check is disabled in Welcome.jsx. Need to decide:
+1. Should Admin have its own profile fields (phone, name, etc.)?
+2. Or should Admin link to OrgMember/Contact for profile data?
+3. When/where should users complete their profile?
+
+### Potential Schema Addition
+```prisma
+model Admin {
+  // ... existing fields
+  
+  // Profile fields (TO BE ADDED)
+  firstName String?
+  lastName  String?
+  phone     String?
+  photoURL  String? // Already exists
+  
+  // Or link to OrgMember for profile data?
+  orgMemberId String? @unique
+  orgMember   OrgMember? @relation(fields: [orgMemberId], references: [id])
+}
+```
+
 ## Last Updated
-October 12, 2025 - Fixed hydration to use Admin as source of truth for orgId and eventId
+October 12, 2025 - Fixed hydration to use Admin as source of truth for orgId and eventId, removed phone check temporarily
 
