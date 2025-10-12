@@ -15,7 +15,7 @@ router.get('/:eventId/attendees', async (req, res) => {
 
     console.log('🔍 Loading EventAttendees + Contact data for event:', eventId);
 
-    // CLEAN SQL query that joins EventAttendee + Contact in one result
+    // CLEAN SQL query that joins EventAttendee + Contact + OrgMember check
     const result = await prisma.$queryRaw`
       SELECT 
         ea.id as "attendeeId",
@@ -30,7 +30,12 @@ router.get('/:eventId/attendees', async (req, res) => {
         c."lastName", 
         c.email,
         c.phone,
-        c."orgId" as "contactOrgId"
+        c."orgId" as "contactOrgId",
+        c."orgMemberId",
+        CASE 
+          WHEN c."orgMemberId" IS NOT NULL THEN 'org_member'
+          ELSE 'external_contact'
+        END as "actualType"
       FROM "EventAttendee" ea
       LEFT JOIN "Contact" c ON ea."contactId" = c.id
       WHERE ea."eventId" = ${eventId}
