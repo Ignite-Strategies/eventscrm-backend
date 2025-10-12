@@ -13,16 +13,58 @@ export const OFFICIAL_AUDIENCES = [
   'champions'
 ];
 
-// OFFICIAL STAGES from EventAttendee.currentStage
-export const OFFICIAL_STAGES = [
+// ALL POSSIBLE STAGES from EventAttendee.currentStage
+export const ALL_STAGES = [
   'in_funnel',
   'general_awareness',
   'personal_invite',
   'expressed_interest',
   'rsvped',
   'paid',
-  'attended'
+  'attended',
+  'interested',
+  'partner',
+  'sponsor',
+  'aware',
+  'committed',
+  'executing'
 ];
+
+// AUDIENCE-SPECIFIC STAGES
+// Each audience type has its own pipeline stages
+export const AUDIENCE_STAGES = {
+  'org_members': [
+    'in_funnel',
+    'general_awareness',
+    'personal_invite',
+    'expressed_interest',
+    'rsvped',
+    'paid',
+    'attended'
+  ],
+  'friends_family': [
+    'in_funnel',
+    'general_awareness',
+    'personal_invite',
+    'expressed_interest',
+    'rsvped',
+    'paid',
+    'attended'
+  ],
+  'community_partners': [
+    'interested',
+    'partner'
+  ],
+  'business_sponsor': [
+    'interested',
+    'sponsor'
+  ],
+  'champions': [
+    'aware',
+    'committed',
+    'executing'
+  ]
+};
 
 // STAGE MAPPING - Maps old/deprecated stages to official stages
 export const STAGE_MAPPING = {
@@ -52,8 +94,14 @@ export const isValidAudience = (audienceType) => {
   return OFFICIAL_AUDIENCES.includes(audienceType);
 };
 
-// Validate stage
-export const isValidStage = (stage) => {
-  return OFFICIAL_STAGES.includes(stage) || stage in STAGE_MAPPING;
+// Get stages for specific audience
+export const getStagesForAudience = (audienceType) => {
+  return AUDIENCE_STAGES[audienceType] || [];
+};
+
+// Validate stage for audience
+export const isValidStageForAudience = (stage, audienceType) => {
+  const audienceStages = getStagesForAudience(audienceType);
+  return audienceStages.includes(stage);
 };
 
