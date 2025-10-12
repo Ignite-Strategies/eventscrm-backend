@@ -36,6 +36,7 @@ import orgMemberDeleteRouter from './routes/orgMemberDeleteRoute.js';    // OrgM
 import contactEventUploadRouter from './routes/contactEventUploadRoute.js';    // Event Contact upload
 import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // NEW: EventAttendee-based pipeline (no EventPipeline model)
 import eventAttendeesRouter from './routes/eventAttendeesRoute.js'; // NEW: Simple EventAttendees endpoint
+import pipelineConfigRouter from './routes/pipelineConfigRoute.js'; // Pipeline config from database
 
 dotenv.config();
 
@@ -88,6 +89,7 @@ app.use('/api/orgmembers', orgMemberDeleteRouter);    // OrgMember delete (fork-
 app.use('/api/contacts', contactEventUploadRouter);    // Event Contact upload
 app.use('/api/events', pipelineHydrationRouter); // Pipeline hydration (EventAttendee-based, no EventPipeline model)
 app.use('/api/events', eventAttendeesRouter); // Simple EventAttendees endpoint
+app.use('/api/pipeline-config', pipelineConfigRouter); // Pipeline config from database
 
 // Health check
 app.get('/health', (req, res) => {
