@@ -94,8 +94,11 @@ router.post('/', async (req, res) => {
       }
     });
     
-    // Map old stage names to new ones for backward compatibility
-    const mappedStage = targetStage === 'soft_commit' ? 'rsvp' : targetStage;
+    // Map old stage names to new correct ones for backward compatibility
+    let mappedStage = targetStage;
+    if (targetStage === 'soft_commit' || targetStage === 'rsvp') {
+      mappedStage = 'rsvped'; // Grammatically correct past tense
+    }
     
     if (attendee) {
       console.log('🔄 Updating existing attendee');
@@ -117,7 +120,7 @@ router.post('/', async (req, res) => {
           orgId: orgId,  // ← From localStorage (frontend)
           eventId: eventId,  // ← From localStorage (frontend)
           contactId: contact.id,
-          currentStage: mappedStage,  // ← Mapped stage
+          currentStage: mappedStage,
           audienceType: audienceType, // ← From frontend
           submittedFormId: publicForm.id, // Track which form they used
           notes: JSON.stringify(customFieldResponses)

@@ -30,8 +30,8 @@ model Organization {
   zip    String?
 
   // Pipeline defaults - audience-specific stages
-  pipelineDefaults String[] @default(["aware", "interested", "rsvped", "paid", "attended", "champion"])
-  audienceDefaults String[] @default(["org_members", "friends_family", "community_partners", "business_sponsor", "champions"])
+  pipelineDefaults String[] @default(["in_funnel", "general_awareness", "personal_invite", "expressed_interest", "rsvped", "paid", "attended"])
+  audienceDefaults String[] @default(["org_members", "friends_family", "landing_page_public", "community_partners", "cold_outreach"])
 
   // Relations
   members         OrgMember[] // Org members (the bridge to Contact)
@@ -362,8 +362,8 @@ model EventAttendee {
   contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   // Pipeline tracking (hardcoded - no EventPipeline model)
-  currentStage String @default("aware") // Current position in funnel
-  audienceType String // "org_members" | "friends_family" | "community_partners" | "business_sponsor" | "champions"
+  currentStage String @default("in_funnel") // Current position in funnel
+  audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
 
   // Form tracking
   submittedFormId String? // Which form created this attendee?
@@ -651,4 +651,5 @@ model EventTask {
 }
 
 // REMOVED: Stage and PipelineStage models - Stages are now hardcoded strings in EventAttendee.currentStage
-// Possible stages: "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid"
+// Official stages: "in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit", "paid"
+// Official audiences: "org_members", "friends_family", "landing_page_public", "community_partners", "cold_outreach"

@@ -27,8 +27,9 @@ router.get('/event/schema', async (req, res) => {
         'general_awareness',
         'personal_invite',
         'expressed_interest',
-        'soft_commit',
-        'paid'
+        'rsvped',
+        'paid',
+        'attended'
       ]
     });
   } catch (error) {
