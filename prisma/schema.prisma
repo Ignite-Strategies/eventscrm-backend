@@ -31,7 +31,7 @@ model Organization {
 
   // Pipeline defaults
   pipelineDefaults String[] @default(["sop_entry", "rsvp", "paid", "attended", "champion"])
-  audienceDefaults String[] @default(["org_members", "friends_family", "community_partners", "local_businesses", "general_public"])
+  audienceDefaults String[] @default(["org_members", "friends_family", "community_partners", "business_sponsor", "champions"])
 
   // Relations
   members         OrgMember[] // Org members (the bridge to Contact)
@@ -385,7 +385,7 @@ model EventAttendee {
 
   // Pipeline tracking (hardcoded - no EventPipeline model)
   currentStage String @default("in_funnel") // Current position in funnel
-  audienceType String // "org_members" | "friends_family" | "landing_page_public" | "community_partners" | "cold_outreach"
+  audienceType String // "org_members" | "friends_family" | "community_partners" | "business_sponsor" | "champions"
 
   // Form tracking
   submittedFormId String? // Which form created this attendee?

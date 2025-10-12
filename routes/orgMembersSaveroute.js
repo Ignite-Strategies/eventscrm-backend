@@ -12,8 +12,9 @@ const upload = multer({ storage: multer.memoryStorage() });
 // POST /orgmember/csv - Upload CSV and create Contact + OrgMember records
 router.post('/orgmember/csv', upload.single('file'), async (req, res) => {
   try {
-    const { orgId } = req.body; // From form data, not URL
+    const { orgId, addToEvent, eventId, audienceType, currentStage } = req.body;
     console.log('📝 ORG MEMBER CSV: Upload Request for orgId:', orgId);
+    console.log('📝 Event Assignment:', { addToEvent, eventId, audienceType, currentStage });
 
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -121,12 +122,48 @@ router.post('/orgmember/csv', upload.single('file'), async (req, res) => {
           inserted++;
         }
 
+        // 3. Add to Event if requested
+        if (addToEvent === 'true' && eventId && audienceType && currentStage) {
+          await prisma.eventAttendee.upsert({
+            where: {
+              eventId_contactId_audienceType: {
+                eventId: eventId,
+                contactId: contact.id,
+                audienceType: audienceType
+              }
+            },
+            update: {
+              currentStage: currentStage
+            },
+            create: {
+              eventId: eventId,
+              contactId: contact.id,
+              audienceType: audienceType,
+              currentStage: currentStage,
+              notes: {}
+            }
+          });
+        }
+
       } catch (error) {
         console.error('❌ Error creating Contact + OrgMember for:', recordData.email, error);
         errors.push({
           email: recordData.email,
           error: error.message
         });
+      }
+    }
+
+    // Get event name if added to event
+    let eventAssignment = null;
+    if (addToEvent === 'true' && eventId) {
+      const event = await prisma.event.findUnique({ where: { id: eventId } });
+      if (event) {
+        eventAssignment = {
+          eventName: event.name,
+          audienceType: audienceType,
+          stage: currentStage
+        };
       }
     }
 
@@ -137,7 +174,8 @@ router.post('/orgmember/csv', upload.single('file'), async (req, res) => {
       updated,
       totalProcessed: validationResult.totalProcessed,
       validCount: validationResult.validCount,
-      errors
+      errors,
+      eventAssignment
     });
 
   } catch (error) {
