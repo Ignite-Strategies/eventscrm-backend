@@ -71,24 +71,6 @@ router.get('/:firebaseId', async (req, res) => {
       adminId: admin ? admin.id : null,
       orgId: orgMember.orgId,
       eventId: events.length > 0 ? events[0].id : null // First event or null
-      
-      // Team members (OrgMembers in this org)
-      orgMembers: orgMembers.map(member => ({
-        id: member.id,
-        contactId: member.contactId,
-        firstName: member.firstName,
-        lastName: member.lastName,
-        email: member.email,
-        role: member.role
-      })),
-      
-      // Admin data (NEW)
-      admin: admin ? {
-        id: admin.id,
-        role: admin.role,
-        permissions: admin.permissions,
-        isActive: admin.isActive
-      } : null
     };
     
     console.log('✅ Hydration complete:', {
