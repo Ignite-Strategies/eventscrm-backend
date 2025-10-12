@@ -68,7 +68,7 @@ router.get('/:eventId/pipeline', async (req, res) => {
     const registryData = Object.keys(stageGroups).map(stage => ({
       stage,
       count: stageGroups[stage].length,
-      supporters: stageGroups[stage]  // Frontend uses "supporters" key
+      contacts: stageGroups[stage]  // NEW: contacts (not deprecated supporters)
     }));
 
     console.log('📋 Registry data:', registryData);
