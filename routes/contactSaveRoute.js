@@ -12,13 +12,12 @@ const prisma = getPrismaClient();
  */
 router.post('/', async (req, res) => {
   try {
-    const { orgId, firstName, lastName, email, phone } = req.body;
+    const { firstName, lastName, email, phone } = req.body;
 
     console.log('📝 Creating new contact:', email);
 
     const contact = await prisma.contact.create({
       data: {
-        orgId,
         firstName,
         lastName,
         email,

@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { readCSV } from '../services/csvReader.js';
-import { getContactFieldMapping, normalizeContactRecord } from '../services/eventAttendeeCsvNormalizer.js';
+import { getContactFieldMapping, normalizeContactRecord } from '../services/eventAttendeeCsvFieldMapper.js';
 import { validateContactBatch } from '../services/eventAttendeeCsvValidator.js';
 import { bulkUpsertContacts } from '../services/eventAttendeeCsvMutation.js';
 import { getPrismaClient } from '../config/database.js';
@@ -141,10 +141,9 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
 
     for (const contactData of validationResult.validRecords) {
       try {
-        // Find the contact that was just created/updated
-        const contact = await prisma.contact.findFirst({
+        // Find the contact that was just created/updated (Contact is universal - no orgId!)
+        const contact = await prisma.contact.findUnique({
           where: {
-            orgId: orgId,
             email: contactData.email
           }
         });

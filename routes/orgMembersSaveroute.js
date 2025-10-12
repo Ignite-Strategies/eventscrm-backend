@@ -1,7 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import { readCSV } from '../services/csvReader.js';
-import { normalizeRecord } from '../services/orgMemberCsvNormalizer.js';
+import { normalizeRecord } from '../services/orgMemberCsvFieldMapper.js';
 import { validateBatch } from '../services/orgMemberCsvValidator.js';
 import { getPrismaClient } from '../config/database.js';
 
