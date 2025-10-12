@@ -3,7 +3,7 @@ import multer from 'multer';
 import { readCSV } from '../services/csvReader.js';
 import { getContactFieldMapping, normalizeContactRecord } from '../services/eventAttendeeCsvFieldMapper.js';
 import { validateContactBatch } from '../services/eventAttendeeCsvValidator.js';
-import { bulkUpsertContacts } from '../services/eventAttendeeCsvMutation.js';
+import { bulkUpsertGeneralContacts } from '../services/eventAttendeeCsvMutation.js';
 import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();
@@ -128,7 +128,7 @@ router.post('/event/save', upload.single('file'), async (req, res) => {
     }
 
     // 4. Bulk upsert Contacts
-    const mutationResult = await bulkUpsertGeneralContacts(orgId, validationResult.validRecords);
+    const mutationResult = await bulkUpsertGeneralContacts(validationResult.validRecords);
 
     if (!mutationResult.success) {
       return res.status(500).json({ error: mutationResult.error });

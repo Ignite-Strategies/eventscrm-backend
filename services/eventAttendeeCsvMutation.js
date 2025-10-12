@@ -10,12 +10,14 @@ const prisma = getPrismaClient();
 /**
  * Create a single Contact
  */
-export async function createGeneralContact(orgId, contactData) {
+export async function createGeneralContact(contactData) {
   try {
     const contact = await prisma.contact.create({
       data: {
-        ...contactData,
-        orgId
+        firstName: contactData.firstName,
+        lastName: contactData.lastName,
+        email: contactData.email,
+        phone: contactData.phone
       }
     });
     
@@ -34,9 +36,9 @@ export async function createGeneralContact(orgId, contactData) {
 /**
  * Bulk upsert contacts (create or update)
  */
-export async function bulkUpsertGeneralContacts(orgId, contactsData) {
+export async function bulkUpsertGeneralContacts(contactsData) {
   try {
-    console.log('🔧 GENERAL CONTACT MUTATION: Starting bulk upsert for orgId:', orgId);
+    console.log('🔧 GENERAL CONTACT MUTATION: Starting bulk upsert for contacts');
     console.log('🔧 GENERAL CONTACT MUTATION: Contacts data count:', contactsData.length);
     
     let created = 0;
@@ -45,38 +47,27 @@ export async function bulkUpsertGeneralContacts(orgId, contactsData) {
     for (const contactData of contactsData) {
       try {
         // Use upsert for each Contact
-        const where = contactData.email 
-          ? { orgId_email: { orgId, email: contactData.email } }
-          : undefined;
-        
-        if (where) {
-          const result = await prisma.contact.upsert({
-            where,
-            update: {
-              firstName: contactData.firstName,
-              lastName: contactData.lastName,
-              phone: contactData.phone
-            },
-            create: {
-              ...contactData,
-              orgId
-            }
-          });
-          
-          if (result.createdAt.getTime() === result.updatedAt.getTime()) {
-            created++;
-          } else {
-            updated++;
+        // Contact-First: Use email for universal lookup (no orgId!)
+        const result = await prisma.contact.upsert({
+          where: { email: contactData.email },
+          update: {
+            firstName: contactData.firstName,
+            lastName: contactData.lastName,
+            phone: contactData.phone
+          },
+          create: {
+            firstName: contactData.firstName,
+            lastName: contactData.lastName,
+            email: contactData.email,
+            phone: contactData.phone
           }
-        } else {
-          // Create new contact if no email for upsert
-          await prisma.contact.create({
-            data: {
-              ...contactData,
-              orgId
-            }
-          });
+        });
+          
+        // Count created vs updated based on timestamps
+        if (result.createdAt.getTime() === result.updatedAt.getTime()) {
           created++;
+        } else {
+          updated++;
         }
       } catch (error) {
         console.log('🔧 GENERAL CONTACT MUTATION: Error processing contact:', contactData.email, error.message);
