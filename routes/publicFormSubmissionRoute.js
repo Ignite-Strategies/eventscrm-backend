@@ -125,6 +125,35 @@ router.post('/', async (req, res) => {
       });
     }
     
+    // Create OrgMember if audienceType is "org_members"
+    let orgMember = null;
+    if (audienceType === 'org_members') {
+      try {
+        // Check if OrgMember already exists for this Contact
+        const existingOrgMember = await prisma.orgMember.findUnique({
+          where: { contactId: contact.id }
+        });
+        
+        if (!existingOrgMember) {
+          console.log('🆕 Creating OrgMember for org_members audience');
+          orgMember = await prisma.orgMember.create({
+            data: {
+              contactId: contact.id,
+              orgId: orgId,
+              // Add any additional OrgMember fields from custom form data if available
+              notes: JSON.stringify(customFieldResponses)
+            }
+          });
+        } else {
+          console.log('✅ OrgMember already exists for this Contact');
+          orgMember = existingOrgMember;
+        }
+      } catch (orgMemberError) {
+        console.error('❌ Error creating OrgMember:', orgMemberError);
+        // Continue even if OrgMember creation fails
+      }
+    }
+    
     // Increment submission count
     await prisma.publicForm.update({
       where: { id: publicForm.id },
