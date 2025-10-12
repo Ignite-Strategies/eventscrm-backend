@@ -33,6 +33,7 @@ router.get('/:eventId/pipeline', async (req, res) => {
     });
 
     console.log(`✅ Found ${attendees.length} attendees for audienceType: ${audienceType}`);
+    console.log('🔍 Attendees data:', JSON.stringify(attendees, null, 2));
 
     // Group by currentStage
     const stageGroups = {};
@@ -42,6 +43,12 @@ router.get('/:eventId/pipeline', async (req, res) => {
         stageGroups[stage] = [];
       }
       
+      // Check if contact exists
+      if (!attendee.contact) {
+        console.log('⚠️ EventAttendee missing contact data:', attendee.id, 'contactId:', attendee.contactId);
+        return; // Skip this attendee
+      }
+
       // Map to frontend-friendly format
       stageGroups[stage].push({
         _id: attendee.contact.id,  // Use contactId as _id for frontend compatibility
