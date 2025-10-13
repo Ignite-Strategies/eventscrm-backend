@@ -12,8 +12,7 @@ const prisma = getPrismaClient();
  */
 router.post('/org-members', async (req, res) => {
   try {
-    const { contactId } = req.body;
-    const orgId = req.headers['x-org-id']; // Get orgId from header (sent from localStorage)
+    const { contactId, orgId } = req.body;
 
     console.log('⬆️ ELEVATE TO ORG MEMBER: contactId:', contactId, 'orgId:', orgId);
 
@@ -22,7 +21,7 @@ router.post('/org-members', async (req, res) => {
     }
 
     if (!orgId) {
-      return res.status(400).json({ error: 'orgId not found in request headers - make sure x-org-id header is sent' });
+      return res.status(400).json({ error: 'orgId is required' });
     }
 
     // Check if contact exists
