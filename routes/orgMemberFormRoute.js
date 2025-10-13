@@ -1,5 +1,6 @@
 import express from 'express';
 import { getPrismaClient } from '../config/database.js';
+import { mapFormFields } from '../services/fieldMappingService.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -34,26 +35,15 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Form is not active' });
     }
     
-    // Field mapping for custom form fields → Contact fields
-    const fieldMap = {
-      'f3_name': 'goesBy',
-      'f3Name': 'goesBy',
-      'nickname': 'goesBy',
-      'goes_by': 'goesBy'
-    };
+    // Use the field mapping service to process form data
+    const mappedData = mapFormFields(submissionData);
     
-    // Extract contact data from standard fields + mapped fields
-    const firstName = submissionData.firstName || '';
-    const lastName = submissionData.lastName || '';
-    const email = submissionData.email?.toLowerCase().trim();
-    const phone = submissionData.phone?.trim();
-    
-    // Map custom fields to Contact fields
-    const goesBy = submissionData.goesBy 
-      || submissionData.f3_name 
-      || submissionData.f3Name 
-      || submissionData.nickname 
-      || submissionData.goes_by;
+    // Extract contact data
+    const firstName = mappedData.contact.firstName || '';
+    const lastName = mappedData.contact.lastName || '';
+    const email = mappedData.contact.email?.toLowerCase().trim();
+    const phone = mappedData.contact.phone?.trim();
+    const goesBy = mappedData.contact.goesBy;
     
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
@@ -107,21 +97,9 @@ router.post('/', async (req, res) => {
     
     // Map form fields to EventAttendee columns
     
-    // "Will you bring your M or anyone else?" → Yes/Just me
-    const bringingMResponse = submissionData.bringing_m 
-      || submissionData.will_bring_spouse 
-      || submissionData.bringing_spouse;
-    
-    const spouseOrOther = bringingMResponse 
-      ? (bringingMResponse.toLowerCase().includes('yes') ? 'spouse' : 'solo')
-      : 'solo';
-    
-    // "If going, how many in your party?"
-    const howManyInParty = submissionData.how_many_in_party 
-      || submissionData.if_going_how_many_in_your_party  // ADD THIS FIELD NAME
-      || submissionData.party_size
-      || submissionData.partySize
-      || (spouseOrOther === 'spouse' ? 2 : 1);  // Default: 2 if bringing spouse, 1 if solo
+    // Extract EventAttendee data from mapped fields
+    const spouseOrOther = mappedData.eventAttendee.spouseOrOther || 'solo';
+    const howManyInParty = mappedData.eventAttendee.howManyInParty || (spouseOrOther === 'spouse' ? 2 : 1);
     
     // "How likely are you to attend?" → Map responses to 1-4
     const likelihoodString = submissionData.how_likely_to_attend 
@@ -172,23 +150,8 @@ router.post('/', async (req, res) => {
       }
     }
     
-    // Collect truly custom field responses (exclude standard, mapped, and event-specific fields)
-    const standardFields = ['firstName', 'lastName', 'email', 'phone'];
-    const mappedToContactFields = ['goesBy', 'f3_name', 'f3Name', 'nickname', 'goes_by'];
-    const mappedToEventFields = [
-      'bringing_m', 'will_bring_spouse', 'bringing_spouse',
-      'how_many_in_party', 'if_going_how_many_in_your_party', 'party_size', 'partySize',
-      'how_likely_to_attend', 'likelihood_to_attend', 'likelihood'
-    ];
-    const customFieldResponses = {};
-    
-    Object.keys(submissionData).forEach(key => {
-      if (!standardFields.includes(key) 
-          && !mappedToContactFields.includes(key)
-          && !mappedToEventFields.includes(key)) {
-        customFieldResponses[key] = submissionData[key];
-      }
-    });
+    // Use custom fields from the mapping service
+    const customFieldResponses = mappedData.customFields;
     
     // Map old stage names to new correct ones for backward compatibility
     let mappedStage = targetStage;
