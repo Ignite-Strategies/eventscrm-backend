@@ -12,12 +12,17 @@ const prisma = getPrismaClient();
  */
 router.post('/org-members', async (req, res) => {
   try {
-    const { contactId, orgId } = req.body;
+    const { contactId } = req.body;
+    const orgId = req.headers['x-org-id']; // Get orgId from header (sent from localStorage)
 
     console.log('⬆️ ELEVATE TO ORG MEMBER: contactId:', contactId, 'orgId:', orgId);
 
-    if (!contactId || !orgId) {
-      return res.status(400).json({ error: 'contactId and orgId are required' });
+    if (!contactId) {
+      return res.status(400).json({ error: 'contactId is required' });
+    }
+
+    if (!orgId) {
+      return res.status(400).json({ error: 'orgId not found in request headers - make sure x-org-id header is sent' });
     }
 
     // Check if contact exists
