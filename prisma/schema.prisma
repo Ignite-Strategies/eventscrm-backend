@@ -35,6 +35,7 @@ model Organization {
   contactLists    ContactList[]
   admins          Admin[]
   campaigns       Campaign[]
+  adCampaigns     AdCampaign[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -613,4 +614,25 @@ model PipelineEventConfig {
   updatedAt DateTime @updatedAt
   
   @@index([audienceType])
+}
+
+model AdCampaign {
+  id          String   @id @default(cuid())
+  orgId       String
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  name        String
+  status      String   @default("Draft")
+  budget      Float
+  landingPage String
+  adText      String
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  spend       Float    @default(0)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([orgId])
+  @@index([status])
 }

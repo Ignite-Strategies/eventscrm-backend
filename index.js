@@ -41,6 +41,9 @@ import eventAttendeeUpdateRouter from './routes/eventAttendeeUpdateRoute.js'; //
 import pipelineConfigRouter from './routes/pipelineConfigRoute.js'; // Pipeline config from database
 import orgMemberCreateRouter from './routes/orgMemberCreateRoute.js'; // NEW: Create OrgMember from Contact
 import formResponsesRouter from './routes/formResponsesRoute.js'; // NEW: Form responses by event
+import adsRouter from './routes/adsRoute.js'; // Ad Management (Google Ads integration)
+import testEmailRouter from './routes/testEmailRoute.js'; // Test email sending (SendGrid testing)
+import enterpriseEmailRouter from './routes/enterpriseEmailRoute.js'; // Enterprise email sending (SendGrid production)
 
 dotenv.config();
 
@@ -73,6 +76,8 @@ app.use('/api/events', eventAttendeeListRouter); // Attendee list (paid/soft_com
 // app.use('/api/events', eventPipelineActionsRouter); // REMOVED - duplicate functionality in eventPipelinesRouter
 app.use('/api/templates', templatesRouter);     // Email templates
 app.use('/api/email/personal', personalEmailRouter);  // Personal email sending (Gmail OAuth)
+app.use('/api/test-email', testEmailRouter);      // Test email sending (SendGrid testing)
+app.use('/api/enterprise-email', enterpriseEmailRouter); // Enterprise email (SendGrid production - campaigns, lists)
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/campaigns', campaignRouter);      // Campaigns (bulk email)
 app.use('/api/sequences', sequenceRouter);      // Sequences (individual emails in campaigns)
@@ -98,6 +103,7 @@ app.use('/api/event-attendees', eventAttendeesRouter); // Simple EventAttendees 
 app.use('/api/event-attendees', eventAttendeeUpdateRouter); // EventAttendee updates
 app.use('/api/pipeline-config', pipelineConfigRouter); // Pipeline config from database
 app.use('/api', formResponsesRouter); // Form responses by event
+app.use('/api/ads', adsRouter); // Ad Management routes
 
 // Health check
 app.get('/health', (req, res) => {
