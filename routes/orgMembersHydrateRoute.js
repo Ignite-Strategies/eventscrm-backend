@@ -65,17 +65,17 @@ router.get('/orgmembers', async (req, res) => {
       engagementValue: member.engagement?.value || null,  // Hydrate the VALUE from Engagement table
       tags: member.tags,
       
-      // Upcoming events with names (events with future dates)
+      // Upcoming events with names (events with status = "upcoming")
       upcomingEvents: member.contact?.eventAttendees?.filter(ea => 
-        ea.event && ea.event.date && new Date(ea.event.date) > new Date()
+        ea.event && ea.event.status === "upcoming"
       ).map(ea => ({
         eventId: ea.event.id,
         eventName: ea.event.name,
         eventSlug: ea.event.slug,
-        eventDate: ea.event.date
+        eventStatus: ea.event.status
       })) || [],
       upcomingEventsCount: member.contact?.eventAttendees?.filter(ea => 
-        ea.event && ea.event.date && new Date(ea.event.date) > new Date()
+        ea.event && ea.event.status === "upcoming"
       ).length || 0,
       
       // Metadata
@@ -94,9 +94,9 @@ router.get('/orgmembers', async (req, res) => {
       console.log(`🔍 - Total eventAttendees:`, orgMembers[0]?.contact?.eventAttendees?.length || 0);
       if (orgMembers[0]?.contact?.eventAttendees?.length > 0) {
         orgMembers[0].contact.eventAttendees.forEach((ea, idx) => {
-          const eventDate = ea.event?.date;
-          const isUpcoming = eventDate && new Date(eventDate) > new Date();
-          console.log(`🔍 - EventAttendee ${idx}: event=${ea.event?.name}, date=${eventDate}, isUpcoming=${isUpcoming}`);
+          const eventStatus = ea.event?.status;
+          const isUpcoming = eventStatus === "upcoming";
+          console.log(`🔍 - EventAttendee ${idx}: event=${ea.event?.name}, status=${eventStatus}, isUpcoming=${isUpcoming}`);
         });
       }
     }
