@@ -11,7 +11,8 @@ router.patch('/orgmembers/:orgMemberId', async (req, res) => {
     const updates = req.body;
     
     console.log('📝 ORG MEMBER UPDATE: Updating member:', orgMemberId);
-    console.log('📝 Updates:', updates);
+    console.log('📝 Updates received:', updates);
+    console.log('📝 Update keys:', Object.keys(updates));
     
     // Get the OrgMember to find the contactId
     const orgMember = await prisma.orgMember.findUnique({

@@ -65,7 +65,15 @@ router.get('/orgmembers', async (req, res) => {
       engagementValue: member.engagement?.value || null,  // Hydrate the VALUE from Engagement table
       tags: member.tags,
       
-      // Upcoming events count (events with future dates)
+      // Upcoming events with names (events with future dates)
+      upcomingEvents: member.contact?.eventAttendees?.filter(ea => 
+        ea.event && new Date(ea.event.date) > new Date()
+      ).map(ea => ({
+        eventId: ea.event.id,
+        eventName: ea.event.name,
+        eventSlug: ea.event.slug,
+        eventDate: ea.event.date
+      })) || [],
       upcomingEventsCount: member.contact?.eventAttendees?.filter(ea => 
         ea.event && new Date(ea.event.date) > new Date()
       ).length || 0,
