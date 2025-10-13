@@ -47,6 +47,7 @@ router.get('/orgmembers', async (req, res) => {
       lastName: member.contact?.lastName || member.lastName || '',
       email: member.contact?.email || member.email || '',
       phone: member.contact?.phone || member.phone || '',
+      eventId: member.contact?.eventId || null,  // Include eventId for inline editing
       
       // Extended OrgMember data
       goesBy: member.goesBy,
