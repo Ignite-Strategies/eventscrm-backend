@@ -38,8 +38,8 @@ router.post("/send", async (req, res) => {
     }
     
     // Get sender email from env or use default
-    const fromEmail = process.env.SENDGRID_FROM_EMAIL || "noreply@ignitestrategies.com";
-    const fromName = process.env.SENDGRID_FROM_NAME || "Ignite Strategies CRM";
+    const fromEmail = process.env.SENDGRID_FROM_EMAIL || "adam@f3capitalimpact.org";
+    const fromName = process.env.SENDGRID_FROM_NAME || "Adam - F3 Capital Impact";
     
     // Prepare email
     const msg = {
@@ -93,9 +93,9 @@ router.post("/send", async (req, res) => {
       console.error(`   SendGrid Error: ${statusCode}`);
       console.error(`   Details:`, body);
       
-      return res.status(statusCode).json({
+      return res.status(statusCode || 500).json({
         error: "SendGrid API error",
-        statusCode: statusCode,
+        statusCode: statusCode || 500,
         details: body.errors || body
       });
     }
