@@ -43,10 +43,24 @@ model Organization {
 model Contact {
   id String @id @default(cuid())
 
+  // Basic identity
   firstName String
   lastName  String
   email     String  @unique
   phone     String?
+
+  // Universal personhood
+  goesBy String?
+  street String?
+  city   String?
+  state  String?
+  zip    String?
+
+  // Universal family
+  birthday     String?
+  married      Boolean @default(false)
+  spouseName   String?
+  numberOfKids Int     @default(0)
 
   contactListId String?
   contactList   ContactList? @relation(fields: [contactListId], references: [id])
@@ -71,33 +85,15 @@ model OrgMember {
   orgId String?
   org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  firstName String?
-  lastName  String?
-  email     String?
-  phone     String?
-
-  goesBy String?
-  street String?
-  city   String?
-  state  String?
-  zip    String?
-
+  // Org-specific fields only
   employer              String?
   yearsWithOrganization Int?
-
-  birthday     String?
-  married      Boolean @default(false)
-  spouseName   String?
-  numberOfKids Int     @default(0)
-
-  originStory String?
-  notes       String?
-
-  role       String?
-  firebaseId String? @unique
-  photoURL   String?
-
-  tags String[] @default([])
+  originStory           String?
+  notes                 String?
+  role                  String?
+  firebaseId            String? @unique
+  photoURL              String?
+  tags                  String[] @default([])
 
   categoryOfEngagement String @default("medium")
 
