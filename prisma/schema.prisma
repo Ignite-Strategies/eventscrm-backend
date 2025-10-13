@@ -360,6 +360,9 @@ model EventAttendee {
   likelihoodToAttend   LikelihoodToAttend? @relation(fields: [likelihoodToAttendId], references: [id])
   
   notes Json?  // Truly custom/unknown fields only (as Json, not String!)
+  
+  // TEMPORARY: Check if old form data is still here
+  customField Json?  // Old form data - check if this exists!
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
