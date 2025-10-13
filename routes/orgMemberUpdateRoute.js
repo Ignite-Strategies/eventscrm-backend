@@ -36,6 +36,24 @@ router.patch('/orgmembers/:orgMemberId', async (req, res) => {
       }
     });
     
+    // Handle type conversions for numeric fields
+    if (orgMemberUpdates.yearsWithOrganization !== undefined) {
+      if (orgMemberUpdates.yearsWithOrganization === '' || orgMemberUpdates.yearsWithOrganization === null) {
+        orgMemberUpdates.yearsWithOrganization = null;
+      } else {
+        orgMemberUpdates.yearsWithOrganization = parseInt(orgMemberUpdates.yearsWithOrganization) || null;
+      }
+    }
+    
+    // Handle Contact numeric fields
+    if (contactUpdates.numberOfKids !== undefined) {
+      if (contactUpdates.numberOfKids === '' || contactUpdates.numberOfKids === null) {
+        contactUpdates.numberOfKids = 0;
+      } else {
+        contactUpdates.numberOfKids = parseInt(contactUpdates.numberOfKids) || 0;
+      }
+    }
+    
     // Update Contact if there are Contact fields
     if (Object.keys(contactUpdates).length > 0 && orgMember.contactId) {
       console.log('📝 Updating Contact fields:', contactUpdates);
