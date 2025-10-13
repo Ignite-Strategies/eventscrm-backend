@@ -48,6 +48,7 @@ const FIELD_MAPPINGS = {
     'likelihoodToAttendId': 'likelihoodToAttendId',
     'how_likely_are_you_to_attend': 'likelihoodToAttendId',
     'likelihood_to_attend': 'likelihoodToAttendId',
+    'attendance_likelihood': 'likelihoodToAttendId',
     'likelihood': 'likelihoodToAttendId'
   }
 };
@@ -67,7 +68,9 @@ const VALUE_TRANSFORMATIONS = {
   likelihoodToAttend: {
     'i\'m_in_—_planning_to_be_there!': 1,
     'i\'m in — planning to be there!': 1,
+    'very_likely': 1,
     'probably': 2,
+    'likely': 2,
     'maybe': 3,
     'support_from_afar': 4,
     'support from afar': 4
