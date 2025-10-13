@@ -60,7 +60,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // MongoDB connection
-await connectDatabase();
+connectDatabase().catch(console.error);
 
 // Routes
 app.use('/api/auth', adminUserAuthRouter);      // Admin user auth (OrgMember mirage - may refactor later)
