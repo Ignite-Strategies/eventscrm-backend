@@ -5,51 +5,95 @@ const router = express.Router();
 const prisma = getPrismaClient();
 
 /**
- * GET /events/attendees?formId=xxx
+ * GET /events/attendees?hasNotes=true&orgId=xxx
  * 
- * Returns EventAttendees filtered by formId
+ * Returns EventAttendees that have notes data (for Notes Parser)
  */
 router.get('/attendees', async (req, res) => {
   try {
-    const { formId } = req.query;
+    const { formId, hasNotes, orgId } = req.query;
 
-    if (!formId) {
-      return res.status(400).json({ error: 'formId is required' });
-    }
+    // Route for Notes Parser - get attendees with notes data
+    if (hasNotes === 'true' && orgId) {
+      console.log('🔍 Loading EventAttendees with notes data for org:', orgId);
 
-    console.log('🔍 Loading EventAttendees for formId:', formId);
-
-    const attendees = await prisma.eventAttendee.findMany({
-      where: { submittedFormId: formId },
-      include: {
-        contact: {
-          include: {
-            orgMember: {
-              select: {
-                id: true,
-                orgId: true
+      const attendees = await prisma.eventAttendee.findMany({
+        where: { 
+          orgId,
+          notes: { not: null }
+        },
+        include: {
+          contact: {
+            include: {
+              orgMember: {
+                select: {
+                  id: true,
+                  orgId: true
+                }
               }
+            }
+          },
+          likelihoodToAttend: true,
+          event: {
+            select: {
+              name: true,
+              id: true
             }
           }
         },
-        likelihoodToAttend: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
 
-    const result = attendees.map(attendee => ({
-      ...attendee,
-      orgMemberId: attendee.contact?.orgMember?.id || null
-    }));
+      const result = attendees.map(attendee => ({
+        ...attendee,
+        orgMemberId: attendee.contact?.orgMember?.id || null
+      }));
 
-    console.log(`✅ Found ${result.length} EventAttendees for form ${formId}`);
+      console.log(`✅ Found ${result.length} EventAttendees with notes data`);
 
-    res.json(result);
+      return res.json(result);
+    }
+
+    // Route for form-specific attendees
+    if (formId) {
+      console.log('🔍 Loading EventAttendees for formId:', formId);
+
+      const attendees = await prisma.eventAttendee.findMany({
+        where: { submittedFormId: formId },
+        include: {
+          contact: {
+            include: {
+              orgMember: {
+                select: {
+                  id: true,
+                  orgId: true
+                }
+              }
+            }
+          },
+          likelihoodToAttend: true
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+
+      const result = attendees.map(attendee => ({
+        ...attendee,
+        orgMemberId: attendee.contact?.orgMember?.id || null
+      }));
+
+      console.log(`✅ Found ${result.length} EventAttendees for form ${formId}`);
+
+      return res.json(result);
+    }
+
+    return res.status(400).json({ error: 'formId or hasNotes=true with orgId is required' });
 
   } catch (error) {
-    console.error('❌ Error loading EventAttendees by formId:', error);
+    console.error('❌ Error loading EventAttendees:', error);
     res.status(500).json({ error: 'Failed to load EventAttendees' });
   }
 });
