@@ -112,17 +112,15 @@ router.post('/', async (req, res) => {
       || submissionData.will_bring_spouse 
       || submissionData.bringing_spouse;
     
-    const attendingWithSpouse = bringingMResponse 
-      ? (bringingMResponse.toLowerCase().includes('yes'))
-      : false;
-    
-    const whoBringingType = attendingWithSpouse ? 'spouse' : 'solo';
+    const spouseOrOther = bringingMResponse 
+      ? (bringingMResponse.toLowerCase().includes('yes') ? 'spouse' : 'solo')
+      : 'solo';
     
     // "If going, how many in your party?"
     const howManyInParty = submissionData.how_many_in_party 
       || submissionData.party_size
       || submissionData.partySize
-      || (attendingWithSpouse ? 2 : 1);  // Default: 2 if bringing spouse, 1 if solo
+      || (spouseOrOther === 'spouse' ? 2 : 1);  // Default: 2 if bringing spouse, 1 if solo
     
     // "How likely are you to attend?" → Map responses to 1-4
     const likelihoodString = submissionData.how_likely_to_attend 

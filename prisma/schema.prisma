@@ -338,8 +338,7 @@ model EventAttendee {
   amountPaid  Float     @default(0)
   
   // Event-specific data from forms (rock solid columns!)
-  whoBringingType      String?  // "solo", "wife", "family", etc.
-  attendingWithSpouse  Boolean  @default(false)
+  spouseOrOther        String?  // "solo", "spouse", "other"
   howManyInParty       Int?     // Total attendees in their party
   
   // Likelihood to attend (FK to reference table)
