@@ -18,7 +18,15 @@ router.get('/orgmembers', async (req, res) => {
     const orgMembers = await prisma.orgMember.findMany({
       where: { orgId },
       include: {
-        contact: true,  // Include the universal Contact data
+        contact: {
+          include: {
+            eventAttendees: {
+              include: {
+                event: true  // Include event details for upcoming events count
+              }
+            }
+          }
+        },
         engagement: true  // Include engagement to get the VALUE
       },
       orderBy: {
@@ -56,6 +64,11 @@ router.get('/orgmembers', async (req, res) => {
       notes: member.notes,
       engagementValue: member.engagement?.value || null,  // Hydrate the VALUE from Engagement table
       tags: member.tags,
+      
+      // Upcoming events count (events with future dates)
+      upcomingEventsCount: member.contact?.eventAttendees?.filter(ea => 
+        ea.event && new Date(ea.event.date) > new Date()
+      ).length || 0,
       
       // Metadata
       createdAt: member.createdAt,
