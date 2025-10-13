@@ -94,7 +94,7 @@ app.use('/api/orgmembers', orgMemberDeleteRouter);    // OrgMember delete (fork-
 // app.use('/api/contacts', generalContactSaverRouter);    // DELETED - General Contact save
 app.use('/api/contacts', contactEventUploadRouter);    // Event Contact upload
 app.use('/api/events', pipelineHydrationRouter); // Pipeline hydration (EventAttendee-based, no EventPipeline model)
-app.use('/api/events', eventAttendeesRouter); // Simple EventAttendees endpoint
+app.use('/api/event-attendees', eventAttendeesRouter); // Simple EventAttendees endpoint
 app.use('/api/event-attendees', eventAttendeeUpdateRouter); // EventAttendee updates
 app.use('/api/pipeline-config', pipelineConfigRouter); // Pipeline config from database
 app.use('/api', formResponsesRouter); // Form responses by event
