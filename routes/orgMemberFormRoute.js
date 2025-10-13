@@ -34,11 +34,26 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Form is not active' });
     }
     
-    // Extract contact data from standard fields
+    // Field mapping for custom form fields → Contact fields
+    const fieldMap = {
+      'f3_name': 'goesBy',
+      'f3Name': 'goesBy',
+      'nickname': 'goesBy',
+      'goes_by': 'goesBy'
+    };
+    
+    // Extract contact data from standard fields + mapped fields
     const firstName = submissionData.firstName || '';
     const lastName = submissionData.lastName || '';
     const email = submissionData.email?.toLowerCase().trim();
     const phone = submissionData.phone?.trim();
+    
+    // Map custom fields to Contact fields
+    const goesBy = submissionData.goesBy 
+      || submissionData.f3_name 
+      || submissionData.f3Name 
+      || submissionData.nickname 
+      || submissionData.goes_by;
     
     if (!email) {
       return res.status(400).json({ error: 'Email is required' });
@@ -58,20 +73,23 @@ router.post('/', async (req, res) => {
           firstName,
           lastName,
           email,
-          phone
+          phone,
+          ...(goesBy && { goesBy })
         }
       });
     } else {
       console.log('✅ Found existing contact:', email);
       // Update contact if new info provided
-      if (firstName || lastName || phone) {
+      const contactUpdates = {};
+      if (firstName) contactUpdates.firstName = firstName;
+      if (lastName) contactUpdates.lastName = lastName;
+      if (phone) contactUpdates.phone = phone;
+      if (goesBy) contactUpdates.goesBy = goesBy;
+      
+      if (Object.keys(contactUpdates).length > 0) {
         contact = await prisma.contact.update({
           where: { id: contact.id },
-          data: {
-            ...(firstName && { firstName }),
-            ...(lastName && { lastName }),
-            ...(phone && { phone })
-          }
+          data: contactUpdates
         });
       }
     }
@@ -87,10 +105,71 @@ router.post('/', async (req, res) => {
       }
     });
     
-    // Collect custom field responses (exclude standard fields)
+    // Map form fields to EventAttendee columns
+    const wifeAttending = submissionData.wife_attending 
+      || submissionData.wifeAttending 
+      || submissionData.bringing_wife 
+      || submissionData.attendingWithSpouse;
+    
+    const attendingWithSpouse = wifeAttending 
+      ? (wifeAttending.toLowerCase() === 'yes' || wifeAttending === true)
+      : false;
+    
+    const whoBringingType = attendingWithSpouse ? 'wife' : 'solo';
+    
+    const howManyInParty = submissionData.howManyInParty 
+      || submissionData.how_many_in_party
+      || submissionData.partySize
+      || (attendingWithSpouse ? 2 : 1);  // Default: 2 if bringing spouse, 1 if solo
+    
+    // Map likelihood to attend string → value (1-4)
+    const likelihoodString = submissionData.likelihoodToAttend 
+      || submissionData.likelihood_to_attend
+      || submissionData.willAttend;
+    
+    let likelihoodToAttendId = null;
+    if (likelihoodString) {
+      const likelihoodMap = {
+        'high': 1,
+        'definitely': 1,
+        'yes': 1,
+        'medium': 2,
+        'maybe': 2,
+        'possibly': 2,
+        'low': 3,
+        'unlikely': 3,
+        'probably_not': 3,
+        'support_from_afar': 4,
+        'no': 4,
+        'cant_make_it': 4
+      };
+      
+      const likelihoodValue = likelihoodMap[likelihoodString.toLowerCase()] || 2; // Default: medium
+      
+      // Find the LikelihoodToAttend record
+      const likelihood = await prisma.likelihoodToAttend.findUnique({
+        where: { value: likelihoodValue }
+      });
+      
+      if (likelihood) {
+        likelihoodToAttendId = likelihood.id;
+      }
+    }
+    
+    // Collect truly custom field responses (exclude standard, mapped, and event-specific fields)
+    const standardFields = ['firstName', 'lastName', 'email', 'phone'];
+    const mappedToContactFields = ['goesBy', 'f3_name', 'f3Name', 'nickname', 'goes_by'];
+    const mappedToEventFields = [
+      'wife_attending', 'wifeAttending', 'bringing_wife', 'attendingWithSpouse',
+      'howManyInParty', 'how_many_in_party', 'partySize',
+      'likelihoodToAttend', 'likelihood_to_attend', 'willAttend', 'definitely', 'maybe', 'unlikely'
+    ];
     const customFieldResponses = {};
+    
     Object.keys(submissionData).forEach(key => {
-      if (!['firstName', 'lastName', 'email', 'phone'].includes(key)) {
+      if (!standardFields.includes(key) 
+          && !mappedToContactFields.includes(key)
+          && !mappedToEventFields.includes(key)) {
         customFieldResponses[key] = submissionData[key];
       }
     });
@@ -109,8 +188,12 @@ router.post('/', async (req, res) => {
         data: {
           currentStage: mappedStage,
           audienceType: audienceType,
-          submittedFormId: publicForm.id, // Track which form they used
-          notes: JSON.stringify(customFieldResponses)
+          submittedFormId: publicForm.id,
+          whoBringingType,
+          attendingWithSpouse,
+          ...(howManyInParty && { howManyInParty: parseInt(howManyInParty) }),
+          ...(likelihoodToAttend && { likelihoodToAttend }),
+          notes: customFieldResponses  // Json type - no stringify needed!
         }
       });
     } else {
@@ -118,13 +201,17 @@ router.post('/', async (req, res) => {
       // Create new attendee
       attendee = await prisma.eventAttendee.create({
         data: {
-          orgId: orgId,  // ← From localStorage (frontend)
-          eventId: eventId,  // ← From localStorage (frontend)
+          orgId: orgId,
+          eventId: eventId,
           contactId: contact.id,
           currentStage: mappedStage,
-          audienceType: audienceType, // ← From frontend
-          submittedFormId: publicForm.id, // Track which form they used
-          notes: JSON.stringify(customFieldResponses)
+          audienceType: audienceType,
+          submittedFormId: publicForm.id,
+          whoBringingType,
+          attendingWithSpouse,
+          ...(howManyInParty && { howManyInParty: parseInt(howManyInParty) }),
+          ...(likelihoodToAttend && { likelihoodToAttend }),
+          notes: customFieldResponses  // Json type - no stringify needed!
         }
       });
     }
@@ -143,9 +230,8 @@ router.post('/', async (req, res) => {
           orgMember = await prisma.orgMember.create({
             data: {
               contactId: contact.id,
-              orgId: orgId,
-              // Add any additional OrgMember fields from custom form data if available
-              notes: JSON.stringify(customFieldResponses)
+              orgId: orgId
+              // OrgMember-specific fields (like yearsWithOrganization) would go here if in form
             }
           });
         } else {

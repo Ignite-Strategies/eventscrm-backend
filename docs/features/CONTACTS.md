@@ -20,20 +20,32 @@ Basic Contact → OrgMember (extended CRM data) → Admin (system access)
 ### Contact (Universal Person)
 ```prisma
 Contact {
-  id, orgId, firstName, lastName, email, phone
+  id, firstName, lastName, email, phone
+  
+  // Universal personhood (WHO they are, not relationship to org)
+  goesBy, employer, street, city, state, zip
+  birthday, married, spouseName, numberOfKids
+  
+  // NO orgId - contacts are universal!
   // Everyone starts here - universal person record
 }
 ```
 
-### OrgMember (Extended CRM Data)
+### OrgMember (Org-Specific Relationship)
 ```prisma
 OrgMember {
-  contactId (unique)
-  goesBy, street, city, state, zip
-  employer, yearsWithOrganization
-  birthday, married, spouseName, numberOfKids
-  originStory, notes, categoryOfEngagement
-  tags: String[]
+  contactId (unique) → links to Contact
+  orgId → links to Organization
+  
+  // Org-specific fields ONLY (relationship to THIS org)
+  yearsWithOrganization  // How long with THIS org
+  leadershipRole         // Role in THIS org (Board, Committee, etc.)
+  engagementId          // Engagement level with THIS org (1-4)
+  originStory           // How they got involved with THIS org
+  notes, tags
+  
+  // System access (if they can log in)
+  firebaseId, role, photoURL
 }
 ```
 
@@ -207,11 +219,11 @@ POST /api/contacts/event/save
 Contact Detail → "Elevate to Org Member" button → Modal → Add extended CRM data → Create OrgMember
 ```
 
-**Data Added:**
-- Personal info: goesBy, birthday, married, spouseName, numberOfKids
-- Address: street, city, state, zip  
-- Professional: employer, yearsWithOrganization
-- Engagement: originStory, notes, categoryOfEngagement, tags
+**Data Added to OrgMember (Org-Specific Only):**
+- Relationship: yearsWithOrganization, leadershipRole
+- Engagement: engagementId (1-4), originStory, notes, tags
+
+**Note:** Universal personhood data (goesBy, employer, address, family) lives in Contact model, NOT OrgMember!
 
 ### OrgMember → Admin
 ```

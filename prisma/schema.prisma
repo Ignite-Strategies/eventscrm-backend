@@ -50,11 +50,12 @@ model Contact {
   phone     String?
 
   // Universal personhood
-  goesBy String?
-  street String?
-  city   String?
-  state  String?
-  zip    String?
+  goesBy   String?
+  employer String? // Where they work (universal, not org-specific!)
+  street   String?
+  city     String?
+  state    String?
+  zip      String?
 
   // Universal family
   birthday     String?
@@ -88,6 +89,17 @@ model Engagement {
   @@index([value])
 }
 
+model LikelihoodToAttend {
+  id    String @id @default(cuid())
+  value Int    @unique // 1=high, 2=medium, 3=low, 4=support_from_afar
+  
+  eventAttendees EventAttendee[]
+  
+  createdAt DateTime @default(now())
+  
+  @@index([value])
+}
+
 model OrgMember {
   id        String   @id @default(cuid())
   contactId String?  @unique
@@ -96,18 +108,17 @@ model OrgMember {
   orgId String?
   org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
-  // Org-specific fields only
-  employer              String?
+  // Org-specific fields ONLY (relationship to THIS org)
   yearsWithOrganization Int?
-  leadershipRole        String? // NEW: None, Board, Committee, Staff, Volunteer Lead, etc.
-  originStory           String?
+  leadershipRole        String? // Board, Committee, Staff, Volunteer Lead, etc.
+  originStory           String? // How they got involved with THIS org
   notes                 String?
-  role                  String?
+  role                  String? // System role (for login access)
   firebaseId            String? @unique
   photoURL              String?
   tags                  String[] @default([])
 
-  // Engagement level (reference to Engagement model)
+  // Engagement level (relationship to THIS org)
   engagementId String? 
   engagement   Engagement? @relation(fields: [engagementId], references: [id])
 
@@ -325,7 +336,17 @@ model EventAttendee {
   checkedInAt DateTime?
   ticketType  String?
   amountPaid  Float     @default(0)
-  notes       String?
+  
+  // Event-specific data from forms (rock solid columns!)
+  whoBringingType      String?  // "solo", "wife", "family", etc.
+  attendingWithSpouse  Boolean  @default(false)
+  howManyInParty       Int?     // Total attendees in their party
+  
+  // Likelihood to attend (FK to reference table)
+  likelihoodToAttendId String?
+  likelihoodToAttend   LikelihoodToAttend? @relation(fields: [likelihoodToAttendId], references: [id])
+  
+  notes Json?  // Truly custom/unknown fields only (as Json, not String!)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
