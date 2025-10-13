@@ -22,8 +22,7 @@ router.delete('/:contactId', async (req, res) => {
       where: { id: contactId },
       include: {
         eventAttendees: true,
-        orgMember: true,
-        admin: true
+        orgMember: true
       }
     });
 
