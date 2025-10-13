@@ -13,7 +13,9 @@ router.delete('/:contactId', async (req, res) => {
   try {
     const { contactId } = req.params;
 
-    console.log('🗑️ Deleting contact:', contactId);
+    console.log('🗑️ DELETE CONTACT REQUEST:', contactId);
+    console.log('🗑️ REQUEST URL:', req.url);
+    console.log('🗑️ REQUEST METHOD:', req.method);
 
     // Check if contact exists
     const contact = await prisma.contact.findUnique({
