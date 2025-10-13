@@ -106,45 +106,62 @@ router.post('/', async (req, res) => {
     });
     
     // Map form fields to EventAttendee columns
-    const wifeAttending = submissionData.wife_attending 
-      || submissionData.wifeAttending 
-      || submissionData.bringing_wife 
-      || submissionData.attendingWithSpouse;
     
-    const attendingWithSpouse = wifeAttending 
-      ? (wifeAttending.toLowerCase() === 'yes' || wifeAttending === true)
+    // "Will you bring your M or anyone else?" → Yes/Just me
+    const bringingMResponse = submissionData.bringing_m 
+      || submissionData.will_bring_spouse 
+      || submissionData.bringing_spouse;
+    
+    const attendingWithSpouse = bringingMResponse 
+      ? (bringingMResponse.toLowerCase().includes('yes'))
       : false;
     
-    const whoBringingType = attendingWithSpouse ? 'wife' : 'solo';
+    const whoBringingType = attendingWithSpouse ? 'spouse' : 'solo';
     
-    const howManyInParty = submissionData.howManyInParty 
-      || submissionData.how_many_in_party
+    // "If going, how many in your party?"
+    const howManyInParty = submissionData.how_many_in_party 
+      || submissionData.party_size
       || submissionData.partySize
       || (attendingWithSpouse ? 2 : 1);  // Default: 2 if bringing spouse, 1 if solo
     
-    // Map likelihood to attend string → value (1-4)
-    const likelihoodString = submissionData.likelihoodToAttend 
+    // "How likely are you to attend?" → Map responses to 1-4
+    const likelihoodString = submissionData.how_likely_to_attend 
       || submissionData.likelihood_to_attend
-      || submissionData.willAttend;
+      || submissionData.likelihood;
     
     let likelihoodToAttendId = null;
     if (likelihoodString) {
       const likelihoodMap = {
-        'high': 1,
-        'definitely': 1,
-        'yes': 1,
-        'medium': 2,
-        'maybe': 2,
-        'possibly': 2,
-        'low': 3,
-        'unlikely': 3,
-        'probably_not': 3,
-        'support_from_afar': 4,
-        'no': 4,
-        'cant_make_it': 4
+        // "I'm in — planning to be there!"
+        "i'm in": 1,
+        "planning to be there": 1,
+        "im in": 1,
+        
+        // "Most likely, just confirming logistics"
+        "most likely": 2,
+        "confirming logistics": 2,
+        
+        // "I'm a probably yes… unless chaos intervenes"
+        "probably yes": 2,
+        "chaos intervenes": 2,
+        "probably": 2,
+        
+        // "Just here for the morale support"
+        "morale support": 4,
+        "just here for": 4,
+        "support from afar": 4
       };
       
-      const likelihoodValue = likelihoodMap[likelihoodString.toLowerCase()] || 2; // Default: medium
+      // Try to find match in response text
+      const lowerResponse = likelihoodString.toLowerCase();
+      let likelihoodValue = 2; // Default: medium
+      
+      for (const [key, value] of Object.entries(likelihoodMap)) {
+        if (lowerResponse.includes(key)) {
+          likelihoodValue = value;
+          break;
+        }
+      }
       
       // Find the LikelihoodToAttend record
       const likelihood = await prisma.likelihoodToAttend.findUnique({
@@ -160,9 +177,9 @@ router.post('/', async (req, res) => {
     const standardFields = ['firstName', 'lastName', 'email', 'phone'];
     const mappedToContactFields = ['goesBy', 'f3_name', 'f3Name', 'nickname', 'goes_by'];
     const mappedToEventFields = [
-      'wife_attending', 'wifeAttending', 'bringing_wife', 'attendingWithSpouse',
-      'howManyInParty', 'how_many_in_party', 'partySize',
-      'likelihoodToAttend', 'likelihood_to_attend', 'willAttend', 'definitely', 'maybe', 'unlikely'
+      'bringing_m', 'will_bring_spouse', 'bringing_spouse',
+      'how_many_in_party', 'party_size', 'partySize',
+      'how_likely_to_attend', 'likelihood_to_attend', 'likelihood'
     ];
     const customFieldResponses = {};
     
