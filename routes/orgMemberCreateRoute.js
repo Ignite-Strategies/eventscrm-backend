@@ -41,15 +41,14 @@ router.post('/org-members', async (req, res) => {
       return res.status(400).json({ error: 'Contact is already an org member' });
     }
 
-    // Create OrgMember record with only relational fields
+    // Create OrgMember record - ContactId => OrgMemberId
     const orgMember = await prisma.orgMember.create({
       data: {
-        contactId: contactId,
-        orgId: orgId,
-        // Only org-specific fields, NOT contact data duplication
-        yearsWithOrganization: 0,
-        married: false,
-        active: true
+        contactId: contactId,  // Link to existing Contact
+        orgId: orgId,          // Link to Organization (from localStorage)
+        // Only org-specific fields, no universal personhood data
+        yearsWithOrganization: 0,  // Default: new to org
+        // No married, birthday, etc. - those are in Contact now
       }
     });
 
@@ -58,12 +57,10 @@ router.post('/org-members', async (req, res) => {
     res.json({
       success: true,
       orgMember: {
-        id: orgMember.id,
-        contactId: orgMember.contactId,
-        orgId: orgMember.orgId,
-        yearsWithOrganization: orgMember.yearsWithOrganization,
-        married: orgMember.married,
-        active: orgMember.active
+        id: orgMember.id,                    // New OrgMemberId
+        contactId: orgMember.contactId,       // Link back to Contact
+        orgId: orgMember.orgId,              // Link to Organization
+        yearsWithOrganization: orgMember.yearsWithOrganization
       }
     });
 
