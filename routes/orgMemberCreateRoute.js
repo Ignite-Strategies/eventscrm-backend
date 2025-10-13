@@ -41,17 +41,12 @@ router.post('/org-members', async (req, res) => {
       return res.status(400).json({ error: 'Contact is already an org member' });
     }
 
-    // Create OrgMember record with minimal data
+    // Create OrgMember record with only relational fields
     const orgMember = await prisma.orgMember.create({
       data: {
         contactId: contactId,
         orgId: orgId,
-        // Use contact data as defaults
-        firstName: contact.firstName,
-        lastName: contact.lastName,
-        email: contact.email,
-        phone: contact.phone,
-        // Set default values for org member specific fields
+        // Only org-specific fields, NOT contact data duplication
         yearsWithOrganization: 0,
         married: false,
         active: true
@@ -66,9 +61,9 @@ router.post('/org-members', async (req, res) => {
         id: orgMember.id,
         contactId: orgMember.contactId,
         orgId: orgMember.orgId,
-        firstName: orgMember.firstName,
-        lastName: orgMember.lastName,
-        email: orgMember.email
+        yearsWithOrganization: orgMember.yearsWithOrganization,
+        married: orgMember.married,
+        active: orgMember.active
       }
     });
 
