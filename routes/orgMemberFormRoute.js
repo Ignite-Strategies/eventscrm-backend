@@ -118,6 +118,7 @@ router.post('/', async (req, res) => {
     
     // "If going, how many in your party?"
     const howManyInParty = submissionData.how_many_in_party 
+      || submissionData.if_going_how_many_in_your_party  // ADD THIS FIELD NAME
       || submissionData.party_size
       || submissionData.partySize
       || (spouseOrOther === 'spouse' ? 2 : 1);  // Default: 2 if bringing spouse, 1 if solo
@@ -176,7 +177,7 @@ router.post('/', async (req, res) => {
     const mappedToContactFields = ['goesBy', 'f3_name', 'f3Name', 'nickname', 'goes_by'];
     const mappedToEventFields = [
       'bringing_m', 'will_bring_spouse', 'bringing_spouse',
-      'how_many_in_party', 'party_size', 'partySize',
+      'how_many_in_party', 'if_going_how_many_in_your_party', 'party_size', 'partySize',
       'how_likely_to_attend', 'likelihood_to_attend', 'likelihood'
     ];
     const customFieldResponses = {};
