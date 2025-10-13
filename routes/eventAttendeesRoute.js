@@ -5,6 +5,56 @@ const router = express.Router();
 const prisma = getPrismaClient();
 
 /**
+ * GET /events/attendees?formId=xxx
+ * 
+ * Returns EventAttendees filtered by formId
+ */
+router.get('/attendees', async (req, res) => {
+  try {
+    const { formId } = req.query;
+
+    if (!formId) {
+      return res.status(400).json({ error: 'formId is required' });
+    }
+
+    console.log('🔍 Loading EventAttendees for formId:', formId);
+
+    const attendees = await prisma.eventAttendee.findMany({
+      where: { submittedFormId: formId },
+      include: {
+        contact: {
+          include: {
+            orgMember: {
+              select: {
+                id: true,
+                orgId: true
+              }
+            }
+          }
+        },
+        likelihoodToAttend: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const result = attendees.map(attendee => ({
+      ...attendee,
+      orgMemberId: attendee.contact?.orgMember?.id || null
+    }));
+
+    console.log(`✅ Found ${result.length} EventAttendees for form ${formId}`);
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('❌ Error loading EventAttendees by formId:', error);
+    res.status(500).json({ error: 'Failed to load EventAttendees' });
+  }
+});
+
+/**
  * GET /events/:eventId/attendees
  * 
  * Returns ALL EventAttendees with Contact data in one clean query
@@ -28,7 +78,8 @@ router.get('/:eventId/attendees', async (req, res) => {
               }
             }
           }
-        }
+        },
+        likelihoodToAttend: true  // Include the reference table data
       },
       orderBy: {
         createdAt: 'desc'
@@ -48,6 +99,47 @@ router.get('/:eventId/attendees', async (req, res) => {
   } catch (error) {
     console.error('❌ Error loading EventAttendees:', error);
     res.status(500).json({ error: 'Failed to load EventAttendees' });
+  }
+});
+
+/**
+ * PATCH /event-attendees/:attendeeId
+ * 
+ * Update EventAttendee fields (mapped from form data)
+ */
+router.patch('/:attendeeId', async (req, res) => {
+  try {
+    const { attendeeId } = req.params;
+    const updateData = req.body;
+
+    console.log('📝 Updating EventAttendee:', attendeeId, updateData);
+
+    // Update the EventAttendee
+    const updatedAttendee = await prisma.eventAttendee.update({
+      where: { id: attendeeId },
+      data: updateData,
+      include: {
+        contact: {
+          include: {
+            orgMember: {
+              select: {
+                id: true,
+                orgId: true
+              }
+            }
+          }
+        },
+        likelihoodToAttend: true
+      }
+    });
+
+    console.log('✅ EventAttendee updated successfully');
+
+    res.json(updatedAttendee);
+
+  } catch (error) {
+    console.error('❌ Error updating EventAttendee:', error);
+    res.status(500).json({ error: 'Failed to update EventAttendee' });
   }
 });
 
