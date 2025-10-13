@@ -38,6 +38,7 @@ import pipelineHydrationRouter from './routes/pipelineHydrationRoute.js'; // NEW
 import eventAttendeesRouter from './routes/eventAttendeesRoute.js'; // NEW: Simple EventAttendees endpoint
 import pipelineConfigRouter from './routes/pipelineConfigRoute.js'; // Pipeline config from database
 import orgMemberCreateRouter from './routes/orgMemberCreateRoute.js'; // NEW: Create OrgMember from Contact
+import formResponsesRouter from './routes/formResponsesRoute.js'; // NEW: Form responses by event
 
 dotenv.config();
 
@@ -92,6 +93,7 @@ app.use('/api/contacts', contactEventUploadRouter);    // Event Contact upload
 app.use('/api/events', pipelineHydrationRouter); // Pipeline hydration (EventAttendee-based, no EventPipeline model)
 app.use('/api/events', eventAttendeesRouter); // Simple EventAttendees endpoint
 app.use('/api/pipeline-config', pipelineConfigRouter); // Pipeline config from database
+app.use('/api', formResponsesRouter); // Form responses by event
 
 // Health check
 app.get('/health', (req, res) => {
