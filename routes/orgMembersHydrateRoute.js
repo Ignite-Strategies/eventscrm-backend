@@ -65,15 +65,10 @@ router.get('/orgmembers', async (req, res) => {
       engagementValue: member.engagement?.value || null,  // Hydrate the VALUE from Engagement table
       tags: member.tags,
       
-      // Upcoming events with names (events with status = "upcoming")
-      upcomingEvents: member.contact?.eventAttendees?.filter(ea => 
-        ea.event && ea.event.status === "upcoming"
-      ).map(ea => ({
-        eventId: ea.event.id,
-        eventName: ea.event.name,
-        eventSlug: ea.event.slug,
-        eventStatus: ea.event.status
-      })) || [],
+      // Upcoming events - simplified (just the names for now)
+      upcomingEventNames: member.contact?.eventAttendees
+        ?.filter(ea => ea.event && ea.event.status === "upcoming")
+        ?.map(ea => ea.event.name) || [],
       upcomingEventsCount: member.contact?.eventAttendees?.filter(ea => 
         ea.event && ea.event.status === "upcoming"
       ).length || 0,
@@ -84,6 +79,18 @@ router.get('/orgmembers', async (req, res) => {
     }));
 
     console.log(`✅ ORG MEMBERS HYDRATE: Found ${members.length} members`);
+    
+    // Debug: Check if we have any EventAttendee records at all
+    const totalEventAttendees = await prisma.eventAttendee.count({
+      where: { orgId }
+    });
+    console.log(`🔍 DEBUG: Total EventAttendee records for orgId ${orgId}: ${totalEventAttendees}`);
+    
+    // Debug: Check if we have any Events at all
+    const totalEvents = await prisma.event.count({
+      where: { orgId }
+    });
+    console.log(`🔍 DEBUG: Total Event records for orgId ${orgId}: ${totalEvents}`);
     
     // Debug: Check first member's upcoming events
     if (members.length > 0) {
