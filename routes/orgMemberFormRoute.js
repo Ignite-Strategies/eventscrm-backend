@@ -64,6 +64,7 @@ router.post('/', async (req, res) => {
           lastName,
           email,
           phone,
+          eventId,  // Link contact to this event
           ...(goesBy && { goesBy })
         }
       });
@@ -75,6 +76,7 @@ router.post('/', async (req, res) => {
       if (lastName) contactUpdates.lastName = lastName;
       if (phone) contactUpdates.phone = phone;
       if (goesBy) contactUpdates.goesBy = goesBy;
+      contactUpdates.eventId = eventId;  // Always link to this event
       
       if (Object.keys(contactUpdates).length > 0) {
         contact = await prisma.contact.update({
