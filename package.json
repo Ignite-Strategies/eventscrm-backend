@@ -12,10 +12,11 @@
     "db:push": "npx prisma db push --force-reset",
     "db:seed": "node scripts/seedDatabase.js",
     "db:seed-engagement": "node scripts/seedEngagements.js",
+    "db:seed-leadership": "node scripts/seedLeadershipRoles.js",
     "db:check": "node scripts/checkDatabase.js",
     "db:migrate-contacts": "node scripts/migrateOrgMembersToContacts.js",
     "db:studio": "npx prisma studio",
-    "postinstall": "npx prisma generate && npx prisma db push --accept-data-loss && npm run db:seed-engagement"
+    "postinstall": "npx prisma generate && npx prisma db push --accept-data-loss && npm run db:seed-engagement && npm run db:seed-leadership"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",

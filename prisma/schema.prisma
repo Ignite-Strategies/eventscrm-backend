@@ -100,6 +100,19 @@ model LikelihoodToAttend {
   @@index([value])
 }
 
+model LeadershipRole {
+  id    String @id @default(cuid())
+  value Int    @unique // 1=none, 2=project_lead, 3=committee, 4=board
+  name  String        // "None", "Project Lead", "Committee", "Board"
+  
+  // TODO: Future migration - add leadershipRoleId to OrgMember and remove leadershipRole string
+  // orgMembers OrgMember[]
+  
+  createdAt DateTime @default(now())
+  
+  @@index([value])
+}
+
 
 model OrgMember {
   id        String   @id @default(cuid())
