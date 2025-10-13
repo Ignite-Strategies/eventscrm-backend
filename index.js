@@ -77,7 +77,7 @@ app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/campaigns', campaignRouter);      // Campaigns (bulk email)
 app.use('/api/sequences', sequenceRouter);      // Sequences (individual emails in campaigns)
 app.use('/api/events', eventTasksRouter);       // Event tasks
-app.use('/api/form-submission', orgMemberFormRouter); // Public form submission with field mapping
+app.use('/api/contacts', orgMemberFormRouter); // Public form submission with field mapping
 app.use('/api/forms/public', formsPublicHydrateRouter); // Public form hydration (external users)
 app.use('/api/forms', formDashHydratorRouter); // Form loading (CRM admin dashboard - list & edit)
 app.use('/api/forms/saver', formCreatorSaverRouter);       // Form save/update/delete (CRM admin)
