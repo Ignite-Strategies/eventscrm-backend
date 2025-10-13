@@ -4,6 +4,11 @@ import { getPrismaClient } from '../config/database.js';
 const router = express.Router();
 const prisma = getPrismaClient();
 
+// Test route to verify the backend is working
+router.get('/test', (req, res) => {
+  res.json({ message: 'EventAttendees route is working!', timestamp: new Date().toISOString() });
+});
+
 /**
  * GET /events/attendees?hasNotes=true&orgId=xxx
  * 
