@@ -90,12 +90,13 @@ router.post("/send", async (req, res) => {
     // SendGrid specific error handling
     if (error.response) {
       const { body, statusCode } = error.response;
-      console.error(`   SendGrid Error: ${statusCode}`);
+      const httpStatus = statusCode || error.code || 500;
+      console.error(`   SendGrid Error: ${httpStatus}`);
       console.error(`   Details:`, body);
       
-      return res.status(statusCode || 500).json({
+      return res.status(httpStatus).json({
         error: "SendGrid API error",
-        statusCode: statusCode || 500,
+        statusCode: httpStatus,
         details: body.errors || body
       });
     }
