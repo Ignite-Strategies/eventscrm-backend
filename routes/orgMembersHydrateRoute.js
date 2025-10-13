@@ -67,7 +67,7 @@ router.get('/orgmembers', async (req, res) => {
       
       // Upcoming events with names (events with future dates)
       upcomingEvents: member.contact?.eventAttendees?.filter(ea => 
-        ea.event && new Date(ea.event.date) > new Date()
+        ea.event && ea.event.date && new Date(ea.event.date) > new Date()
       ).map(ea => ({
         eventId: ea.event.id,
         eventName: ea.event.name,
@@ -75,7 +75,7 @@ router.get('/orgmembers', async (req, res) => {
         eventDate: ea.event.date
       })) || [],
       upcomingEventsCount: member.contact?.eventAttendees?.filter(ea => 
-        ea.event && new Date(ea.event.date) > new Date()
+        ea.event && ea.event.date && new Date(ea.event.date) > new Date()
       ).length || 0,
       
       // Metadata
@@ -84,6 +84,22 @@ router.get('/orgmembers', async (req, res) => {
     }));
 
     console.log(`✅ ORG MEMBERS HYDRATE: Found ${members.length} members`);
+    
+    // Debug: Check first member's upcoming events
+    if (members.length > 0) {
+      const firstMember = members[0];
+      console.log(`🔍 DEBUG: First member ${firstMember.firstName} ${firstMember.lastName}:`);
+      console.log(`🔍 - upcomingEventsCount: ${firstMember.upcomingEventsCount}`);
+      console.log(`🔍 - upcomingEvents:`, firstMember.upcomingEvents);
+      console.log(`🔍 - Total eventAttendees:`, orgMembers[0]?.contact?.eventAttendees?.length || 0);
+      if (orgMembers[0]?.contact?.eventAttendees?.length > 0) {
+        orgMembers[0].contact.eventAttendees.forEach((ea, idx) => {
+          const eventDate = ea.event?.date;
+          const isUpcoming = eventDate && new Date(eventDate) > new Date();
+          console.log(`🔍 - EventAttendee ${idx}: event=${ea.event?.name}, date=${eventDate}, isUpcoming=${isUpcoming}`);
+        });
+      }
+    }
     
     res.json({
       success: true,
