@@ -15,30 +15,33 @@ router.get('/:eventId/attendees', async (req, res) => {
 
     console.log('🔍 Loading EventAttendees + Contact data for event:', eventId);
 
-    // SACRED WORKING QUERY - copied from pipelineHydrationRoute.js
-    const result = await prisma.$queryRaw`
-      SELECT 
-        ea.id as "attendeeId",
-        ea."eventId",
-        ea."contactId",
-        ea."currentStage",
-        ea."audienceType",
-        ea."attended",
-        ea."createdAt",
-        c.id as "contactId",
-        c."firstName",
-        c."lastName", 
-        c.email,
-        c.phone,
-        ea."orgId" as "contactOrgId"
-      FROM "EventAttendee" ea
-      LEFT JOIN "Contact" c ON ea."contactId" = c.id
-      WHERE ea."eventId" = ${eventId}
-      ORDER BY ea."createdAt" DESC
-    `;
+    // Use Prisma query to get nested structure
+    const attendees = await prisma.eventAttendee.findMany({
+      where: { eventId },
+      include: {
+        contact: {
+          include: {
+            orgMember: {
+              select: {
+                id: true,
+                orgId: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Transform to include orgMemberId at top level for easy frontend access
+    const result = attendees.map(attendee => ({
+      ...attendee,
+      orgMemberId: attendee.contact?.orgMember?.id || null
+    }));
 
     console.log(`✅ Found ${result.length} EventAttendees with Contact data`);
-    console.log('🔍 Combined data:', JSON.stringify(result, null, 2));
 
     res.json(result);
 

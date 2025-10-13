@@ -5,9 +5,10 @@ const router = express.Router();
 const prisma = getPrismaClient();
 
 /**
- * POST /contacts - Create contact from form submission
+ * POST /contacts - Create contact from ORG MEMBER form submission
  * No auth required - this is for external form submissions
- * Body should include: { slug, formData }
+ * AUTO-ELEVATES to OrgMember if audienceType is "org_members"
+ * Body should include: { slug, orgId, eventId, audienceType, targetStage, formData }
  */
 router.post('/', async (req, res) => {
   try {

@@ -14,11 +14,12 @@ router.get('/orgmembers', async (req, res) => {
       return res.status(400).json({ error: 'orgId is required' });
     }
 
-    // Get all OrgMembers for this org, include their Contact data
+    // Get all OrgMembers for this org, include their Contact data and Engagement level
     const orgMembers = await prisma.orgMember.findMany({
       where: { orgId },
       include: {
-        contact: true  // Include the universal Contact data
+        contact: true,  // Include the universal Contact data
+        engagement: true  // Include engagement level
       },
       orderBy: {
         createdAt: 'desc'
@@ -47,12 +48,14 @@ router.get('/orgmembers', async (req, res) => {
       zip: member.zip,
       employer: member.employer,
       yearsWithOrganization: member.yearsWithOrganization,
+      leadershipRole: member.leadershipRole,
       married: member.married,
       spouseName: member.spouseName,
       numberOfKids: member.numberOfKids,
       originStory: member.originStory,
       notes: member.notes,
-      categoryOfEngagement: member.categoryOfEngagement,
+      engagementId: member.engagementId,
+      engagementValue: member.engagement?.value || null,
       tags: member.tags,
       
       // Metadata

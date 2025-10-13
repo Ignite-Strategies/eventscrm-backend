@@ -112,13 +112,80 @@ class ContactListService {
   
   /**
    * Get general contacts (everyone in the CRM)
+   * Contacts related to org through EventAttendees OR OrgMember
    */
   static async getGeneralContacts(contactList) {
-    return await prisma.contact.findMany({
-      where: { orgId: contactList.orgId },
+    // Get all contacts that have EventAttendees for this org
+    const contactsViaEvents = await prisma.contact.findMany({
+      where: {
+        eventAttendees: {
+          some: {
+            orgId: contactList.orgId
+          }
+        }
+      },
       include: {
         orgMember: true,
         eventAttendees: {
+          where: {
+            orgId: contactList.orgId
+          },
+          include: {
+            event: true
+          }
+        }
+      }
+    });
+    
+    // Get all contacts that have OrgMember for this org
+    const contactsViaOrgMember = await prisma.contact.findMany({
+      where: {
+        orgMember: {
+          orgId: contactList.orgId
+        }
+      },
+      include: {
+        orgMember: true,
+        eventAttendees: {
+          where: {
+            orgId: contactList.orgId
+          },
+          include: {
+            event: true
+          }
+        }
+      }
+    });
+    
+    // Merge and deduplicate contacts by ID
+    const contactMap = new Map();
+    
+    [...contactsViaEvents, ...contactsViaOrgMember].forEach(contact => {
+      if (!contactMap.has(contact.id)) {
+        contactMap.set(contact.id, contact);
+      }
+    });
+    
+    return Array.from(contactMap.values());
+  }
+  
+  /**
+   * Get org member contacts
+   * Contacts that have been elevated to OrgMember status for this org
+   */
+  static async getOrgMemberContacts(contactList) {
+    return await prisma.contact.findMany({
+      where: {
+        orgMember: {
+          orgId: contactList.orgId
+        }
+      },
+      include: {
+        orgMember: true,
+        eventAttendees: {
+          where: {
+            orgId: contactList.orgId
+          },
           include: {
             event: true
           }

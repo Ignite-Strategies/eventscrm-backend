@@ -173,5 +173,94 @@ router.get("/:listId/stats", async (req, res) => {
   }
 });
 
+// POST /contact-lists/from-event - Create contact list from event attendees
+router.post("/from-event", async (req, res) => {
+  try {
+    const { 
+      orgId, 
+      name, 
+      description, 
+      eventId, 
+      audienceType, 
+      stages 
+    } = req.body;
+    
+    if (!orgId || !name || !eventId) {
+      return res.status(400).json({ 
+        error: "orgId, name, and eventId are required" 
+      });
+    }
+    
+    // Create contact list with event attendee criteria
+    const contactList = await ContactListService.createContactList({
+      orgId,
+      name,
+      description: description || `Contacts from event`,
+      type: "event_attendee",
+      criteria: {
+        eventId,
+        audienceType,
+        stages
+      }
+    });
+    
+    res.status(201).json(contactList);
+  } catch (error) {
+    console.error("Error creating contact list from event:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /contact-lists/from-org-members - Create contact list from org members
+router.post("/from-org-members", async (req, res) => {
+  try {
+    const { orgId, name, description } = req.body;
+    
+    if (!orgId || !name) {
+      return res.status(400).json({ 
+        error: "orgId and name are required" 
+      });
+    }
+    
+    // Create contact list with org member criteria
+    const contactList = await ContactListService.createContactList({
+      orgId,
+      name,
+      description: description || `Org members`,
+      type: "org_member"
+    });
+    
+    res.status(201).json(contactList);
+  } catch (error) {
+    console.error("Error creating org member contact list:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /contact-lists/from-all-contacts - Create contact list from all contacts
+router.post("/from-all-contacts", async (req, res) => {
+  try {
+    const { orgId, name, description } = req.body;
+    
+    if (!orgId || !name) {
+      return res.status(400).json({ 
+        error: "orgId and name are required" 
+      });
+    }
+    
+    // Create contact list with all contacts
+    const contactList = await ContactListService.createContactList({
+      orgId,
+      name,
+      description: description || `All contacts`,
+      type: "contact"
+    });
+    
+    res.status(201).json(contactList);
+  } catch (error) {
+    console.error("Error creating general contact list:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;

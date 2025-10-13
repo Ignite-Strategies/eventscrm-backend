@@ -8,17 +8,18 @@ import adminUserAuthRouter from './routes/adminUserAuthRoute.js';
 import orgsRouter from './routes/orgsRoute.js';
 import orgMembersSaverouter from './routes/orgMembersSaveroute.js';
 import orgMembersHydraterouter from './routes/orgMembersHydrateRoute.js';
+import orgMemberUpdateRouter from './routes/orgMemberUpdateRoute.js';
 import eventsRouter from './routes/eventsRoute.js';
 import eventAttendeeListRouter from './routes/eventAttendeeListRoute.js';
 // import eventPipelinesRouter from './routes/eventPipelinesRoute.js'; // REMOVED - deprecated for now
 // import eventPipelineActionsRouter from './routes/eventPipelineActionsRoute.js'; // REMOVED - duplicate of eventPipelinesRouter
 import templatesRouter from './routes/templatesRoute.js';
-import emailRouter from './routes/emailRoute.js';
+import personalEmailRouter from './routes/personalEmailRoute.js';
 import contactListsRouter from './routes/contactListsRoute.js';
 import campaignRouter from './routes/campaignRoute.js';
 import sequenceRouter from './routes/sequenceRoute.js';
 import eventTasksRouter from './routes/eventTasksRoute.js';
-import publicFormSubmissionRouter from './routes/publicFormSubmissionRoute.js';
+import orgMemberFormRouter from './routes/orgMemberFormRoute.js';
 import formDashHydratorRouter from './routes/formDashHydratorRoute.js';
 import formCreatorSaverRouter from './routes/formCreatorSaverRoute.js';
 import formsPublicHydrateRouter from './routes/formsPublicHydrateRoute.js';
@@ -62,6 +63,7 @@ app.use('/api/auth', adminUserAuthRouter);      // Admin user auth (OrgMember mi
 app.use('/api/orgs', orgsRouter);
 app.use('/api', orgMembersSaverouter);           // OrgMember CSV upload (Contact-First, no orgId in URL)
 app.use('/api', orgMembersHydraterouter);        // OrgMember list/detail hydration
+app.use('/api', orgMemberUpdateRouter);          // Update OrgMember fields (PATCH)
 app.use('/api', orgMemberCreateRouter);          // Create OrgMember from existing Contact
 app.use('/api/orgs', eventsRouter);             // Event creation nested under orgs
 app.use('/api/events', eventsRouter);           // Event operations
@@ -69,12 +71,12 @@ app.use('/api/events', eventAttendeeListRouter); // Attendee list (paid/soft_com
 // app.use('/api/events', eventPipelinesRouter);   // REMOVED - Pipeline routes deprecated for now
 // app.use('/api/events', eventPipelineActionsRouter); // REMOVED - duplicate functionality in eventPipelinesRouter
 app.use('/api/templates', templatesRouter);     // Email templates
-app.use('/api/email', emailRouter);             // Email sending
+app.use('/api/email/personal', personalEmailRouter);  // Personal email sending (Gmail OAuth)
 app.use('/api/contact-lists', contactListsRouter); // Contact lists
 app.use('/api/campaigns', campaignRouter);      // Campaigns (bulk email)
 app.use('/api/sequences', sequenceRouter);      // Sequences (individual emails in campaigns)
 app.use('/api/events', eventTasksRouter);       // Event tasks
-app.use('/api/contacts', publicFormSubmissionRouter); // Public form submission (external users)
+app.use('/api/contacts', orgMemberFormRouter); // Org member form submission (auto-elevates to OrgMember)
 app.use('/api/forms/public', formsPublicHydrateRouter); // Public form hydration (external users)
 app.use('/api/forms', formDashHydratorRouter); // Form loading (CRM admin dashboard - list & edit)
 app.use('/api/forms/saver', formCreatorSaverRouter);       // Form save/update/delete (CRM admin)

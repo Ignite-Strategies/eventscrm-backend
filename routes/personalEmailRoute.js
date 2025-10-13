@@ -1,6 +1,6 @@
 import express from "express";
 import verifyGmailToken from "../middleware/verifyFirebaseToken.js";
-import { GmailService } from "../services/gmailService.js";
+import { GmailService } from "../services/personalEmailService.js";
 import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();
