@@ -204,10 +204,9 @@ router.post('/', async (req, res) => {
           currentStage: mappedStage,
           audienceType: audienceType,
           submittedFormId: publicForm.id,
-          whoBringingType,
-          attendingWithSpouse,
+          spouseOrOther,
           ...(howManyInParty && { howManyInParty: parseInt(howManyInParty) }),
-          ...(likelihoodToAttend && { likelihoodToAttend }),
+          ...(likelihoodToAttendId && { likelihoodToAttendId }),
           notes: customFieldResponses  // Json type - no stringify needed!
         }
       });
@@ -215,19 +214,18 @@ router.post('/', async (req, res) => {
       console.log('🆕 Creating new attendee');
       // Create new attendee
       attendee = await prisma.eventAttendee.create({
-        data: {
-          orgId: orgId,
-          eventId: eventId,
-          contactId: contact.id,
-          currentStage: mappedStage,
-          audienceType: audienceType,
-          submittedFormId: publicForm.id,
-          whoBringingType,
-          attendingWithSpouse,
-          ...(howManyInParty && { howManyInParty: parseInt(howManyInParty) }),
-          ...(likelihoodToAttend && { likelihoodToAttend }),
-          notes: customFieldResponses  // Json type - no stringify needed!
-        }
+      data: {
+        orgId: orgId,
+        eventId: eventId,
+        contactId: contact.id,
+        currentStage: mappedStage,
+        audienceType: audienceType,
+        submittedFormId: publicForm.id,
+        spouseOrOther,
+        ...(howManyInParty && { howManyInParty: parseInt(howManyInParty) }),
+        ...(likelihoodToAttendId && { likelihoodToAttendId }),
+        notes: customFieldResponses  // Json type - no stringify needed!
+      }
       });
     }
     
