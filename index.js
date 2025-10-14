@@ -10,7 +10,7 @@ import orgRouter from './routes/orgsRoute.js';
 import eventRouter from './routes/eventsRoute.js';
 import contactListRouter from './routes/contactListsRoute.js';
 import campaignRouter from './routes/campaignRoute.js';
-import sequenceRouter from './routes/sequenceRoute.js';
+// import sequenceRouter from './routes/sequenceRoute.js'; // DEPRECATED
 import templateRouter from './routes/templatesRoute.js';
 import orgMemberFormRouter from './routes/orgMemberFormRoute.js';
 import orgMembersHydrateRouter from './routes/orgMembersHydrateRoute.js'; // ORG MEMBERS HYDRATION
@@ -46,7 +46,7 @@ app.use('/api/orgs', orgRouter);
 app.use('/api/events', eventRouter);
 app.use('/api/contact-lists', contactListRouter);
 app.use('/api/campaigns', campaignRouter);
-app.use('/api/sequences', sequenceRouter);
+// app.use('/api/sequences', sequenceRouter); // DEPRECATED
 app.use('/api/templates', templateRouter);
 app.use('/api/org-member-form', orgMemberFormRouter);
 app.use('/api/orgmembers', orgMembersHydrateRouter);  // ✅ Org Members Hydration
