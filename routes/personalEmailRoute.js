@@ -10,7 +10,7 @@ const prisma = getPrismaClient();
 router.post("/send", verifyGmailToken, async (req, res) => {
   try {
     const { to, subject, body, templateId, variables } = req.body;
-    const { gmailAccessToken } = req; // From Gmail token
+    const gmailAccessToken = req.gmailAccessToken; // From Gmail token
 
     if (!to || !subject || !body) {
       return res.status(400).json({ 
@@ -54,7 +54,7 @@ router.post("/send", verifyGmailToken, async (req, res) => {
     }
 
     // Initialize Gmail service
-    const gmailService = new GmailService(gmailAccessToken);
+    const gmailService = new GmailService(req.gmailAccessToken);
 
     // Send email
     const result = await gmailService.sendEmail({
@@ -114,7 +114,7 @@ router.post("/send-bulk", verifyGmailToken, async (req, res) => {
     }
 
     // Initialize Gmail service
-    const gmailService = new GmailService(gmailAccessToken);
+    const gmailService = new GmailService(req.gmailAccessToken);
 
     // Prepare emails with personalized variables
     const emails = recipients.map(recipient => {
