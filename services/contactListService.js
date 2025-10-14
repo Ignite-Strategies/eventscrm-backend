@@ -31,8 +31,8 @@ class ContactListService {
       data: contactListData
     });
     
-    // Find matching contacts and set their contactListId
-    await this.populateContactList(contactList);
+    // Find matching contacts and set their contactListId (MUTATION!)
+    await this.assignContactsToList(contactList);
     
     return contactList;
   }
@@ -66,9 +66,10 @@ class ContactListService {
   }
   
   /**
-   * Populate contact list by setting contactListId on matching contacts
+   * Assign contacts to list by setting contactListId on matching contacts
+   * MUTATION: Sets Contact.contactListId = contactList.id for all matching contacts
    */
-  static async populateContactList(contactList) {
+  static async assignContactsToList(contactList) {
     let matchingContacts = [];
     
     switch (contactList.type) {

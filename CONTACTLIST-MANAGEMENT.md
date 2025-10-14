@@ -38,7 +38,7 @@ model Contact {
   id            String  @id
   orgId         String
   
-  contactListId String?  // ← THE MUTATION! Set by populateContactList()
+  contactListId String?  // ← THE MUTATION! Set by assignContactsToList()
   contactList   ContactList? @relation(fields: [contactListId], references: [id])
   
   // ... other fields
@@ -82,10 +82,10 @@ const contactList = await prisma.contactList.create({
 
 ---
 
-### **Step 2: ASSIGN/MUTATE Contacts (The Confusion!)**
+### **Step 2: ASSIGN/MUTATE Contacts**
 ```javascript
-// ContactListService.populateContactList()
-// MISLEADING NAME! Should be assignContactsToList()
+// ContactListService.assignContactsToList()
+// CLEAR NAME! Assigns contacts to list by mutating Contact.contactListId
 
 // 1. Find matching contacts based on list criteria
 const matchingContacts = await getEventAttendeeContacts(contactList);
@@ -315,8 +315,8 @@ AND status IN ('draft', 'active', 'sent');
 
 | Method | What It Does | Better Name |
 |--------|--------------|-------------|
-| `createContactList(listData)` | Creates ContactList record + calls populate | `createListRecord()` |
-| `populateContactList(contactList)` | **MUTATES** `Contact.contactListId` | `assignContactsToList()` |
+| `createContactList(listData)` | Creates ContactList record + calls assign | `createListRecord()` |
+| `assignContactsToList(contactList)` | **MUTATES** `Contact.contactListId` | ✅ (renamed!) |
 | `getContactsForList(listId)` | **HYDRATES** contacts from DB | ✅ (good name!) |
 | `getGeneralContacts()` | Find all org contacts | ✅ |
 | `getOrgMemberContacts()` | Find org member contacts | ✅ |
@@ -383,11 +383,11 @@ if (campaigns.length === 0) {
 
 ### **Pitfall 1: Confusing "populate" with "hydrate"**
 ```javascript
-// ❌ WRONG mental model
-populateContactList() → "Fetch contacts from DB"
+// ❌ OLD NAME (confusing)
+populateContactList() → Sounds like "fetch" but actually "mutates"
 
-// ✅ CORRECT mental model
-populateContactList() → "MUTATE Contact.contactListId to assign contacts to list"
+// ✅ NEW NAME (clear!)
+assignContactsToList() → "MUTATE Contact.contactListId to assign contacts to list"
 ```
 
 ### **Pitfall 2: Using URL params instead of localStorage**

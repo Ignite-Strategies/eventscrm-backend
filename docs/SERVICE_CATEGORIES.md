@@ -81,7 +81,7 @@ services/
 ├── contactListService.js               # Manages ContactList records
 │   ├── createContactList()             # Create new campaign list
 │   ├── getContactsForList()            # Get contacts in a list
-│   ├── populateContactList()           # Auto-populate based on criteria
+│   ├── assignContactsToList()          # Assign contacts to list (MUTATE Contact.contactListId)
 │   ├── getGeneralContacts()            # All contacts in CRM
 │   ├── getEventAttendeeContacts()      # Filter by event/stage/audience
 │   └── getOrgMemberContacts()          # Filter org members
