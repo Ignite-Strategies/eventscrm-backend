@@ -7,52 +7,34 @@ const prisma = getPrismaClient();
 /**
  * GET /api/welcome/:firebaseId
  * 
- * SIMPLE WELCOME HYDRATION - Returns ONLY the core management IDs:
- * 1. contactId (universal person record)
- * 2. orgMemberId (CRM management record)
- * 3. adminId (if exists)
+ * ADMIN-FIRST HYDRATION - Just check if user exists as Admin
+ * Admins don't need orgMember - they're self-sufficient!
  */
 router.get('/:firebaseId', async (req, res) => {
   try {
     const { firebaseId } = req.params;
     console.log('🚀 WELCOME HYDRATION for firebaseId:', firebaseId);
 
-    // Find OrgMember by firebaseId
-    const orgMember = await prisma.orgMember.findFirst({
-      where: { firebaseId },
-      include: {
-        contact: true,
-        org: {
-          include: {
-            events: {
-              orderBy: { createdAt: 'desc' },
-              take: 1 // Get most recent event
-            }
-          }
-        }
-      }
-    });
-
-    if (!orgMember) {
-      console.log('❌ No orgMember found for firebaseId:', firebaseId);
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Find Admin by firebaseId
+    // Check for Admin - that's all we need!
     const admin = await prisma.admin.findFirst({
       where: { firebaseId }
     });
 
-    // SIMPLE RESPONSE - Only the 3 things Welcome needs
+    if (!admin) {
+      console.log('❌ No admin found for firebaseId:', firebaseId);
+      return res.status(404).json({ error: 'Admin not found - please contact support' });
+    }
+
+    console.log('✅ Admin found:', admin.id);
+
+    // Return ONLY the 3 IDs - that's it!
     const welcomeData = {
-      adminId: admin ? admin.id : null,
-      orgId: orgMember.orgId,
-      eventId: orgMember.org?.events?.[0]?.id || null, // First event or null
-      orgName: orgMember.org?.name || 'Unknown',
-      memberName: orgMember.firstName || 'there'
+      adminId: admin.id,
+      orgId: admin.orgId || null,
+      eventId: admin.eventId || null
     };
 
-    console.log('✅ Welcome hydration complete:', welcomeData);
+    console.log('✅ Admin hydration complete:', welcomeData);
     res.json(welcomeData);
 
   } catch (error) {
