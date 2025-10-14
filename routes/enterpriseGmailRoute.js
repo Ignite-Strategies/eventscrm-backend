@@ -136,4 +136,115 @@ router.post("/send-sequence", verifyGmailToken, async (req, res) => {
   }
 });
 
+/**
+ * POST /enterprise-gmail/send-campaign
+ * Send a campaign via Gmail API
+ */
+router.post("/send-campaign", verifyGmailToken, async (req, res) => {
+  console.log('🎯 /send-campaign route called');
+  
+  try {
+    const { campaignId, subject, message, contactListId } = req.body;
+    const gmailAccessToken = req.gmailAccessToken;
+    
+    console.log('📨 Campaign request:', { campaignId, subject, contactListId });
+    
+    if (!campaignId || !subject || !message || !contactListId) {
+      return res.status(400).json({ error: "campaignId, subject, message, and contactListId are required" });
+    }
+    
+    if (!gmailAccessToken) {
+      return res.status(401).json({ error: "Gmail authentication required" });
+    }
+    
+    // Get contacts from the contact list
+    const contacts = await ContactListService.getContactsForList(contactListId);
+    
+    if (contacts.length === 0) {
+      return res.status(400).json({ error: "No contacts in list" });
+    }
+    
+    console.log(`🚀 Sending campaign "${subject}" to ${contacts.length} contacts via Gmail API`);
+    
+    // Initialize Gmail service
+    const gmailService = new GmailService(gmailAccessToken);
+    
+    // Send emails with delays
+    const results = [];
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (let i = 0; i < contacts.length; i++) {
+      const contact = contacts[i];
+      
+      try {
+        // Personalize email
+        const personalizedSubject = subject.replace(/\{\{firstName\}\}/g, contact.firstName || '');
+        const personalizedMessage = message.replace(/\{\{firstName\}\}/g, contact.firstName || '');
+        
+        // Send via Gmail
+        const result = await gmailService.sendEmail({
+          to: contact.email,
+          subject: personalizedSubject,
+          body: personalizedMessage,
+          fromName: "Adam - F3 Capital Impact"
+        });
+        
+        successCount++;
+        results.push({
+          contactId: contact.id,
+          email: contact.email,
+          status: 'sent',
+          messageId: result.messageId
+        });
+        
+        console.log(`✅ Sent to ${contact.email} (${i + 1}/${contacts.length})`);
+        
+        // Add delay between sends (except for the last one)
+        if (i < contacts.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 4000)); // 4 second delay
+        }
+        
+      } catch (error) {
+        errorCount++;
+        results.push({
+          contactId: contact.id,
+          email: contact.email,
+          status: 'error',
+          error: error.message
+        });
+        
+        console.error(`❌ Failed to send to ${contact.email}:`, error.message);
+      }
+    }
+    
+    // Update campaign status
+    await prisma.campaign.update({
+      where: { id: campaignId },
+      data: { 
+        status: 'sent',
+        subject,
+        body: message
+      }
+    });
+    
+    console.log(`🎯 Campaign complete: ${successCount} sent, ${errorCount} failed`);
+    
+    res.json({
+      success: true,
+      message: `Campaign sent to ${successCount} contacts`,
+      results: {
+        total: contacts.length,
+        sent: successCount,
+        failed: errorCount,
+        details: results
+      }
+    });
+    
+  } catch (error) {
+    console.error("Error sending campaign via Gmail:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

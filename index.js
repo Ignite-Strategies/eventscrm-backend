@@ -20,7 +20,7 @@ import orgMemberCreateRouter from './routes/orgMemberCreateRoute.js'; // NEW: Cr
 import formResponsesRouter from './routes/formResponsesRoute.js'; // NEW: Form responses by event
 import adsRouter from './routes/adsRoute.js'; // Ad Management (Google Ads integration)
 import testEmailRouter from './routes/testEmailRoute.js'; // Test email sending (SendGrid testing)
-import enterpriseEmailRouter from './routes/enterpriseEmailRoute.js'; // Enterprise email sending (SendGrid production)
+// import enterpriseEmailRouter from './routes/enterpriseEmailRoute.js'; // DELETED - too confusing with Gmail // Enterprise email sending (SendGrid production)
 import personalEmailRouter from './routes/personalEmailRoute.js'; // Personal email sending (Gmail OAuth)
 import enterpriseGmailRouter from './routes/enterpriseGmailRoute.js'; // Enterprise Gmail sending (Gmail OAuth campaigns)
 import welcomeHydrationRouter from './routes/welcomeHydrationRoute.js'; // Welcome hydration for Firebase users
@@ -56,7 +56,7 @@ app.use('/api/org-member-create', orgMemberCreateRouter);
 app.use('/api/form-responses', formResponsesRouter);
 app.use('/api/ads', adsRouter);
 app.use('/api/test-email', testEmailRouter);
-app.use('/api/enterprise-email', enterpriseEmailRouter);
+// app.use('/api/enterprise-email', enterpriseEmailRouter); // DELETED - too confusing with Gmail
 app.use('/api/email/personal', personalEmailRouter);  // Personal email sending (Gmail OAuth)
 app.use('/api/enterprise-gmail', enterpriseGmailRouter);  // Enterprise Gmail sending (Gmail OAuth campaigns)
 app.use('/api/welcome', welcomeHydrationRouter);  // ✅ Welcome hydration (Firebase → Admin check)
