@@ -218,7 +218,23 @@ router.post("/send-campaign", verifyGmailToken, async (req, res) => {
       }
     }
     
-    // Update campaign status
+    console.log(`🎯 Campaign complete: ${successCount} sent, ${errorCount} failed`);
+    
+    // CRITICAL: Only mark as sent if at least 1 email went through!
+    if (successCount === 0) {
+      console.error('❌ CAMPAIGN FAILED: 0 emails sent!');
+      return res.status(500).json({ 
+        error: `Campaign failed: All ${errorCount} emails failed to send. Check Gmail authentication.`,
+        results: {
+          total: contacts.length,
+          sent: 0,
+          failed: errorCount,
+          details: results
+        }
+      });
+    }
+    
+    // Update campaign status (only if we actually sent emails!)
     await prisma.campaign.update({
       where: { id: campaignId },
       data: { 
@@ -228,11 +244,10 @@ router.post("/send-campaign", verifyGmailToken, async (req, res) => {
       }
     });
     
-    console.log(`🎯 Campaign complete: ${successCount} sent, ${errorCount} failed`);
-    
+    // Return success with stats
     res.json({
       success: true,
-      message: `Campaign sent to ${successCount} contacts`,
+      message: `Campaign sent to ${successCount} contacts${errorCount > 0 ? ` (${errorCount} failed)` : ''}`,
       results: {
         total: contacts.length,
         sent: successCount,
