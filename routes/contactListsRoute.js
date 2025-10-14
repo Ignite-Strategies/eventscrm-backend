@@ -263,4 +263,54 @@ router.post("/from-all-contacts", async (req, res) => {
   }
 });
 
+// POST /contact-lists/from-selection - Create contact list from selected contacts
+router.post("/from-selection", async (req, res) => {
+  try {
+    const { orgId, name, description, selectedContactIds } = req.body;
+    
+    if (!orgId || !name || !selectedContactIds || !Array.isArray(selectedContactIds)) {
+      return res.status(400).json({ 
+        error: "orgId, name, and selectedContactIds array are required" 
+      });
+    }
+    
+    // 1. Create the contact list
+    const contactList = await prisma.contactList.create({
+      data: {
+        orgId,
+        name,
+        description: description || "Selected contacts",
+        type: "selection"
+      }
+    });
+    
+    // 2. Clear ALL org members first (handle deselection)
+    await prisma.contact.updateMany({
+      where: {
+        orgMember: { orgId }
+      },
+      data: { contactListId: null }
+    });
+    
+    // 3. Set contactListId ONLY on selected contacts
+    await prisma.contact.updateMany({
+      where: { id: { in: selectedContactIds } },
+      data: { contactListId: contactList.id }
+    });
+    
+    // 4. Update contact count
+    await prisma.contactList.update({
+      where: { id: contactList.id },
+      data: { totalContacts: selectedContactIds.length }
+    });
+    
+    console.log(`✅ Created selection list "${name}" with ${selectedContactIds.length} contacts`);
+    
+    res.status(201).json(contactList);
+  } catch (error) {
+    console.error("Error creating selection list:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

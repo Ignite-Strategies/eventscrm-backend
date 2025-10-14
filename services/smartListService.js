@@ -1,4 +1,5 @@
 import { getPrismaClient } from "../config/database.js";
+import { mapToOfficialStage, OFFICIAL_AUDIENCES, AUDIENCE_STAGES } from "../config/pipelineConfig.js";
 
 const prisma = getPrismaClient();
 
@@ -43,7 +44,7 @@ class SmartListService {
       getConfig: (event) => ({
         eventId: event.id,
         audienceType: null,
-        stages: ["soft_commit"]
+        stages: ["rsvped"]
       })
     },
     
@@ -95,7 +96,7 @@ class SmartListService {
       getConfig: (event) => ({
         eventId: event.id,
         audienceType: "org_member",
-        stages: ["in_funnel", "general_awareness", "personal_invite", "expressed_interest", "soft_commit"]
+        stages: ["in_funnel", "general_awareness", "personal_invite", "expressed_interest", "rsvped"]
       })
     },
     
