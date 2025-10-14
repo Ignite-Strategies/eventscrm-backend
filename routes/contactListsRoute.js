@@ -338,6 +338,7 @@ router.post("/from-selection", async (req, res) => {
     }
     
     console.log('🎯 Creating SIMPLE selection list:', { orgId, name, contactCount: selectedContactIds.length });
+    console.log('📋 Selected Contact IDs:', selectedContactIds);
     
     // 1. Create the contact list (SIMPLE!)
     const contactList = await ContactListService.createContactList({
@@ -347,8 +348,12 @@ router.post("/from-selection", async (req, res) => {
       type: "selection"
     });
     
+    console.log('📋 List created, now assigning contacts...');
+    
     // 2. Assign the selected contacts (SIMPLE!)
-    await ContactListService.assignContactsToList(contactList.id, selectedContactIds);
+    const assignResult = await ContactListService.assignContactsToList(contactList.id, selectedContactIds);
+    
+    console.log('📋 Assignment result:', assignResult);
     
     console.log(`✅ SIMPLE selection list created: "${name}" with ${selectedContactIds.length} contacts`);
     
