@@ -69,9 +69,10 @@ router.get("/:listId/contacts", async (req, res) => {
   try {
     const { listId } = req.params;
     
-    const contacts = await ContactListOrchestrator.getContactListWithContacts(listId);
+    const contactListData = await ContactListOrchestrator.getContactListWithContacts(listId);
     
-    res.json(contacts);
+    // Return just the contacts array, not the full object
+    res.json(contactListData.contacts || []);
   } catch (error) {
     console.error("Error fetching contacts from list:", error);
     res.status(500).json({ error: error.message });
