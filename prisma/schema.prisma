@@ -325,11 +325,32 @@ model Admin {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Relation to profile (future)
+  profile AdminProfile?
+
   @@unique([orgId, eventId])
   @@index([orgId])
   @@index([eventId])
   @@index([firebaseId])
   @@index([isActive])
+}
+
+// FUTURE: Admin Profile - Personal info separate from auth/permissions
+model AdminProfile {
+  id        String   @id @default(cuid())
+  adminId   String   @unique
+  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  email     String   @unique
+  firstName String?
+  lastName  String?
+  phone     String?
+  photoURL  String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
 }
 
 model EventAttendee {
