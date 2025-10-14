@@ -181,7 +181,8 @@ router.patch("/:campaignId", async (req, res) => {
   }
 });
 
-// DELETE /campaigns/:campaignId - Delete campaign (NO GUARDRAILS - nuclear option!)
+// DELETE /campaigns/:campaignId - Delete campaign ONLY (leaves ContactList intact!)
+// WHY? Smart lists are reusable modular assets - don't auto-delete them!
 router.delete("/:campaignId", async (req, res) => {
   try {
     const { campaignId } = req.params;
@@ -190,7 +191,7 @@ router.delete("/:campaignId", async (req, res) => {
     const campaign = await prisma.campaign.findUnique({
       where: { id: campaignId },
       include: {
-        contactList: { select: { name: true } },
+        contactList: { select: { id: true, name: true } },
         sequences: { select: { id: true } }
       }
     });
@@ -199,22 +200,29 @@ router.delete("/:campaignId", async (req, res) => {
       return res.status(404).json({ error: "Campaign not found" });
     }
     
-    // DELETE - no questions asked!
+    // DELETE campaign only - ContactList remains for reuse!
     await prisma.campaign.delete({
       where: { id: campaignId }
     });
     
     console.log(`🗑️ DELETED Campaign: "${campaign.name}" (status: ${campaign.status})`);
+    if (campaign.contactList) {
+      console.log(`📋 ContactList "${campaign.contactList.name}" preserved for reuse`);
+    }
     
     res.json({ 
       message: "Campaign deleted successfully",
+      note: "ContactList preserved - it's a reusable asset!",
       deleted: {
         id: campaign.id,
         name: campaign.name,
-        status: campaign.status,
-        hadList: !!campaign.contactList,
-        hadSequences: campaign.sequences.length
-      }
+        status: campaign.status
+      },
+      preserved: campaign.contactList ? {
+        listId: campaign.contactList.id,
+        listName: campaign.contactList.name,
+        reason: "Smart lists are modular - can be reused for future campaigns"
+      } : null
     });
   } catch (error) {
     console.error("Error deleting campaign:", error);
