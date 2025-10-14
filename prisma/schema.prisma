@@ -514,6 +514,10 @@ model Campaign {
   contactListId String?
   contactList   ContactList? @relation(fields: [contactListId], references: [id])
 
+  // Email content
+  subject String?
+  body    String?
+
   status String @default("draft")
 
   sequences Sequence[]

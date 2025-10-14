@@ -1,6 +1,6 @@
 import express from "express";
 import { getPrismaClient } from "../config/database.js";
-import ContactListService from "../services/contactListService.js";
+import ContactListOrchestrator from "../services/contactListOrchestrator.js";
 import ContactListFormHydrator from "../services/contactListFormHydrator.js";
 
 const router = express.Router();
@@ -69,7 +69,7 @@ router.get("/:listId/contacts", async (req, res) => {
   try {
     const { listId } = req.params;
     
-    const contacts = await ContactListService.getContactsForList(listId);
+    const contacts = await ContactListOrchestrator.getContactListWithContacts(listId);
     
     res.json(contacts);
   } catch (error) {
@@ -81,7 +81,7 @@ router.get("/:listId/contacts", async (req, res) => {
 // POST /contact-lists - Create new contact list
 router.post("/", async (req, res) => {
   try {
-    const contactList = await ContactListService.createContactList(req.body);
+    const contactList = await ContactListOrchestrator.createContactList(req.body);
     res.status(201).json(contactList);
   } catch (error) {
     console.error("Error creating contact list:", error);
