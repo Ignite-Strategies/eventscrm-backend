@@ -6,19 +6,12 @@ import dotenv from 'dotenv';
 import { connectDatabase } from './config/database.js';
 
 // Import all routes
-import authRouter from './routes/authRoute.js';
-import orgRouter from './routes/orgRoute.js';
-import eventRouter from './routes/eventRoute.js';
-import contactRouter from './routes/contactRoute.js';
-import orgMemberRouter from './routes/orgMemberRoute.js';
-import eventAttendeeRouter from './routes/eventAttendeeRoute.js';
-import pipelineRouter from './routes/pipelineRoute.js';
+import orgRouter from './routes/orgsRoute.js';
+import eventRouter from './routes/eventsRoute.js';
 import contactListRouter from './routes/contactListsRoute.js';
 import campaignRouter from './routes/campaignRoute.js';
 import sequenceRouter from './routes/sequenceRoute.js';
-import templateRouter from './routes/templateRoute.js';
-import formRouter from './routes/formRoute.js';
-import formSubmissionRouter from './routes/formSubmissionRoute.js';
+import templateRouter from './routes/templatesRoute.js';
 import orgMemberFormRouter from './routes/orgMemberFormRoute.js';
 import eventAttendeeUpdateRouter from './routes/eventAttendeeUpdateRoute.js'; // UPDATE: EventAttendee updates
 import pipelineConfigRouter from './routes/pipelineConfigRoute.js'; // Pipeline config from database
@@ -46,19 +39,12 @@ app.use(express.json());
 connectDatabase().catch(console.error);
 
 // Routes
-app.use('/api/auth', authRouter);
 app.use('/api/orgs', orgRouter);
 app.use('/api/events', eventRouter);
-app.use('/api/contacts', contactRouter);
-app.use('/api/orgmembers', orgMemberRouter);
-app.use('/api/eventattendees', eventAttendeeRouter);
-app.use('/api/pipelines', pipelineRouter);
 app.use('/api/contact-lists', contactListRouter);
 app.use('/api/campaigns', campaignRouter);
 app.use('/api/sequences', sequenceRouter);
 app.use('/api/templates', templateRouter);
-app.use('/api/forms', formRouter);
-app.use('/api/form-submissions', formSubmissionRouter);
 app.use('/api/org-member-form', orgMemberFormRouter);
 app.use('/api/event-attendee-update', eventAttendeeUpdateRouter);
 app.use('/api/pipeline-config', pipelineConfigRouter);
