@@ -123,11 +123,15 @@ router.patch("/:campaignId", async (req, res) => {
         return res.status(404).json({ error: "Campaign not found" });
       }
       
-      // GUARDRAIL 1: Can't reassign if campaign already sent
-      if (currentCampaign.status === 'sent') {
+      // GUARDRAIL 1: Can't reassign if campaign already sent (unless force=true)
+      if (currentCampaign.status === 'sent' && req.query.force !== 'true') {
         return res.status(400).json({ 
           error: "Cannot change contact list - campaign already sent",
-          hint: "Use Wiper Service to clear and reuse"
+          options: {
+            wiper: "Use Wiper Service to clear and reuse",
+            delete: `DELETE /campaigns/${campaignId} to start fresh`,
+            force: `PATCH /campaigns/${campaignId}?force=true to override (risky!)`
+          }
         });
       }
       
@@ -177,16 +181,41 @@ router.patch("/:campaignId", async (req, res) => {
   }
 });
 
-// DELETE /campaigns/:campaignId - Delete campaign
+// DELETE /campaigns/:campaignId - Delete campaign (NO GUARDRAILS - nuclear option!)
 router.delete("/:campaignId", async (req, res) => {
   try {
     const { campaignId } = req.params;
     
+    // Fetch campaign details before deleting (for logging/confirmation)
+    const campaign = await prisma.campaign.findUnique({
+      where: { id: campaignId },
+      include: {
+        contactList: { select: { name: true } },
+        sequences: { select: { id: true } }
+      }
+    });
+    
+    if (!campaign) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+    
+    // DELETE - no questions asked!
     await prisma.campaign.delete({
       where: { id: campaignId }
     });
     
-    res.json({ message: "Campaign deleted successfully" });
+    console.log(`🗑️ DELETED Campaign: "${campaign.name}" (status: ${campaign.status})`);
+    
+    res.json({ 
+      message: "Campaign deleted successfully",
+      deleted: {
+        id: campaign.id,
+        name: campaign.name,
+        status: campaign.status,
+        hadList: !!campaign.contactList,
+        hadSequences: campaign.sequences.length
+      }
+    });
   } catch (error) {
     console.error("Error deleting campaign:", error);
     res.status(500).json({ error: error.message });
