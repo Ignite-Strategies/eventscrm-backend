@@ -54,13 +54,13 @@ class ContactListService {
       }
     });
     
-    // Update usage tracking
-    const contactList = await prisma.contactList.findUnique({
-      where: { id: listId }
-    });
-    if (contactList) {
-      await this.trackUsage(contactList);
-    }
+    // DEPRECATED: trackUsage() - use campaign relationship instead
+    // const contactList = await prisma.contactList.findUnique({
+    //   where: { id: listId }
+    // });
+    // if (contactList) {
+    //   await this.trackUsage(contactList);
+    // }
     
     return contacts;
   }
@@ -485,16 +485,27 @@ class ContactListService {
   
   /**
    * Track usage of a contact list
+   * DEPRECATED: Use Campaign relationship instead!
+   * 
+   * New status system:
+   * - assigned: Campaign.contactListId = listId && Campaign.status = 'draft'
+   * - used: Campaign.contactListId = listId && Campaign.status = 'sent'
+   * - unassign: Remove from campaign, pick different list
+   * - reuse: Wiper service clears Campaign.contactListId, start fresh
    */
   static async trackUsage(contactList) {
-    // Update using Prisma
-    await prisma.contactList.update({
-      where: { id: contactList.id },
-      data: {
-        usageCount: (contactList.usageCount || 0) + 1,
-        lastUsed: new Date()
-      }
-    });
+    // DEPRECATED - DO NOT USE
+    console.warn('⚠️ trackUsage() is deprecated - use Campaign relationship instead');
+    return;
+    
+    // OLD CODE (commented out):
+    // await prisma.contactList.update({
+    //   where: { id: contactList.id },
+    //   data: {
+    //     usageCount: (contactList.usageCount || 0) + 1,
+    //     lastUsed: new Date()
+    //   }
+    // });
   }
   
   /**
