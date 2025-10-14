@@ -263,6 +263,70 @@ router.post("/from-all-contacts", async (req, res) => {
   }
 });
 
+// POST /contact-lists/test - Create a hardcoded test list with Adam's email
+router.post("/test", async (req, res) => {
+  try {
+    const { orgId } = req.body;
+    
+    if (!orgId) {
+      return res.status(400).json({ error: "orgId is required" });
+    }
+    
+    // 1. Find or create test contact
+    let testContact = await prisma.contact.findFirst({
+      where: {
+        email: "adam.cole.0524@gmail.com",
+        orgMember: { orgId }
+      }
+    });
+    
+    if (!testContact) {
+      // Create test contact
+      const orgMember = await prisma.orgMember.create({
+        data: {
+          orgId,
+          firstName: "Adam",
+          lastName: "Cole (Test)",
+          email: "adam.cole.0524@gmail.com"
+        }
+      });
+      
+      testContact = await prisma.contact.create({
+        data: {
+          orgMemberId: orgMember.id,
+          email: "adam.cole.0524@gmail.com",
+          firstName: "Adam",
+          lastName: "Cole (Test)"
+        }
+      });
+    }
+    
+    // 2. Create the test list
+    const contactList = await prisma.contactList.create({
+      data: {
+        orgId,
+        name: "🧪 Test List",
+        description: "Quick test with Adam",
+        type: "selection",
+        totalContacts: 1
+      }
+    });
+    
+    // 3. Link contact to list
+    await prisma.contact.update({
+      where: { id: testContact.id },
+      data: { contactListId: contactList.id }
+    });
+    
+    console.log(`✅ Created test list with adam.cole.0524@gmail.com`);
+    
+    res.status(201).json(contactList);
+  } catch (error) {
+    console.error("Error creating test list:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // POST /contact-lists/from-selection - Create contact list from selected contacts
 router.post("/from-selection", async (req, res) => {
   try {
