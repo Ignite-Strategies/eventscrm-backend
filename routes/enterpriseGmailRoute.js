@@ -1,6 +1,6 @@
 import express from "express";
 import { getPrismaClient } from "../config/database.js";
-import ContactListService from "../services/contactListService.js";
+import ContactListOrchestrator from "../services/contactListOrchestrator.js";
 import { GmailService } from "../services/personalEmailService.js";
 import verifyGmailToken from "../middleware/verifyGmailToken.js";
 
