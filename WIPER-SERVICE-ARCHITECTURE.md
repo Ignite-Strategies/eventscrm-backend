@@ -145,64 +145,7 @@ User: "I want to start fresh with my contact lists"
 
 ## 🚀 Future Enhancements
 
-### MVP2: Decouple Campaigns from ContactLists
-**Problem:** `Campaign.contactListId` creates 1:1 relationship (1 campaign = 1 list)
-**Solution:** Junction table for many-to-many
-
-```prisma
-model CampaignContactList {
-  id            String      @id @default(cuid())
-  campaignId    String
-  campaign      Campaign    @relation(fields: [campaignId], references: [id])
-  contactListId String
-  contactList   ContactList @relation(fields: [contactListId], references: [id])
-  
-  createdAt DateTime @default(now())
-  
-  @@unique([campaignId, contactListId])
-  @@index([campaignId])
-  @@index([contactListId])
-}
-
-// Update Campaign model
-model Campaign {
-  id    String  @id @default(cuid())
-  orgId String
-  name  String
-  
-  // OLD: contactListId String?  // REMOVE THIS!
-  // NEW: Use junction table
-  contactLists CampaignContactList[]
-}
-```
-
-**Benefits:**
-- ✅ Campaign can target multiple lists (e.g., "All Members" + "Event Attendees")
-- ✅ Same list can be used by multiple campaigns
-- ✅ Easy to add/remove lists from campaigns
-- ✅ Better analytics (see which lists performed best per campaign)
-
-**Wiper Service Expansion:**
-```javascript
-// Wipe campaign-list assignments
-await prisma.campaignContactList.deleteMany({
-  where: { 
-    campaign: { orgId }
-  }
-});
-```
-
-### MVP3: Junction Table for Contacts
-```javascript
-// With junction table, wipe becomes:
-await prisma.contactListContact.deleteMany({
-  where: { 
-    contactList: { orgId }
-  }
-});
-```
-
-### MVP4: Selective Wipe
+### MVP2: Selective Wipe
 ```javascript
 // Wipe only specific lists
 await prisma.contact.updateMany({
@@ -222,4 +165,36 @@ await prisma.contact.updateMany({
 - [ ] Add warning messages
 - [ ] Test wipe operations
 - [ ] Document usage scenarios
+
+---
+
+## ❌ DEPRECATED: Junction Tables for Campaigns
+
+**Why NOT do many-to-many Campaign ↔ ContactList?**
+
+### EMAIL BOMB RISK
+```
+Campaign: "Spring Fundraiser"
+Lists: ["All Members", "VIP Donors", "Event Attendees"]
+
+John is in ALL 3 lists
+→ John gets 3 copies of same email! 💣
+```
+
+**Result:**
+- ❌ Email spam complaints
+- ❌ Unsubscribes
+- ❌ Deliverability death
+- ❌ Angry users
+
+**Solution:**
+- ✅ Keep 1:1 relationship (1 campaign = 1 list)
+- ✅ Use Wiper Service to reorganize when needed
+- ✅ User controls segmentation carefully
+- ✅ No accidental email bombs
+
+**If you need to target multiple audiences:**
+- Create separate campaigns per audience
+- Or combine lists BEFORE creating campaign
+- Better control = better deliverability
 
