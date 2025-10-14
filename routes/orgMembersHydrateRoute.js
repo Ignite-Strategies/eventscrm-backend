@@ -4,8 +4,8 @@ import { getPrismaClient } from '../config/database.js';
 const router = express.Router();
 const prisma = getPrismaClient();
 
-// GET /orgmembers?orgId=xxx - Hydrate all org members with their Contact data
-router.get('/orgmembers', async (req, res) => {
+// GET /?orgId=xxx - Hydrate all org members with their Contact data
+router.get('/', async (req, res) => {
   try {
     const { orgId } = req.query;
     console.log('📖 ORG MEMBERS HYDRATE: Getting members for orgId:', orgId);
@@ -121,8 +121,8 @@ router.get('/orgmembers', async (req, res) => {
   }
 });
 
-// GET /orgmembers/:orgMemberId - Get single org member details
-router.get('/orgmembers/:orgMemberId', async (req, res) => {
+// GET /:orgMemberId - Get single org member details
+router.get('/:orgMemberId', async (req, res) => {
   try {
     const { orgMemberId } = req.params;
     console.log('📖 ORG MEMBER DETAIL: Getting member:', orgMemberId);
