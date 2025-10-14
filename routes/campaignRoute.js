@@ -112,6 +112,55 @@ router.patch("/:campaignId", async (req, res) => {
     delete updates.orgId;
     delete updates.createdAt;
     
+    // GUARDRAILS for contactListId assignment/unassignment
+    if ('contactListId' in updates) {
+      // Fetch current campaign
+      const currentCampaign = await prisma.campaign.findUnique({
+        where: { id: campaignId }
+      });
+      
+      if (!currentCampaign) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+      
+      // GUARDRAIL 1: Can't reassign if campaign already sent
+      if (currentCampaign.status === 'sent') {
+        return res.status(400).json({ 
+          error: "Cannot change contact list - campaign already sent",
+          hint: "Use Wiper Service to clear and reuse"
+        });
+      }
+      
+      // GUARDRAIL 2: If assigning a list (not null), validate it exists and belongs to org
+      if (updates.contactListId !== null) {
+        const list = await prisma.contactList.findUnique({
+          where: { id: updates.contactListId }
+        });
+        
+        if (!list) {
+          return res.status(404).json({ error: "Contact list not found" });
+        }
+        
+        if (list.orgId !== currentCampaign.orgId) {
+          return res.status(403).json({ error: "Contact list belongs to different organization" });
+        }
+        
+        // GUARDRAIL 3: Warn if list already used (but allow it - user's choice)
+        const existingCampaigns = await prisma.campaign.findMany({
+          where: { 
+            contactListId: updates.contactListId,
+            status: { in: ['draft', 'active', 'sent'] },
+            id: { not: campaignId }  // Exclude current campaign
+          }
+        });
+        
+        if (existingCampaigns.length > 0) {
+          console.warn(`⚠️ Contact list ${updates.contactListId} is used by ${existingCampaigns.length} other campaign(s)`);
+          // Allow but log the warning
+        }
+      }
+    }
+    
     const campaign = await prisma.campaign.update({
       where: { id: campaignId },
       data: updates,
