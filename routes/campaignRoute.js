@@ -1,5 +1,6 @@
 import express from "express";
 import { getPrismaClient } from "../config/database.js";
+import ContactListOrchestrator from "../services/contactListOrchestrator.js";
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -226,6 +227,37 @@ router.delete("/:campaignId", async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting campaign:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /campaigns/:id/contacts - Get contacts for a campaign's contact list
+router.get("/:id/contacts", async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get the campaign to find its contactListId
+    const campaign = await prisma.campaign.findUnique({
+      where: { id },
+      include: {
+        contactList: true
+      }
+    });
+    
+    if (!campaign) {
+      return res.status(404).json({ error: "Campaign not found" });
+    }
+    
+    if (!campaign.contactListId) {
+      return res.json([]); // No contact list assigned
+    }
+    
+    // Get contacts from the contact list
+    const contactListData = await ContactListOrchestrator.getContactListWithContacts(campaign.contactListId);
+    
+    res.json(contactListData.contacts || []);
+  } catch (error) {
+    console.error("Error fetching campaign contacts:", error);
     res.status(500).json({ error: error.message });
   }
 });
