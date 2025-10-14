@@ -1,6 +1,6 @@
 import express from "express";
 import { getPrismaClient } from "../config/database.js";
-import ContactListOrchestrator from "../services/contactListOrchestrator.js";
+import ContactListService from "../services/contactListService.js";
 import ContactListFormHydrator from "../services/contactListFormHydrator.js";
 
 const router = express.Router();
@@ -69,10 +69,8 @@ router.get("/:listId/contacts", async (req, res) => {
   try {
     const { listId } = req.params;
     
-    const contactListData = await ContactListOrchestrator.getContactListWithContacts(listId);
-    
-    // Return just the contacts array, not the full object
-    res.json(contactListData.contacts || []);
+    const contacts = await ContactListService.getContactsForList(listId);
+    res.json(contacts);
   } catch (error) {
     console.error("Error fetching contacts from list:", error);
     res.status(500).json({ error: error.message });
@@ -82,7 +80,7 @@ router.get("/:listId/contacts", async (req, res) => {
 // POST /contact-lists - Create new contact list
 router.post("/", async (req, res) => {
   try {
-    const contactList = await ContactListOrchestrator.createContactList(req.body);
+    const contactList = await ContactListService.createContactList(req.body);
     res.status(201).json(contactList);
   } catch (error) {
     console.error("Error creating contact list:", error);
@@ -328,7 +326,7 @@ router.post("/test", async (req, res) => {
   }
 });
 
-// POST /contact-lists/from-selection - Create contact list from selected contacts
+// POST /contact-lists/from-selection - Create contact list from selected contacts (SIMPLE!)
 router.post("/from-selection", async (req, res) => {
   try {
     const { orgId, name, description, selectedContactIds } = req.body;
@@ -339,39 +337,27 @@ router.post("/from-selection", async (req, res) => {
       });
     }
     
-    // 1. Create the contact list
-    const contactList = await prisma.contactList.create({
-      data: {
-        orgId,
-        name,
-        description: description || "Selected contacts",
-        type: "selection"
-      }
+    console.log('🎯 Creating SIMPLE selection list:', { orgId, name, contactCount: selectedContactIds.length });
+    
+    // 1. Create the contact list (SIMPLE!)
+    const contactList = await ContactListService.createContactList({
+      orgId,
+      name,
+      description: description || "Selected contacts",
+      type: "selection"
     });
     
-    // 2. Clear ALL org members first (handle deselection)
-    await prisma.contact.updateMany({
-      where: {
-        orgMember: { orgId }
-      },
-      data: { contactListId: null }
+    // 2. Assign the selected contacts (SIMPLE!)
+    await ContactListService.assignContactsToList(contactList.id, selectedContactIds);
+    
+    console.log(`✅ SIMPLE selection list created: "${name}" with ${selectedContactIds.length} contacts`);
+    
+    // Return the updated list with count
+    const updatedList = await prisma.contactList.findUnique({
+      where: { id: contactList.id }
     });
     
-    // 3. Set contactListId ONLY on selected contacts
-    await prisma.contact.updateMany({
-      where: { id: { in: selectedContactIds } },
-      data: { contactListId: contactList.id }
-    });
-    
-    // 4. Update contact count
-    await prisma.contactList.update({
-      where: { id: contactList.id },
-      data: { totalContacts: selectedContactIds.length }
-    });
-    
-    console.log(`✅ Created selection list "${name}" with ${selectedContactIds.length} contacts`);
-    
-    res.status(201).json(contactList);
+    res.status(201).json(updatedList);
   } catch (error) {
     console.error("Error creating selection list:", error);
     res.status(500).json({ error: error.message });

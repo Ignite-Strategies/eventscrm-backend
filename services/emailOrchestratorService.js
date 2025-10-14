@@ -1,5 +1,5 @@
 import { getPrismaClient } from "../config/database.js";
-import ContactListOrchestrator from "./contactListOrchestrator.js";
+import ContactListService from "./contactListService.js";
 
 const prisma = getPrismaClient();
 
@@ -35,8 +35,8 @@ class EmailOrchestratorService {
       variables
     );
     
-    // 3. GET CONTACTS
-    const contacts = await ContactListOrchestrator.getContactListWithContacts(contactListId);
+    // 3. GET CONTACTS (SIMPLE!)
+    const contacts = await ContactListService.getContactsForList(contactListId);
     const sendableContacts = this.filterSendableContacts(contacts);
     
     if (sendableContacts.length === 0) {

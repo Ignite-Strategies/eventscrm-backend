@@ -1,6 +1,6 @@
 import express from "express";
 import { getPrismaClient } from "../config/database.js";
-import ContactListOrchestrator from "../services/contactListOrchestrator.js";
+import ContactListService from "../services/contactListService.js";
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -252,10 +252,10 @@ router.get("/:id/contacts", async (req, res) => {
       return res.json([]); // No contact list assigned
     }
     
-    // Get contacts from the contact list
-    const contactListData = await ContactListOrchestrator.getContactListWithContacts(campaign.contactListId);
-    
-    res.json(contactListData.contacts || []);
+    // Get contacts from the contact list (SIMPLE!)
+    const contacts = await ContactListService.getContactsForList(campaign.contactListId);
+
+    res.json(contacts);
   } catch (error) {
     console.error("Error fetching campaign contacts:", error);
     res.status(500).json({ error: error.message });

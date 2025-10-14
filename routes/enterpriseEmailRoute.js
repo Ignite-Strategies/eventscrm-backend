@@ -1,7 +1,7 @@
 import express from "express";
 import sgMail from "@sendgrid/mail";
 import { getPrismaClient } from "../config/database.js";
-import ContactListOrchestrator from "../services/contactListOrchestrator.js";
+import ContactListService from "../services/contactListService.js";
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -124,10 +124,8 @@ router.post("/send-campaign", async (req, res) => {
       return res.status(400).json({ error: "Campaign has no contact list" });
     }
     
-    // Get contacts from list
-    const contacts = await ContactListOrchestrator.getContactListWithContacts(
-      campaign.contactListId
-    );
+    // Get contacts from list (SIMPLE!)
+    const contacts = await ContactListService.getContactsForList(campaign.contactListId);
     
     if (contacts.length === 0) {
       return res.status(400).json({ error: "No contacts in list" });
