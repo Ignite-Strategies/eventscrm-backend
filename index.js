@@ -13,6 +13,7 @@ import campaignRouter from './routes/campaignRoute.js';
 import sequenceRouter from './routes/sequenceRoute.js';
 import templateRouter from './routes/templatesRoute.js';
 import orgMemberFormRouter from './routes/orgMemberFormRoute.js';
+import orgMembersHydrateRouter from './routes/orgMembersHydrateRoute.js'; // ORG MEMBERS HYDRATION
 import eventAttendeeUpdateRouter from './routes/eventAttendeeUpdateRoute.js'; // UPDATE: EventAttendee updates
 import pipelineConfigRouter from './routes/pipelineConfigRoute.js'; // Pipeline config from database
 import orgMemberCreateRouter from './routes/orgMemberCreateRoute.js'; // NEW: Create OrgMember from Contact
@@ -48,6 +49,7 @@ app.use('/api/campaigns', campaignRouter);
 app.use('/api/sequences', sequenceRouter);
 app.use('/api/templates', templateRouter);
 app.use('/api/org-member-form', orgMemberFormRouter);
+app.use('/api/orgmembers', orgMembersHydrateRouter);  // ✅ Org Members Hydration
 app.use('/api/event-attendee-update', eventAttendeeUpdateRouter);
 app.use('/api/pipeline-config', pipelineConfigRouter);
 app.use('/api/org-member-create', orgMemberCreateRouter);
