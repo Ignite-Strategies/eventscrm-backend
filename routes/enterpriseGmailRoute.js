@@ -2,6 +2,7 @@ import express from "express";
 import { getPrismaClient } from "../config/database.js";
 import ContactListService from "../services/contactListService.js";
 import { GmailService } from "../services/personalEmailService.js";
+import verifyGmailToken from "../middleware/verifyGmailToken.js";
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -10,12 +11,32 @@ const prisma = getPrismaClient();
  * POST /enterprise-gmail/send-sequence
  * Send a configured sequence via Gmail API with 4-second delays
  */
-router.post("/send-sequence", async (req, res) => {
+router.post("/send-sequence", verifyGmailToken, async (req, res) => {
+  console.log('🎯 /send-sequence route called');
+  
   try {
     const { sequenceId, contacts, delaySeconds = 4 } = req.body;
+    const gmailAccessToken = req.gmailAccessToken; // From Gmail OAuth middleware
+    
+    console.log('📨 Request body:', { 
+      sequenceId, 
+      contactCount: contacts?.length,
+      delaySeconds 
+    });
+    console.log('🔑 Gmail token from middleware:', {
+      exists: !!gmailAccessToken,
+      tokenStart: gmailAccessToken?.substring(0, 20) + '...',
+      tokenLength: gmailAccessToken?.length
+    });
     
     if (!sequenceId || !contacts || !Array.isArray(contacts)) {
+      console.error('❌ Missing required fields');
       return res.status(400).json({ error: "sequenceId and contacts array are required" });
+    }
+    
+    if (!gmailAccessToken) {
+      console.error('❌ No Gmail token available');
+      return res.status(401).json({ error: "Gmail authentication required" });
     }
     
     // 1. Get sequence details
@@ -34,16 +55,8 @@ router.post("/send-sequence", async (req, res) => {
     
     console.log(`🚀 Sending sequence "${sequence.name}" to ${contacts.length} contacts via Gmail API`);
     
-    // 3. Get Gmail access token (you'll need to implement this)
-    // For now, we'll need to get the user's Gmail token
-    const accessToken = await getGmailAccessToken(); // TODO: Implement this
-    
-    if (!accessToken) {
-      return res.status(401).json({ error: "Gmail authentication required" });
-    }
-    
-    // 4. Initialize Gmail service
-    const gmailService = new GmailService(accessToken);
+    // 3. Initialize Gmail service
+    const gmailService = new GmailService(gmailAccessToken);
     
     // 5. Send emails with delays
     const results = [];
@@ -122,12 +135,5 @@ router.post("/send-sequence", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-// TODO: Implement Gmail access token retrieval
-async function getGmailAccessToken() {
-  // This needs to be implemented based on your auth system
-  // Could be from a user's stored token, or require re-authentication
-  return null; // Placeholder
-}
 
 export default router;

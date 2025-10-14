@@ -21,6 +21,7 @@ import adsRouter from './routes/adsRoute.js'; // Ad Management (Google Ads integ
 import testEmailRouter from './routes/testEmailRoute.js'; // Test email sending (SendGrid testing)
 import enterpriseEmailRouter from './routes/enterpriseEmailRoute.js'; // Enterprise email sending (SendGrid production)
 import personalEmailRouter from './routes/personalEmailRoute.js'; // Personal email sending (Gmail OAuth)
+import enterpriseGmailRouter from './routes/enterpriseGmailRoute.js'; // Enterprise Gmail sending (Gmail OAuth campaigns)
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use('/api/ads', adsRouter);
 app.use('/api/test-email', testEmailRouter);
 app.use('/api/enterprise-email', enterpriseEmailRouter);
 app.use('/api/email/personal', personalEmailRouter);  // Personal email sending (Gmail OAuth)
+app.use('/api/enterprise-gmail', enterpriseGmailRouter);  // Enterprise Gmail sending (Gmail OAuth campaigns)
 
 // Health check
 app.get('/health', (req, res) => {

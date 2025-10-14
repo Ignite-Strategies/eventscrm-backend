@@ -1,5 +1,5 @@
 import express from "express";
-import verifyGmailToken from "../middleware/verifyFirebaseToken.js";
+import verifyGmailToken from "../middleware/verifyGmailToken.js";
 import { GmailService } from "../services/personalEmailService.js";
 import { getPrismaClient } from '../config/database.js';
 
