@@ -317,17 +317,32 @@ The Gmail `accessToken` is stored in `localStorage`, which means:
 
 ---
 
-## 🔄 **Token Refresh (TODO)**
+## 🔄 **Token Refresh (TODO)** 🚨🚨🚨
 
-Google OAuth tokens **expire after 1 hour**. 
+**⚠️ CRITICAL: Google OAuth tokens EXPIRE AFTER 1 HOUR!** ⚠️
 
 **Current status:** No refresh logic implemented
-**Impact:** Users need to re-authenticate after 1 hour
+**Impact:** Users MUST re-authenticate after 1 hour
 
-**Future fix:**
+### **WHAT HAPPENS WHEN TOKEN EXPIRES:**
+1. ❌ Backend returns: `Request had invalid authentication credentials`
+2. ❌ User sees: "Campaign failed: All emails failed to send. Check Gmail authentication."
+3. ✅ Frontend auto-prompts: "Gmail authentication expired. Click OK to reconnect now."
+4. ✅ User clicks OK → redirected to `/campaignhome` → clicks "Connect Gmail" → gets fresh token
+
+### **HOW TO FIX WHEN IT BREAKS:**
+1. Go to `/campaignhome`
+2. Click "Connect Gmail"
+3. Re-authenticate
+4. Try sending again
+
+### **Future fix (REAL solution):**
 1. Store `refreshToken` in addition to `accessToken`
 2. Use Google's token refresh endpoint when `accessToken` expires
 3. Update `localStorage` with new token
+4. Make it transparent to the user
+
+**Last time we forgot this and went in circles:** October 14, 2025 😂
 
 ---
 
