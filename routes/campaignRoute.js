@@ -80,14 +80,7 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "orgId and name are required" });
     }
     
-    // Check if campaign name exists
-    const existing = await prisma.campaign.findFirst({
-      where: { orgId, name }
-    });
-    
-    if (existing) {
-      return res.status(400).json({ error: "Campaign name already exists" });
-    }
+    // Allow duplicate campaign names - they're just labels
     
     const campaign = await prisma.campaign.create({
       data: {
