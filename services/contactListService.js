@@ -463,7 +463,7 @@ class ContactListService {
     let count = 0;
     
     try {
-      const contacts = await this.getContactsForList(contactList._id);
+      const contacts = await this.getContactsForList(contactList.id);
       count = contacts.length;
     } catch (error) {
       console.error("Error calculating contact count:", error);
@@ -471,9 +471,14 @@ class ContactListService {
       count = contactList.totalContacts || 0;
     }
     
-    contactList.totalContacts = count;
-    contactList.lastUpdated = new Date();
-    await contactList.save();
+    // Update using Prisma
+    await prisma.contactList.update({
+      where: { id: contactList.id },
+      data: {
+        totalContacts: count,
+        lastUpdated: new Date()
+      }
+    });
     
     return count;
   }
@@ -482,9 +487,14 @@ class ContactListService {
    * Track usage of a contact list
    */
   static async trackUsage(contactList) {
-    contactList.usageCount = (contactList.usageCount || 0) + 1;
-    contactList.lastUsed = new Date();
-    await contactList.save();
+    // Update using Prisma
+    await prisma.contactList.update({
+      where: { id: contactList.id },
+      data: {
+        usageCount: (contactList.usageCount || 0) + 1,
+        lastUsed: new Date()
+      }
+    });
   }
   
   /**
