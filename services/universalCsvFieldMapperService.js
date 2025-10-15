@@ -146,20 +146,7 @@ export function mapFieldsForType(csvRecord, uploadType) {
     }
   });
   
-  // Universal fullName parsing (applies to all types that support it)
-  if (mappedRecord.fullName && (!mappedRecord.firstName || !mappedRecord.lastName)) {
-    const parsed = smartNameParse(mappedRecord.fullName);
-    
-    if (!mappedRecord.firstName) {
-      mappedRecord.firstName = parsed.firstName;
-    }
-    if (!mappedRecord.lastName) {
-      mappedRecord.lastName = parsed.lastName;
-    }
-    
-    // Remove fullName after parsing
-    delete mappedRecord.fullName;
-  }
+  // fullName parsing is now handled by the CSV reader service
   
   return mappedRecord;
 }
@@ -219,9 +206,9 @@ export function validateMappedRecord(mappedRecord, uploadType) {
     errors.push('Email is required');
   }
   
-  // Name validation - at least firstName OR lastName OR fullName must be present
-  if (!mappedRecord.firstName && !mappedRecord.lastName && !mappedRecord.fullName) {
-    errors.push('At least one name field (firstName, lastName, or fullName) is required');
+  // Name validation - at least firstName OR lastName must be present (fullName gets parsed immediately)
+  if (!mappedRecord.firstName && !mappedRecord.lastName) {
+    errors.push('At least one name field (firstName or lastName) is required');
   }
   
   // Type-specific validations

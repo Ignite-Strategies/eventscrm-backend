@@ -1,4 +1,5 @@
 import { parse } from 'csv-parse/sync';
+import { smartNameParse } from '../utils/nameParser.js';
 
 /**
  * Pure CSV Reader - Just reads and parses CSV files
@@ -18,9 +19,33 @@ export function readCSV(csvBuffer) {
     console.log('📖 READER: Headers:', records.length > 0 ? Object.keys(records[0]) : []);
     console.log('📖 READER: First record sample:', records[0]);
     
+    // Parse fullName columns immediately - they're not real database fields!
+    const parsedRecords = records.map(record => {
+      const parsedRecord = { ...record };
+      
+      // Check for fullName variations
+      const fullNameFields = ['Full Name', 'full name', 'fullname', 'name', 'complete name'];
+      for (const field of fullNameFields) {
+        if (record[field] && !record['firstName'] && !record['lastName']) {
+          console.log('🔍 READER: Found fullName field:', field, '=', record[field]);
+          const nameParts = smartNameParse(record[field]);
+          console.log('🔍 READER: Parsed to:', nameParts);
+          
+          parsedRecord.firstName = nameParts.firstName;
+          parsedRecord.lastName = nameParts.lastName;
+          
+          // Remove the fullName field - it's not a real database field!
+          delete parsedRecord[field];
+          break;
+        }
+      }
+      
+      return parsedRecord;
+    });
+    
     return {
       success: true,
-      records,
+      records: parsedRecords,
       headers: records.length > 0 ? Object.keys(records[0]) : []
     };
   } catch (error) {
