@@ -1,4 +1,4 @@
-import { getPrismaClient } from "../config/database.js";
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                import { getPrismaClient } from "../config/database.js";
 import SmartListService from "./smartListService.js";
 
 const prisma = getPrismaClient();
@@ -36,24 +36,47 @@ class CampaignContactService {
         await this.refreshList(contactList);
       }
       
-      // Get contacts from list (SIMPLE QUERY)
-      const select = {};
-      fields.forEach(field => select[field] = true);
-      
+      // Get contacts from list with orgMember data for personalization
       const contacts = await prisma.contact.findMany({
         where: {
           contactListId: contactListId,
           email: { not: null } // Only contacts with email
         },
-        select
+        include: {
+          orgMember: true
+        }
       });
       
-      console.log(`✅ Retrieved ${contacts.length} contacts for campaign`);
+      // Transform contacts to flatten orgMember data and include requested fields
+      const transformedContacts = contacts.map(contact => {
+        const result = {
+          ...contact,
+          goesBy: contact.orgMember?.goesBy || contact.firstName,
+          // Include only requested fields + goesBy
+          id: contact.id,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          email: contact.email,
+          phone: contact.phone
+        };
+        
+        // Add other requested fields if they exist
+        fields.forEach(field => {
+          if (contact[field] !== undefined) {
+            result[field] = contact[field];
+          }
+        });
+        
+        return result;
+      });
+      
+      console.log(`✅ Retrieved ${transformedContacts.length} contacts for campaign`);
+      console.log(`✅ Sample contact goesBy:`, transformedContacts[0]?.goesBy || 'No contacts');
       
       // Update usage tracking
       await this.trackListUsage(contactList);
       
-      return contacts;
+      return transformedContacts;
       
     } catch (error) {
       console.error("Error getting contacts for campaign:", error);
