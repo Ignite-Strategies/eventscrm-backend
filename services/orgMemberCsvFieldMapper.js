@@ -1,68 +1,12 @@
 /**
- * OrgMember CSV Field Mapper - Maps various CSV headers to Contact + OrgMember fields
- * Pure function - no side effects, just field mapping
+ * OrgMember CSV Field Mapper - Maps CSV headers to Contact + OrgMember fields
+ * Uses universal Contact field mapping + adds OrgMember-specific fields
  */
 
-import { smartNameParse } from '../utils/nameParser.js';
+import { mapContactFields } from './contactCsvFieldMapperService.js';
 
-const FIELD_MAP = {
-  // First Name variations
-  'first name': 'firstName',
-  'firstname': 'firstName',
-  'fname': 'firstName',
-  'given name': 'firstName',
-  
-  // Goes By variations
-  'goes by': 'goesBy',
-  'goesby': 'goesBy',
-  'nickname': 'goesBy',
-  'preferred name': 'goesBy',
-  'preferredname': 'goesBy',
-  
-  // Last Name variations
-  'last name': 'lastName',
-  'lastname': 'lastName',
-  'lname': 'lastName',
-  'surname': 'lastName',
-  'family name': 'lastName',
-  
-  // Email variations
-  'email': 'email',
-  'email address': 'email',
-  'emailaddress': 'email',
-  'e-mail': 'email',
-  
-  // Phone variations
-  'phone': 'phone',
-  'phone number': 'phone',
-  'phonenumber': 'phone',
-  'mobile': 'phone',
-  'cell': 'phone',
-  'telephone': 'phone',
-  
-  // Full Name variations (will be parsed into firstName/lastName)
-  'full name': 'fullName',
-  'fullname': 'fullName',
-  'name': 'fullName',
-  'complete name': 'fullName',
-  
-  // Address variations
-  'street': 'street',
-  'street address': 'street',
-  'streetaddress': 'street',
-  'address': 'street',
-  'address line 1': 'street',
-  
-  'city': 'city',
-  'state': 'state',
-  'province': 'state',
-  
-  'zip': 'zip',
-  'zip code': 'zip',
-  'zipcode': 'zip',
-  'postal code': 'zip',
-  'postalcode': 'zip',
-  
+// OrgMember-specific field mappings (in addition to Contact fields)
+const ORG_MEMBER_FIELD_MAP = {
   // Employer variations
   'employer': 'employer',
   'company': 'employer',
@@ -79,45 +23,39 @@ const FIELD_MAP = {
 };
 
 /**
- * Normalize a single field name
+ * Normalize OrgMember-specific field name
  */
-export function normalizeFieldName(fieldName) {
+export function normalizeOrgMemberFieldName(fieldName) {
   if (!fieldName || typeof fieldName !== 'string') {
     return 'unmapped';
   }
   
   const normalized = fieldName.toLowerCase().trim();
-  return FIELD_MAP[normalized] || 'unmapped';
+  return ORG_MEMBER_FIELD_MAP[normalized] || 'unmapped';
 }
 
 /**
  * Normalize all field names in a record
+ * Uses universal Contact field mapping + OrgMember-specific fields
  */
 export function normalizeRecord(record) {
-  const normalized = {};
+  // First, use universal Contact field mapping (includes fullName parsing)
+  const contactFields = mapContactFields(record);
   
+  // Then add OrgMember-specific fields
+  const orgMemberFields = {};
   Object.keys(record).forEach(key => {
-    const normalizedKey = normalizeFieldName(key);
-    normalized[normalizedKey] = record[key];
+    const normalizedKey = normalizeOrgMemberFieldName(key);
+    if (normalizedKey !== 'unmapped') {
+      orgMemberFields[normalizedKey] = record[key];
+    }
   });
   
-  // Parse fullName if it exists and firstName/lastName are missing
-  if (normalized.fullName && (!normalized.firstName || !normalized.lastName)) {
-    const parsedName = smartNameParse(normalized.fullName);
-    
-    // Only use parsed names if we don't already have firstName/lastName
-    if (!normalized.firstName) {
-      normalized.firstName = parsedName.firstName;
-    }
-    if (!normalized.lastName) {
-      normalized.lastName = parsedName.lastName;
-    }
-    
-    // Remove fullName from final record since we've parsed it
-    delete normalized.fullName;
-  }
-  
-  return normalized;
+  // Combine Contact + OrgMember fields
+  return {
+    ...contactFields,
+    ...orgMemberFields
+  };
 }
 
 /**

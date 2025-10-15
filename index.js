@@ -26,10 +26,9 @@ import enterpriseGmailRouter from './routes/enterpriseGmailRoute.js'; // Enterpr
 import welcomeHydrationRouter from './routes/welcomeHydrationRoute.js'; // Welcome hydration for Firebase users
 import adminUserAuthRouter from './routes/adminUserAuthRoute.js'; // Admin/User authentication (Firebase)
 import stageMovementRouter from './routes/stageMovementRoute.js'; // Stage movement automation
-import championsUploadRouter from './routes/championsUploadRoute.js'; // Champions upload with attachments
 import googleAdsRouter from './routes/googleAdsRoute.js'; // Google Ads API integration
 import metaRouter from './routes/metaRoute.js'; // Meta/Facebook Page management
-import contactEventUploadRouter from './routes/contactEventUploadRoute.js'; // Event contact CSV upload
+import universalContactUploadRouter from './routes/universalContactUploadRoute.js'; // Universal CSV upload
 
 dotenv.config();
 
@@ -68,10 +67,9 @@ app.use('/api/enterprise-gmail', enterpriseGmailRouter);  // Enterprise Gmail se
 app.use('/api/welcome', welcomeHydrationRouter);  // ✅ Welcome hydration (Firebase → Admin check)
 app.use('/api/auth', adminUserAuthRouter);  // ✅ Admin authentication (findOrCreate)
 app.use('/api/stage-movement', stageMovementRouter);  // ✅ Stage movement automation
-app.use('/api/champions', championsUploadRouter);  // ✅ Champions upload with attachments
 app.use('/api/google-ads', googleAdsRouter);  // ✅ Google Ads API integration
 app.use('/api/meta', metaRouter);  // ✅ Meta/Facebook Page management
-app.use('/api/contacts', contactEventUploadRouter);  // ✅ Event contact CSV upload
+app.use('/api/contacts/upload', universalContactUploadRouter);  // ✅ Universal CSV upload
 
 // Health check
 app.get('/health', (req, res) => {
