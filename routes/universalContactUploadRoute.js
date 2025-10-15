@@ -1,6 +1,6 @@
 import express from 'express';
 import multer from 'multer';
-import { readCSV } from '../services/csvReader.js';
+import { parseAndPrepareCSV } from '../services/csvParserService.js';
 import { 
   mapFieldsForType, 
   validateMappedRecord, 
@@ -65,7 +65,7 @@ router.post('/preview', upload.single('file'), async (req, res) => {
     }
 
     // 1. Read CSV
-    const readResult = readCSV(req.file.buffer);
+    const readResult = parseAndPrepareCSV(req.file.buffer);
     if (!readResult.success) {
       return res.status(400).json({ error: readResult.error });
     }
@@ -132,7 +132,7 @@ router.post('/save', upload.single('file'), async (req, res) => {
     }
 
     // 1. Read CSV
-    const readResult = readCSV(req.file.buffer);
+    const readResult = parseAndPrepareCSV(req.file.buffer);
     if (!readResult.success) {
       return res.status(400).json({ error: readResult.error });
     }

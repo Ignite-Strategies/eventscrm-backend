@@ -2,12 +2,12 @@ import { parse } from 'csv-parse/sync';
 import { smartNameParse } from '../utils/nameParser.js';
 
 /**
- * Pure CSV Reader - Just reads and parses CSV files
- * No validation, no normalization, just raw data
+ * CSV Parser Service - Parses CSV files and prepares data for mapping
+ * Handles fullName parsing, data cleaning, and preparation for database mapping
  */
-export function readCSV(csvBuffer) {
+export function parseAndPrepareCSV(csvBuffer) {
   try {
-    console.log('📖 READER: Starting CSV parse, buffer size:', csvBuffer.length);
+    console.log('📖 PARSER: Starting CSV parse and preparation, buffer size:', csvBuffer.length);
     
     const records = parse(csvBuffer, {
       columns: true,
@@ -15,9 +15,9 @@ export function readCSV(csvBuffer) {
       trim: true
     });
     
-    console.log('📖 READER: Parsed', records.length, 'records');
-    console.log('📖 READER: Headers:', records.length > 0 ? Object.keys(records[0]) : []);
-    console.log('📖 READER: First record sample:', records[0]);
+    console.log('📖 PARSER: Parsed', records.length, 'records');
+    console.log('📖 PARSER: Headers:', records.length > 0 ? Object.keys(records[0]) : []);
+    console.log('📖 PARSER: First record sample:', records[0]);
     
     // Parse fullName columns immediately - they're not real database fields!
     const parsedRecords = records.map(record => {
@@ -27,9 +27,9 @@ export function readCSV(csvBuffer) {
       const fullNameFields = ['Full Name', 'full name', 'fullname', 'name', 'complete name'];
       for (const field of fullNameFields) {
         if (record[field] && !record['firstName'] && !record['lastName']) {
-          console.log('🔍 READER: Found fullName field:', field, '=', record[field]);
+          console.log('🔍 PARSER: Found fullName field:', field, '=', record[field]);
           const nameParts = smartNameParse(record[field]);
-          console.log('🔍 READER: Parsed to:', nameParts);
+          console.log('🔍 PARSER: Parsed to:', nameParts);
           
           parsedRecord.firstName = nameParts.firstName;
           parsedRecord.lastName = nameParts.lastName;
@@ -49,7 +49,7 @@ export function readCSV(csvBuffer) {
       headers: records.length > 0 ? Object.keys(records[0]) : []
     };
   } catch (error) {
-    console.error('📖 READER ERROR:', error);
+    console.error('📖 PARSER ERROR:', error);
     return {
       success: false,
       error: `CSV parsing failed: ${error.message}`,
