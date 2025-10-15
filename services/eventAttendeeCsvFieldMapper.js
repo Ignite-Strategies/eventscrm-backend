@@ -19,6 +19,13 @@ const CONTACT_FIELD_MAP = {
   'surname': 'lastName',
   'family name': 'lastName',
   
+  // Goes By variations
+  'goes by': 'goesBy',
+  'goesby': 'goesBy',
+  'nickname': 'goesBy',
+  'preferred name': 'goesBy',
+  'preferredname': 'goesBy',
+  
   // Email variations
   'email': 'email',
   'email address': 'email',
@@ -100,6 +107,7 @@ export function getAvailableContactFields() {
     { value: 'unmapped', label: 'Ignore this column' },
     { value: 'firstName', label: 'First Name' },
     { value: 'lastName', label: 'Last Name' },
+    { value: 'goesBy', label: 'Goes By (Nickname)' },
     { value: 'email', label: 'Email Address' },
     { value: 'phone', label: 'Phone Number' }
   ];
