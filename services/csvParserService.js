@@ -31,10 +31,12 @@ export function parseAndPrepareCSV(csvBuffer) {
           const nameParts = smartNameParse(record[field]);
           console.log('🔍 PARSER: Parsed to:', nameParts);
           
+          // Save both the original fullName AND the parsed parts
+          parsedRecord.fullName = record[field]; // Keep original for display
           parsedRecord.firstName = nameParts.firstName;
           parsedRecord.lastName = nameParts.lastName;
           
-          // Remove the fullName field - it's not a real database field!
+          // Remove the original CSV field since we've saved it as fullName
           delete parsedRecord[field];
           break;
         }

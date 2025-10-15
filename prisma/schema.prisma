@@ -50,6 +50,7 @@ model Contact {
   // Basic identity
   firstName String
   lastName  String
+  fullName  String? // Original full name for display
   email     String  @unique
   phone     String?
 
