@@ -331,6 +331,9 @@ model Admin {
 
   // Relation to profile (future)
   profile AdminProfile?
+  
+  // File uploads
+  attachments CampaignAttachment[]
 
   @@unique([orgId, eventId])
   @@index([orgId])
@@ -525,6 +528,7 @@ model Campaign {
   status String @default("draft")
 
   sequences Sequence[]
+  attachments CampaignAttachment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -532,6 +536,26 @@ model Campaign {
   @@unique([orgId, name])
   @@index([orgId])
   @@index([status])
+}
+
+model CampaignAttachment {
+  id          String   @id @default(cuid())
+  campaignId  String
+  campaign    Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  adminId     String?
+  admin       Admin?   @relation(fields: [adminId], references: [id])
+  
+  filename    String   // Stored filename (with timestamp)
+  originalName String  // Original filename from upload
+  mimeType    String   // MIME type of the file
+  filePath    String   // Full path to the file on disk
+  fileSize    Int      // File size in bytes
+  
+  uploadedAt  DateTime @default(now())
+  
+  @@index([campaignId])
+  @@index([adminId])
 }
 
 model Sequence {

@@ -29,10 +29,10 @@ export class GmailService {
   }
 
   // Send email using Gmail API
-  async sendEmail({ to, subject, body, fromName = "F3 Events" }) {
+  async sendEmail({ to, subject, body, fromName = "F3 Events", attachments = [] }) {
     try {
-      // Create email message
-      const message = this.createMessage({ to, subject, body, fromName });
+      // Create email message with attachments
+      const message = this.createMessage({ to, subject, body, fromName, attachments });
       
       // Send email
       const result = await this.gmail.users.messages.send({
@@ -50,14 +50,23 @@ export class GmailService {
     }
   }
 
-  // Create properly formatted email message
-  createMessage({ to, subject, body, fromName }) {
+  // Create properly formatted email message with attachment support
+  createMessage({ to, subject, body, fromName, attachments = [] }) {
     const boundary = '----=_Part_' + Math.random().toString(36).substr(2, 9);
+    const mainBoundary = '----=_Main_' + Math.random().toString(36).substr(2, 9);
     
-    const message = [
+    // Start building the message
+    const messageParts = [
       `To: ${to}`,
       `Subject: ${subject}`,
       `MIME-Version: 1.0`,
+      `Content-Type: multipart/mixed; boundary="${mainBoundary}"`,
+      ``
+    ];
+    
+    // Add text/HTML content
+    messageParts.push(
+      `--${mainBoundary}`,
       `Content-Type: multipart/alternative; boundary="${boundary}"`,
       ``,
       `--${boundary}`,
@@ -73,7 +82,28 @@ export class GmailService {
       body,
       ``,
       `--${boundary}--`
-    ].join('\n');
+    );
+    
+    // Add attachments if any
+    for (const attachment of attachments) {
+      if (attachment.filename && attachment.content && attachment.contentType) {
+        const encodedContent = Buffer.from(attachment.content).toString('base64');
+        messageParts.push(
+          `--${mainBoundary}`,
+          `Content-Type: ${attachment.contentType}`,
+          `Content-Disposition: attachment; filename="${attachment.filename}"`,
+          `Content-Transfer-Encoding: base64`,
+          ``,
+          encodedContent,
+          ``
+        );
+      }
+    }
+    
+    // Close main boundary
+    messageParts.push(`--${mainBoundary}--`);
+    
+    const message = messageParts.join('\n');
 
     // Encode message in base64url format
     return Buffer.from(message)

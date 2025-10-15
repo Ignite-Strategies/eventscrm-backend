@@ -4,6 +4,7 @@ import ContactListService from "../services/contactListService.js";
 import { GmailService } from "../services/personalEmailService.js";
 import verifyGmailToken from "../middleware/verifyGmailToken.js";
 import StageMovementService from "../services/stageMovementService.js";
+import FileUploadService from "../services/fileUploadService.js";
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -49,6 +50,23 @@ router.post("/send-sequence", verifyGmailToken, async (req, res) => {
       return res.status(404).json({ error: "Sequence not found" });
     }
     
+    // 1.5. Load campaign attachments if this sequence belongs to a campaign
+    let attachments = [];
+    if (sequence.campaignId) {
+      const campaignFiles = await FileUploadService.getCampaignFiles(sequence.campaignId);
+      console.log('📎 Loading attachments for campaign:', campaignFiles.length);
+      
+      // Convert to Gmail attachment format
+      attachments = campaignFiles.map(file => {
+        const fileContent = FileUploadService.getFileContent(file.filePath);
+        return {
+          filename: file.originalName,
+          content: fileContent,
+          contentType: file.mimeType
+        };
+      });
+    }
+    
     // 2. Use contacts passed from frontend (FRONTEND CONTROLS THE DATA!)
     if (contacts.length === 0) {
       return res.status(400).json({ error: "No contacts provided" });
@@ -81,12 +99,13 @@ router.post("/send-sequence", verifyGmailToken, async (req, res) => {
           .replace(/\{\{goesBy\}\}/g, contact.goesBy || contact.firstName || '')
           .replace(/\{\{email\}\}/g, contact.email || '');
         
-        // Send via Gmail
+        // Send via Gmail with attachments
         const result = await gmailService.sendEmail({
           to: contact.email,
           subject: personalizedSubject,
           body: personalizedBody,
-          fromName: "Adam Cole - F3 Capital Impact"
+          fromName: "Adam Cole - F3 Capital Impact",
+          attachments: attachments
         });
         
         successCount++;
@@ -188,6 +207,20 @@ router.post("/send-campaign", verifyGmailToken, async (req, res) => {
     // Get contacts from the contact list
     const contacts = await ContactListService.getContactsForList(contactListId);
     
+    // Load campaign attachments
+    const campaignFiles = await FileUploadService.getCampaignFiles(campaignId);
+    console.log('📎 Loading attachments for campaign:', campaignFiles.length);
+    
+    // Convert to Gmail attachment format
+    const attachments = campaignFiles.map(file => {
+      const fileContent = FileUploadService.getFileContent(file.filePath);
+      return {
+        filename: file.originalName,
+        content: fileContent,
+        contentType: file.mimeType
+      };
+    });
+    
     if (contacts.length === 0) {
       return res.status(400).json({ error: "No contacts in list" });
     }
@@ -219,12 +252,13 @@ router.post("/send-campaign", verifyGmailToken, async (req, res) => {
           .replace(/\{\{goesBy\}\}/g, contact.goesBy || contact.firstName || '')
           .replace(/\{\{email\}\}/g, contact.email || '');
         
-        // Send via Gmail
+        // Send via Gmail with attachments
         const result = await gmailService.sendEmail({
           to: contact.email,
           subject: personalizedSubject,
           body: personalizedMessage,
-          fromName: "Adam Cole - F3 Capital Impact"
+          fromName: "Adam Cole - F3 Capital Impact",
+          attachments: attachments
         });
         
         successCount++;
