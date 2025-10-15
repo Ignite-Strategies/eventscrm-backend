@@ -28,16 +28,15 @@ router.get('/', async (req, res) => {
     const contacts = await prisma.contact.findMany({
       where: {
         OR: [
-          // Direct org members
+          // Direct org members (SINGULAR - orgMember not orgMembers!)
           { orgMember: { orgId } },
           // Event attendees from org's events
           { eventAttendees: { some: { event: { orgId } } } }
         ]
       },
       include: {
-        // Include org member relationship
+        // Include org member relationship (SINGULAR - orgMember not orgMembers!)
         orgMember: {
-          where: { orgId },
           select: {
             id: true,
             orgId: true,
