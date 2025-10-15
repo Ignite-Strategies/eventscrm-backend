@@ -98,7 +98,7 @@ router.get('/', async (req, res) => {
       const firstMember = members[0];
       console.log(`🔍 DEBUG: First member ${firstMember.firstName} ${firstMember.lastName}:`);
       console.log(`🔍 - upcomingEventsCount: ${firstMember.upcomingEventsCount}`);
-      console.log(`🔍 - upcomingEvents:`, firstMember.upcomingEvents);
+      console.log(`🔍 - upcomingEventNames:`, firstMember.upcomingEventNames);  // Fixed: was checking upcomingEvents
       console.log(`🔍 - Total eventAttendees:`, orgMembers[0]?.contact?.eventAttendees?.length || 0);
       if (orgMembers[0]?.contact?.eventAttendees?.length > 0) {
         orgMembers[0].contact.eventAttendees.forEach((ea, idx) => {

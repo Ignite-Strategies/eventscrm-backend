@@ -159,13 +159,21 @@ router.post('/save', upload.single('file'), async (req, res) => {
     let contactResults = [];
     let orgMemberResults = [];
     let eventAttendeeResults = [];
+    let contactsCreated = 0;
+    let contactsUpdated = 0;
+    let orgMembersCreated = 0;
+    let orgMembersUpdated = 0;
 
     for (const record of validRecords) {
       try {
         // Split record into Contact, OrgMember, EventAttendee data
         const { contactData, orgMemberData, eventAttendeeData } = splitRecordForSave(record, uploadType);
 
-        // 1. Always create/update Contact (universal personhood)
+        // 1. Check if contact exists before upsert
+        const existingContact = await prisma.contact.findUnique({
+          where: { email: contactData.email }
+        });
+        
         const contact = await prisma.contact.upsert({
           where: { email: contactData.email },
           update: contactData,
@@ -173,9 +181,19 @@ router.post('/save', upload.single('file'), async (req, res) => {
         });
 
         contactResults.push(contact);
+        
+        if (existingContact) {
+          contactsUpdated++;
+        } else {
+          contactsCreated++;
+        }
 
         // 2. Create OrgMember if orgMemberData exists
         if (orgMemberData && uploadType === 'orgMember') {
+          const existingOrgMember = await prisma.orgMember.findUnique({
+            where: { contactId: contact.id }
+          });
+          
           const orgMember = await prisma.orgMember.upsert({
             where: { 
               contactId: contact.id
@@ -191,6 +209,12 @@ router.post('/save', upload.single('file'), async (req, res) => {
             }
           });
           orgMemberResults.push(orgMember);
+          
+          if (existingOrgMember) {
+            orgMembersUpdated++;
+          } else {
+            orgMembersCreated++;
+          }
         }
 
         // 3. Create EventAttendee if eventAttendeeData exists
@@ -243,7 +267,11 @@ router.post('/save', upload.single('file'), async (req, res) => {
       message: `Universal upload completed for ${uploadType}`,
       uploadType,
       contacts: contactResults.length,
+      contactsCreated,
+      contactsUpdated,
       orgMembers: orgMemberResults.length,
+      orgMembersCreated,
+      orgMembersUpdated,
       eventAttendees: eventAttendeeResults.length,
       totalProcessed: readResult.records.length,
       validCount: validRecords.length,
