@@ -68,9 +68,18 @@ router.post("/send-sequence", verifyGmailToken, async (req, res) => {
       const contact = contacts[i];
       
       try {
-        // Personalize email
-        const personalizedSubject = sequence.subject.replace(/\{\{firstName\}\}/g, contact.firstName);
-        const personalizedBody = sequence.html.replace(/\{\{firstName\}\}/g, contact.firstName);
+        // Personalize email with ALL available fields
+        const personalizedSubject = sequence.subject
+          .replace(/\{\{firstName\}\}/g, contact.firstName || '')
+          .replace(/\{\{lastName\}\}/g, contact.lastName || '')
+          .replace(/\{\{goesBy\}\}/g, contact.goesBy || contact.firstName || '')
+          .replace(/\{\{email\}\}/g, contact.email || '');
+          
+        const personalizedBody = sequence.html
+          .replace(/\{\{firstName\}\}/g, contact.firstName || '')
+          .replace(/\{\{lastName\}\}/g, contact.lastName || '')
+          .replace(/\{\{goesBy\}\}/g, contact.goesBy || contact.firstName || '')
+          .replace(/\{\{email\}\}/g, contact.email || '');
         
         // Send via Gmail
         const result = await gmailService.sendEmail({
@@ -197,9 +206,18 @@ router.post("/send-campaign", verifyGmailToken, async (req, res) => {
       const contact = contacts[i];
       
       try {
-        // Personalize email
-        const personalizedSubject = subject.replace(/\{\{firstName\}\}/g, contact.firstName || '');
-        const personalizedMessage = message.replace(/\{\{firstName\}\}/g, contact.firstName || '');
+        // Personalize email with ALL available fields
+        const personalizedSubject = subject
+          .replace(/\{\{firstName\}\}/g, contact.firstName || '')
+          .replace(/\{\{lastName\}\}/g, contact.lastName || '')
+          .replace(/\{\{goesBy\}\}/g, contact.goesBy || contact.firstName || '')
+          .replace(/\{\{email\}\}/g, contact.email || '');
+          
+        const personalizedMessage = message
+          .replace(/\{\{firstName\}\}/g, contact.firstName || '')
+          .replace(/\{\{lastName\}\}/g, contact.lastName || '')
+          .replace(/\{\{goesBy\}\}/g, contact.goesBy || contact.firstName || '')
+          .replace(/\{\{email\}\}/g, contact.email || '');
         
         // Send via Gmail
         const result = await gmailService.sendEmail({
