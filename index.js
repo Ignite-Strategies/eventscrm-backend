@@ -29,6 +29,7 @@ import stageMovementRouter from './routes/stageMovementRoute.js'; // Stage movem
 import championsUploadRouter from './routes/championsUploadRoute.js'; // Champions upload with attachments
 import googleAdsRouter from './routes/googleAdsRoute.js'; // Google Ads API integration
 import metaRouter from './routes/metaRoute.js'; // Meta/Facebook Page management
+import contactEventUploadRouter from './routes/contactEventUploadRoute.js'; // Event contact CSV upload
 
 dotenv.config();
 
@@ -70,6 +71,7 @@ app.use('/api/stage-movement', stageMovementRouter);  // ✅ Stage movement auto
 app.use('/api/champions', championsUploadRouter);  // ✅ Champions upload with attachments
 app.use('/api/google-ads', googleAdsRouter);  // ✅ Google Ads API integration
 app.use('/api/meta', metaRouter);  // ✅ Meta/Facebook Page management
+app.use('/api/contacts', contactEventUploadRouter);  // ✅ Event contact CSV upload
 
 // Health check
 app.get('/health', (req, res) => {
