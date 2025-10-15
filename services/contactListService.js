@@ -52,8 +52,24 @@ class ContactListService {
       ]
     });
     
-    console.log('📞 Found contacts (SIMPLE):', contacts.length);
-    return contacts;
+    // Transform contacts to flatten orgMember data for frontend
+    const transformedContacts = contacts.map(contact => ({
+      ...contact,
+      goesBy: contact.orgMember?.goesBy || contact.firstName,
+      // Add other orgMember fields if needed
+      memberSince: contact.orgMember?.memberSince,
+      memberType: contact.orgMember?.memberType,
+      isActive: contact.orgMember?.isActive
+    }));
+    
+    console.log('📞 Found contacts (SIMPLE):', transformedContacts.length);
+    console.log('📞 Sample contact data:', transformedContacts[0] ? {
+      firstName: transformedContacts[0].firstName,
+      goesBy: transformedContacts[0].goesBy,
+      hasOrgMember: !!transformedContacts[0].orgMember
+    } : 'No contacts');
+    
+    return transformedContacts;
   }
   
   /**

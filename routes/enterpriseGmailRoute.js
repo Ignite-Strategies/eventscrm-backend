@@ -86,7 +86,7 @@ router.post("/send-sequence", verifyGmailToken, async (req, res) => {
           to: contact.email,
           subject: personalizedSubject,
           body: personalizedBody,
-          fromName: "Adam - F3 Capital Impact"
+          fromName: "Adam Cole - F3 Capital Impact"
         });
         
         successCount++;
@@ -224,7 +224,7 @@ router.post("/send-campaign", verifyGmailToken, async (req, res) => {
           to: contact.email,
           subject: personalizedSubject,
           body: personalizedMessage,
-          fromName: "Adam - F3 Capital Impact"
+          fromName: "Adam Cole - F3 Capital Impact"
         });
         
         successCount++;
