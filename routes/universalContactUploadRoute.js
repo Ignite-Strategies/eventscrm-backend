@@ -178,12 +178,12 @@ router.post('/save', upload.single('file'), async (req, res) => {
         if (orgMemberData && uploadType === 'orgMember') {
           const orgMember = await prisma.orgMember.upsert({
             where: { 
-              contactId_orgId: {
-                contactId: contact.id,
-                orgId: orgId
-              }
+              contactId: contact.id
             },
-            update: orgMemberData,
+            update: {
+              orgId: orgId,
+              ...orgMemberData
+            },
             create: {
               contactId: contact.id,
               orgId: orgId,
