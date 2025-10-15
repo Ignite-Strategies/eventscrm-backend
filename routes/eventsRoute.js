@@ -56,15 +56,23 @@ router.post('/:orgId/events', async (req, res) => {
 // List events for org
 router.get('/:orgId/events', async (req, res) => {
   try {
-    console.log('📋 Fetching events for org:', req.params.orgId);
+    console.log('📋 FETCHING EVENTS for org:', req.params.orgId);
+    console.log('📋 Full URL:', req.originalUrl);
+    console.log('📋 Method:', req.method);
+    
     const events = await prisma.event.findMany({
       where: { orgId: req.params.orgId },
       orderBy: { date: 'desc' }
     });
-    console.log(`✅ Found ${events.length} events`);
+    
+    console.log(`✅ FOUND ${events.length} events for org ${req.params.orgId}:`);
+    events.forEach(event => {
+      console.log(`  - ${event.name} (${event.id})`);
+    });
+    
     res.json(events);
   } catch (error) {
-    console.error('❌ List events error:', error);
+    console.error('❌ LIST EVENTS ERROR:', error);
     console.error('❌ Error details:', error.message);
     res.status(400).json({ error: error.message });
   }

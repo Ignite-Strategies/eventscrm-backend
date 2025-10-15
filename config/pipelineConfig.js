@@ -67,13 +67,15 @@ export const AUDIENCE_STAGES = {
     'interested',
     'contacted',        // Follow-up after interest
     'partner',
-    'thanked'           // Follow-up after partnership
+    'thanked',          // Follow-up after partnership
+    'recognized'        // Public recognition/social media
   ],
   'business_sponsor': [
     'interested',
     'contacted',        // Follow-up after interest
     'sponsor',
-    'thanked'           // Follow-up after sponsorship
+    'thanked',          // Follow-up after sponsorship
+    'recognized'        // Public recognition/social media
   ],
   'champions': [
     'aware',
