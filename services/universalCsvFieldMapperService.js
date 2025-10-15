@@ -209,6 +209,37 @@ export function validateRequiredFieldsForType(mappedRecord, uploadType) {
 }
 
 /**
+ * Validate a mapped record for required fields
+ */
+export function validateMappedRecord(mappedRecord, uploadType) {
+  const errors = [];
+  
+  // Universal required fields (apply to all types)
+  if (!mappedRecord.email) {
+    errors.push('Email is required');
+  }
+  
+  // Name validation - at least firstName OR lastName OR fullName must be present
+  if (!mappedRecord.firstName && !mappedRecord.lastName && !mappedRecord.fullName) {
+    errors.push('At least one name field (firstName, lastName, or fullName) is required');
+  }
+  
+  // Type-specific validations
+  if (uploadType === 'orgMember') {
+    // OrgMember specific validations can go here
+  }
+  
+  if (uploadType === 'eventAttendee') {
+    // EventAttendee specific validations can go here
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+
+/**
  * Get field mapping suggestions for headers
  */
 export function getFieldMappingSuggestions(headers, uploadType) {
