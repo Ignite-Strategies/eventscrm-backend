@@ -29,14 +29,14 @@ router.get('/', async (req, res) => {
       where: {
         OR: [
           // Direct org members
-          { orgMembers: { some: { orgId } } },
+          { orgMember: { orgId } },
           // Event attendees from org's events
           { eventAttendees: { some: { event: { orgId } } } }
         ]
       },
       include: {
         // Include org member relationship
-        orgMembers: {
+        orgMember: {
           where: { orgId },
           select: {
             id: true,
@@ -84,7 +84,7 @@ router.get('/', async (req, res) => {
     const universalContacts = contacts.map(contact => ({
       // Universal identifiers
       contactId: contact.id,
-      orgMemberId: contact.orgMembers?.[0]?.id || null,
+      orgMemberId: contact.orgMember?.id || null,
       eventAttendeeIds: contact.eventAttendees.map(ea => ea.id),
       
       // Basic contact info
@@ -95,8 +95,8 @@ router.get('/', async (req, res) => {
       goesBy: contact.goesBy,
       
       // Org member data (if they're a member)
-      orgMember: contact.orgMembers?.[0] || null,
-      isOrgMember: !!contact.orgMembers?.[0],
+      orgMember: contact.orgMember || null,
+      isOrgMember: !!contact.orgMember,
       
       // Event attendee data (all events they've attended)
       eventAttendees: contact.eventAttendees.map(ea => ({
