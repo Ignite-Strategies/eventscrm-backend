@@ -3,6 +3,7 @@ import { getPrismaClient } from "../config/database.js";
 import ContactListService from "../services/contactListService.js";
 import { GmailService } from "../services/personalEmailService.js";
 import verifyGmailToken from "../middleware/verifyGmailToken.js";
+import StageMovementService from "../services/stageMovementService.js";
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -118,6 +119,24 @@ router.post("/send-sequence", verifyGmailToken, async (req, res) => {
     });
     
     console.log(`🎯 Sequence complete: ${successCount} sent, ${errorCount} failed`);
+    
+    // 7. AUTO-MOVE CONTACTS TO NEXT STAGE! 🚀
+    try {
+      const sentContactIds = results
+        .filter(r => r.status === 'sent')
+        .map(r => r.contactId);
+      
+      if (sentContactIds.length > 0) {
+        const moveResult = await StageMovementService.moveContactsAfterEmail(
+          sequenceId,
+          sentContactIds
+        );
+        console.log(`📊 Auto-movement: ${moveResult.moved} contacts moved to next stage`);
+      }
+    } catch (moveError) {
+      console.error('⚠️ Stage movement failed (non-critical):', moveError);
+      // Don't fail the whole request if movement fails
+    }
     
     res.json({
       success: true,

@@ -24,8 +24,11 @@ model Organization {
   state  String?
   zip    String?
 
-  pipelineDefaults String[] @default(["in_funnel", "general_awareness", "personal_invite", "expressed_interest", "rsvped", "paid", "attended"])
+  pipelineDefaults String[] @default(["in_funnel", "general_awareness", "personal_invite", "expressed_interest", "rsvped", "thanked", "paid", "thanked_paid", "attended", "followed_up"])
   audienceDefaults String[] @default(["org_members", "friends_family", "landing_page_public", "community_partners", "cold_outreach"])
+
+  googleAdsConfig String? // JSON: { refreshToken, customerId, connectedAt }
+  metaConfig      String? // JSON: { accessToken, pageId, connectedAt }
 
   members         OrgMember[]
   supporters      Supporter[]
@@ -545,8 +548,9 @@ model Sequence {
   delayDays Int @default(0)
   order     Int
 
-  status String    @default("draft")
-  sentAt DateTime?
+  status    String    @default("draft")
+  sentAt    DateTime?
+  totalSent Int       @default(0)
 
   sequenceContacts SequenceContact[]
   emailEvents      EmailEvent[]
@@ -654,6 +658,10 @@ model AdCampaign {
   impressions Int      @default(0)
   clicks      Int      @default(0)
   spend       Float    @default(0)
+  
+  googleAdsId String?  // Google Ads campaign resource name
+  metaAdsId   String?  // Meta/Facebook campaign ID
+  platform    String   @default("Manual") // Manual, Google, Meta
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

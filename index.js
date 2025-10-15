@@ -25,6 +25,10 @@ import personalEmailRouter from './routes/personalEmailRoute.js'; // Personal em
 import enterpriseGmailRouter from './routes/enterpriseGmailRoute.js'; // Enterprise Gmail sending (Gmail OAuth campaigns)
 import welcomeHydrationRouter from './routes/welcomeHydrationRoute.js'; // Welcome hydration for Firebase users
 import adminUserAuthRouter from './routes/adminUserAuthRoute.js'; // Admin/User authentication (Firebase)
+import stageMovementRouter from './routes/stageMovementRoute.js'; // Stage movement automation
+import championsUploadRouter from './routes/championsUploadRoute.js'; // Champions upload with attachments
+import googleAdsRouter from './routes/googleAdsRoute.js'; // Google Ads API integration
+import metaRouter from './routes/metaRoute.js'; // Meta/Facebook Page management
 
 dotenv.config();
 
@@ -62,6 +66,10 @@ app.use('/api/email/personal', personalEmailRouter);  // Personal email sending 
 app.use('/api/enterprise-gmail', enterpriseGmailRouter);  // Enterprise Gmail sending (Gmail OAuth campaigns)
 app.use('/api/welcome', welcomeHydrationRouter);  // ✅ Welcome hydration (Firebase → Admin check)
 app.use('/api/auth', adminUserAuthRouter);  // ✅ Admin authentication (findOrCreate)
+app.use('/api/stage-movement', stageMovementRouter);  // ✅ Stage movement automation
+app.use('/api/champions', championsUploadRouter);  // ✅ Champions upload with attachments
+app.use('/api/google-ads', googleAdsRouter);  // ✅ Google Ads API integration
+app.use('/api/meta', metaRouter);  // ✅ Meta/Facebook Page management
 
 // Health check
 app.get('/health', (req, res) => {
