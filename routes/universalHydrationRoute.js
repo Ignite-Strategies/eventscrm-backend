@@ -40,7 +40,7 @@ router.get('/', async (req, res) => {
           select: {
             id: true,
             orgId: true,
-            goesBy: true,
+            // goesBy moved to Contact model
             street: true,
             city: true,
             state: true,
