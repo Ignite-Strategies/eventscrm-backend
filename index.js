@@ -24,6 +24,7 @@ import testEmailRouter from './routes/testEmailRoute.js'; // Test email sending 
 import personalEmailRouter from './routes/personalEmailRoute.js'; // Personal email sending (Gmail OAuth)
 import enterpriseGmailRouter from './routes/enterpriseGmailRoute.js'; // Enterprise Gmail sending (Gmail OAuth campaigns)
 import welcomeHydrationRouter from './routes/welcomeHydrationRoute.js'; // Welcome hydration for Firebase users
+import adminUserAuthRouter from './routes/adminUserAuthRoute.js'; // Admin/User authentication (Firebase)
 
 dotenv.config();
 
@@ -60,6 +61,7 @@ app.use('/api/test-email', testEmailRouter);
 app.use('/api/email/personal', personalEmailRouter);  // Personal email sending (Gmail OAuth)
 app.use('/api/enterprise-gmail', enterpriseGmailRouter);  // Enterprise Gmail sending (Gmail OAuth campaigns)
 app.use('/api/welcome', welcomeHydrationRouter);  // ✅ Welcome hydration (Firebase → Admin check)
+app.use('/api/auth', adminUserAuthRouter);  // ✅ Admin authentication (findOrCreate)
 
 // Health check
 app.get('/health', (req, res) => {
