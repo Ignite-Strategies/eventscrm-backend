@@ -152,8 +152,8 @@ model OrgMember {
   id        String   @id @default(cuid())
   contactId String?  // LEGACY - not used in new Contact-first model
 
-  orgId String
-  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId String?
+  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   // Org-specific fields ONLY (relationship to THIS org)
   yearsWithOrganization Int?
