@@ -6,46 +6,77 @@ const prisma = getPrismaClient();
 
 /**
  * 🎯 UNIVERSAL LIST BUILDING
- * Build lists from Contact queries (orgId, eventId, pipelineId, etc.)
+ * Query contacts with filters → create list for campaigns
  */
 
-// POST /lists/create-from-query
-router.post('/create-from-query', async (req, res) => {
+// GET /lists/preview - Preview contacts before creating list
+router.get('/preview', async (req, res) => {
+  try {
+    const { orgId, eventId, audienceType, currentStage, engagementValue, chapterResponsibleFor } = req.query;
+
+    console.log('👁️ PREVIEW:', { orgId, eventId, audienceType, currentStage, engagementValue, chapterResponsibleFor });
+
+    // Build where clause
+    const where = {};
+    if (orgId) where.orgId = orgId;
+    if (eventId) where.eventId = eventId;
+    if (audienceType) where.audienceType = audienceType;
+    if (currentStage) where.currentStage = currentStage;
+    if (engagementValue) where.engagementValue = parseInt(engagementValue);
+    if (chapterResponsibleFor) where.chapterResponsibleFor = chapterResponsibleFor;
+
+    const contacts = await prisma.contact.findMany({ 
+      where,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        currentStage: true,
+        audienceType: true,
+        engagementValue: true
+      },
+      take: 100 // Preview max 100
+    });
+
+    const totalCount = await prisma.contact.count({ where });
+
+    console.log(`✅ Preview: ${totalCount} total, showing ${contacts.length}`);
+
+    res.json({
+      success: true,
+      contacts,
+      totalCount,
+      previewCount: contacts.length
+    });
+
+  } catch (error) {
+    console.error('❌ Preview error:', error);
+    res.status(500).json({ error: 'Failed to preview contacts' });
+  }
+});
+
+// POST /lists/create - Create list from filters
+router.post('/create', async (req, res) => {
   try {
     const { 
       name, 
       description,
       orgId,
-      // Query filters (build list from any combo!)
-      queryFilters: {
-        orgId: filterOrgId,
-        eventId,
-        pipelineId,
-        audienceType,
-        currentStage,
-        isOrgMember,
-        engagementValue,
-        chapterResponsibleFor,
-        tags
-      } = {}
+      filters: { eventId, audienceType, currentStage, engagementValue, chapterResponsibleFor } = {}
     } = req.body;
 
-    console.log('🎯 CREATING UNIVERSAL LIST:', name);
-    console.log('📋 Filters:', req.body.queryFilters);
+    console.log('🎯 CREATE LIST:', name, { orgId, eventId, audienceType, currentStage });
 
-    // Build where clause from filters
-    const where = {};
-    if (filterOrgId) where.orgId = filterOrgId;
+    // Build where clause
+    const where = { orgId };
     if (eventId) where.eventId = eventId;
-    if (pipelineId) where.pipelineId = pipelineId;
     if (audienceType) where.audienceType = audienceType;
     if (currentStage) where.currentStage = currentStage;
-    if (chapterResponsibleFor) where.chapterResponsibleFor = chapterResponsibleFor;
-    if (isOrgMember !== undefined) where.isOrgMember = isOrgMember;
     if (engagementValue) where.engagementValue = parseInt(engagementValue);
-    if (tags?.length > 0) where.orgTags = { hasSome: tags };
+    if (chapterResponsibleFor) where.chapterResponsibleFor = chapterResponsibleFor;
 
-    // Get contacts matching query
+    // Get contacts
     const contacts = await prisma.contact.findMany({ where });
 
     console.log(`✅ Found ${contacts.length} contacts`);
@@ -59,7 +90,7 @@ router.post('/create-from-query', async (req, res) => {
         type: 'manual',
         totalContacts: contacts.length,
         isActive: true,
-        filters: req.body.queryFilters // Store filters for refresh
+        filters: { eventId, audienceType, currentStage, engagementValue, chapterResponsibleFor }
       }
     });
 
@@ -69,75 +100,20 @@ router.post('/create-from-query', async (req, res) => {
       data: { contactListId: list.id }
     });
 
-    console.log(`✅ Created list ${list.id} with ${contacts.length} contacts`);
+    console.log(`✅ List ${list.id} created with ${contacts.length} contacts`);
 
     res.json({
       success: true,
       list: {
-        ...list,
-        contactCount: contacts.length
+        id: list.id,
+        name: list.name,
+        totalContacts: contacts.length
       }
     });
 
   } catch (error) {
-    console.error('❌ Error creating list:', error);
+    console.error('❌ Create list error:', error);
     res.status(500).json({ error: 'Failed to create list' });
-  }
-});
-
-// POST /lists/:listId/refresh
-router.post('/:listId/refresh', async (req, res) => {
-  try {
-    const { listId } = req.params;
-
-    const list = await prisma.contactList.findUnique({
-      where: { id: listId }
-    });
-
-    if (!list) {
-      return res.status(404).json({ error: 'List not found' });
-    }
-
-    // Re-run the stored query
-    const where = {};
-    const filters = list.filters || {};
-    
-    if (filters.orgId) where.orgId = filters.orgId;
-    if (filters.eventId) where.eventId = filters.eventId;
-    if (filters.pipelineId) where.pipelineId = filters.pipelineId;
-    if (filters.audienceType) where.audienceType = filters.audienceType;
-    if (filters.currentStage) where.currentStage = filters.currentStage;
-
-    const contacts = await prisma.contact.findMany({ where });
-
-    // Update list
-    await prisma.contactList.update({
-      where: { id: listId },
-      data: {
-        totalContacts: contacts.length,
-        lastUpdated: new Date()
-      }
-    });
-
-    // Relink contacts
-    await prisma.contact.updateMany({
-      where: { contactListId: listId },
-      data: { contactListId: null }
-    });
-
-    await prisma.contact.updateMany({
-      where: { id: { in: contacts.map(c => c.id) }},
-      data: { contactListId: listId }
-    });
-
-    res.json({
-      success: true,
-      contactCount: contacts.length
-    });
-
-  } catch (error) {
-    console.error('❌ Error refreshing list:', error);
-    res.status(500).json({ error: 'Failed to refresh list' });
   }
 });
 
