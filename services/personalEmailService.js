@@ -88,7 +88,7 @@ export class GmailService {
     // Add attachments if any
     for (const attachment of attachments) {
       if (attachment.filename && attachment.content && attachment.contentType) {
-        const encodedContent = Buffer.from(attachment.content).toString('base64');
+        const encodedContent = attachment.content; // Already base64 encoded from frontend
         messageParts.push(
           `--${mainBoundary}`,
           `Content-Type: ${attachment.contentType}`,

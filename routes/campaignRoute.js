@@ -159,9 +159,24 @@ router.patch("/:campaignId", async (req, res) => {
           }
         });
         
-        if (existingCampaigns.length > 0) {
+        if (existingCampaigns.length > 0 && !updates.forceConflict) {
           console.warn(`⚠️ Contact list ${updates.contactListId} is used by ${existingCampaigns.length} other campaign(s)`);
-          // Allow but log the warning
+          
+          // Return conflict information to frontend
+          return res.status(409).json({
+            error: 'Contact list conflict detected',
+            message: `This contact list is already used by ${existingCampaigns.length} other campaign(s)`,
+            conflicts: existingCampaigns.map(c => ({
+              id: c.id,
+              name: c.name,
+              status: c.status
+            })),
+            contactListId: updates.contactListId
+          });
+        }
+        
+        if (existingCampaigns.length > 0 && updates.forceConflict) {
+          console.warn(`⚠️ FORCING conflict resolution for contact list ${updates.contactListId}`);
         }
       }
     }
