@@ -109,7 +109,6 @@ router.post('/findOrCreate', async (req, res) => {
     // Create Admin record (orgId can be null, will update when org assigned)
     const admin = await prisma.admin.create({
       data: {
-        contactId: contact.id,
         firebaseId: firebaseId, // Link to Firebase user
         orgId: orgMember.orgId, // null initially
         role: 'super_admin',
