@@ -136,6 +136,7 @@ model OrgMember {
   firebaseId            String? @unique
   photoURL              String?
   tags                  String[] @default([])
+  chapterresponsiblefor String? // Chapter/region/team responsible for (e.g., "Los Angeles", "Manhattan", "Product Team")
 
   // Engagement level (relationship to THIS org)
   engagementId String? 

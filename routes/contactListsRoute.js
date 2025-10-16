@@ -120,21 +120,35 @@ router.patch("/:listId", async (req, res) => {
   }
 });
 
-// DELETE /contact-lists/:listId - Soft delete contact list
+// DELETE /contact-lists/:listId - Delete contact list with cascade
 router.delete("/:listId", async (req, res) => {
   try {
     const { listId } = req.params;
     
-    const contactList = await prisma.contactList.update({
-      where: { id: listId },
-      data: { isActive: false }
+    // First, remove this list from all campaigns (cascade)
+    await prisma.campaign.updateMany({
+      where: { contactListId: listId },
+      data: { contactListId: null }
     });
     
-    if (!contactList) {
-      return res.status(404).json({ error: "Contact list not found" });
-    }
+    // Then, free all contacts from this list (cascade)
+    await prisma.contact.updateMany({
+      where: { contactListId: listId },
+      data: { contactListId: null }
+    });
     
-    res.json({ message: "Contact list deleted successfully" });
+    // Finally, delete the contact list
+    await prisma.contactList.delete({
+      where: { id: listId }
+    });
+    
+    res.json({ 
+      message: "Contact list deleted successfully",
+      cascaded: {
+        campaigns: "Removed from all campaigns",
+        contacts: "Freed all contacts"
+      }
+    });
   } catch (error) {
     console.error("Error deleting contact list:", error);
     res.status(500).json({ error: error.message });

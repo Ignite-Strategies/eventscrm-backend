@@ -53,6 +53,8 @@ class CampaignContactService {
           ...contact,
           // Priority: contact.goesBy (universal) > orgMember.goesBy (org-specific) > firstName (fallback)
           goesBy: contact.goesBy || contact.orgMember?.goesBy || contact.firstName,
+          // Include chapterresponsiblefor from orgMember
+          chapterresponsiblefor: contact.orgMember?.chapterresponsiblefor,
           // Include only requested fields + goesBy
           id: contact.id,
           firstName: contact.firstName,

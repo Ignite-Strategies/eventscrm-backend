@@ -160,6 +160,7 @@ router.get('/:orgMemberId', async (req, res) => {
       originStory: orgMember.originStory,
       notes: orgMember.notes,
       categoryOfEngagement: orgMember.categoryOfEngagement,
+      chapterresponsiblefor: orgMember.chapterresponsiblefor,
       tags: orgMember.tags,
       
       // Event history (from Contact)

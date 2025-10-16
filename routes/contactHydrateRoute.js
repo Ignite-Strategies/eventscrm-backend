@@ -57,6 +57,7 @@ router.get('/:contactId', async (req, res) => {
         originStory: contact.orgMember.originStory,
         notes: contact.orgMember.notes,
         categoryOfEngagement: contact.orgMember.categoryOfEngagement,
+        chapterresponsiblefor: contact.orgMember.chapterresponsiblefor,
         tags: contact.orgMember.tags
       })
     };
