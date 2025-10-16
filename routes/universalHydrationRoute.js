@@ -36,24 +36,21 @@ router.get('/', async (req, res) => {
       },
       include: {
         // Include org member relationship (SINGULAR - orgMember not orgMembers!)
+        // ONLY select fields that actually exist in OrgMember schema!
         orgMember: {
           select: {
             id: true,
             orgId: true,
-            // goesBy moved to Contact model
-            street: true,
-            city: true,
-            state: true,
-            zip: true,
-            employer: true,
+            contactId: true,
             yearsWithOrganization: true,
             leadershipRole: true,
-            married: true,
-            spouseName: true,
-            numberOfKids: true,
             originStory: true,
             notes: true,
+            role: true,
+            firebaseId: true,
+            photoURL: true,
             tags: true,
+            engagementId: true,
             createdAt: true,
             updatedAt: true
           }
