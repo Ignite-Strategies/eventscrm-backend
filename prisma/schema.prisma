@@ -130,6 +130,10 @@ model Contact {
   contactListId String?
   contactList   ContactList? @relation(fields: [contactListId], references: [id])
 
+  // ⚠️ LEGACY RELATIONS (keep until migration complete)
+  orgMembers       OrgMember[]
+  eventAttendees   EventAttendee[]
+  
   sequenceContacts SequenceContact[]
   emailEvents      EmailEvent[]
 
@@ -359,6 +363,7 @@ model PublicForm {
 
   eventForms     EventForm[]
   eventAttendees EventAttendee[]
+  contacts       Contact[]  // Form submissions linked to contacts
 
   isActive        Boolean @default(true)
   submissionCount Int     @default(0)
