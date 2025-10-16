@@ -19,6 +19,22 @@ router.post('/findOrCreate', async (req, res) => {
     
     console.log('🔐 AUTH: FindOrCreate for firebaseId:', firebaseId);
     
+    // Find existing Admin by firebaseId first
+    let existingAdmin = await prisma.admin.findFirst({
+      where: { firebaseId }
+    });
+    
+    if (existingAdmin) {
+      console.log('✅ AUTH: Existing Admin found:', existingAdmin.id);
+      return res.json({
+        id: existingAdmin.id,
+        firebaseId: existingAdmin.firebaseId,
+        role: existingAdmin.role,
+        orgId: existingAdmin.orgId,
+        isAdmin: true
+      });
+    }
+    
     // Find existing OrgMember by firebaseId
     let orgMember = await prisma.orgMember.findUnique({
       where: { firebaseId }
@@ -62,9 +78,6 @@ router.post('/findOrCreate', async (req, res) => {
     orgMember = await prisma.orgMember.create({
       data: {
         firebaseId,
-        email: email || '',
-        firstName: firstName || '',
-        lastName: lastName || '',
         photoURL: photoURL || null,
         role: null,
         orgId: null
@@ -78,10 +91,10 @@ router.post('/findOrCreate', async (req, res) => {
     const contact = await prisma.contact.create({
       data: {
         orgId: orgMember.orgId, // null initially
-        firstName: orgMember.firstName,
-        lastName: orgMember.lastName,
-        email: orgMember.email,
-        phone: orgMember.phone
+        firstName: firstName || '',
+        lastName: lastName || '',
+        email: email || '',
+        phone: null
       }
     });
     
