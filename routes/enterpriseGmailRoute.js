@@ -191,10 +191,10 @@ router.post("/send-campaign", verifyGmailToken, async (req, res) => {
   console.log('🎯 /send-campaign route called');
   
   try {
-    const { campaignId, subject, message, contactListId } = req.body;
+    const { campaignId, subject, message, contactListId, attachments = [] } = req.body;
     const gmailAccessToken = req.gmailAccessToken;
     
-    console.log('📨 Campaign request:', { campaignId, subject, contactListId });
+    console.log('📨 Campaign request:', { campaignId, subject, contactListId, attachmentCount: attachments.length });
     
     if (!campaignId || !subject || !message || !contactListId) {
       return res.status(400).json({ error: "campaignId, subject, message, and contactListId are required" });
@@ -207,19 +207,7 @@ router.post("/send-campaign", verifyGmailToken, async (req, res) => {
     // Get contacts from the contact list
     const contacts = await ContactListService.getContactsForList(contactListId);
     
-    // Load campaign attachments
-    const campaignFiles = await FileUploadService.getCampaignFiles(campaignId);
-    console.log('📎 Loading attachments for campaign:', campaignFiles.length);
-    
-    // Convert to Gmail attachment format
-    const attachments = campaignFiles.map(file => {
-      const fileContent = FileUploadService.getFileContent(file.filePath);
-      return {
-        filename: file.originalName,
-        content: fileContent,
-        contentType: file.mimeType
-      };
-    });
+    console.log('📎 Using attachments from request:', attachments.length);
     
     if (contacts.length === 0) {
       return res.status(400).json({ error: "No contacts in list" });
