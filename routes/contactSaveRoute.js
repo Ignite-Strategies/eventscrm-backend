@@ -12,12 +12,17 @@ const prisma = getPrismaClient();
  */
 router.post('/', async (req, res) => {
   try {
-    const { firstName, lastName, email, phone } = req.body;
+    const { orgId, firstName, lastName, email, phone } = req.body;
 
-    console.log('📝 Creating new contact:', email);
+    if (!orgId) {
+      return res.status(400).json({ error: 'orgId is required' });
+    }
+
+    console.log('📝 Creating new contact:', email, 'for org:', orgId);
 
     const contact = await prisma.contact.create({
       data: {
+        orgId,
         firstName,
         lastName,
         email,
