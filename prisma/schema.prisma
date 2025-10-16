@@ -32,7 +32,6 @@ model Organization {
 
   // ✅ NEW: Direct relations to Contact
   contacts        Contact[]
-  pipelines       Pipeline[]
   
   // ⚠️ LEGACY (to be removed)
   members         OrgMember[]
@@ -83,9 +82,6 @@ model Contact {
   eventId    String?
   event      Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
   
-  pipelineId String?
-  pipeline   Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
-  
   // TARGETING
   audienceType String?
   currentStage String?
@@ -112,9 +108,8 @@ model Contact {
   @@index([email])
   @@index([orgId])
   @@index([eventId])
-  @@index([pipelineId])
   @@index([firebaseId])
-  @@index([pipelineId, audienceType, currentStage])
+  @@index([eventId, audienceType, currentStage])
 }
 
 model Engagement {
@@ -155,8 +150,7 @@ model LeadershipRole {
 
 model OrgMember {
   id        String   @id @default(cuid())
-  contactId String   // 🔥 NO @unique! One Contact can be in MANY orgs
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String?  // LEGACY - not used in new Contact-first model
 
   orgId String
   org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
@@ -320,7 +314,6 @@ model PublicForm {
 
   eventForms     EventForm[]
   eventAttendees EventAttendee[]
-  contacts       Contact[]  // Form submissions linked to contacts
 
   isActive        Boolean @default(true)
   submissionCount Int     @default(0)
@@ -408,8 +401,7 @@ model EventAttendee {
   eventId String
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  contactId String
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String?  // LEGACY - not used in new Contact-first model
 
   currentStage String @default("aware")
   audienceType String
@@ -699,29 +691,6 @@ model EventTask {
 
   @@index([eventId])
   @@index([eventId, completed])
-}
-
-model Pipeline {
-  id      String @id @default(cuid())
-  orgId   String
-  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  
-  name    String  // "Nurture Pipeline 2024", "Event Funnel - Bros & Brews"
-  type    String  // "event", "nurture", "donor"
-  
-  // Pipeline definition
-  audiences String[]  // ["org_members", "prospects", "donors"]
-  stages    String[]  // ["aware", "invited", "rsvped", "paid", "attended"]
-  
-  // Contacts in this pipeline
-  contacts Contact[]
-  
-  isActive  Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@index([orgId])
-  @@index([type])
 }
 
 model PipelineEventConfig {

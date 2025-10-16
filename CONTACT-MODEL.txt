@@ -19,10 +19,9 @@ orgTags (array)
 FOREIGN KEYS:
 orgId → Organization
 eventId → Event
-pipelineId → Pipeline
 
-TARGETING:
-audienceType (org_members, prospects, donors, vip)
+TARGETING (uses existing PipelineEventConfig):
+audienceType (org_members, prospects, donors, vip) 
 currentStage (aware, invited, rsvped, paid, attended)
 
 EVENT DETAILS:
@@ -36,11 +35,11 @@ THAT'S IT!
 NO OrgMember relations
 NO EventAttendee relations  
 NO PublicForm relations
-Just foreign keys (orgId, eventId, pipelineId)
+Just foreign keys (orgId, eventId)
 
 QUERIES:
 - Org members: Contact.findMany({ where: { orgId } })
 - Event attendees: Contact.findMany({ where: { eventId } })
-- Pipeline contacts: Contact.findMany({ where: { pipelineId, audienceType, currentStage } })
+- Event + audience + stage: Contact.findMany({ where: { eventId, audienceType, currentStage } })
 - Chapter: Contact.findMany({ where: { chapterResponsibleFor } })
 
