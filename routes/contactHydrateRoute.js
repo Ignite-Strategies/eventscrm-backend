@@ -42,7 +42,8 @@ router.get('/:contactId', async (req, res) => {
       // OrgMember extended data (if exists)
       ...(contact.orgMember && {
         orgMemberId: contact.orgMember.id,
-        goesBy: contact.orgMember.goesBy,
+        // Priority: contact.goesBy (universal) > orgMember.goesBy (legacy) > firstName (fallback)
+        goesBy: contact.goesBy || contact.orgMember.goesBy || contact.firstName,
         street: contact.orgMember.street,
         city: contact.orgMember.city,
         state: contact.orgMember.state,
