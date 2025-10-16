@@ -146,7 +146,8 @@ router.get('/:orgMemberId', async (req, res) => {
       phone: orgMember.contact?.phone || orgMember.phone || '',
       
       // Extended OrgMember data
-      goesBy: orgMember.goesBy,
+      // Priority: contact.goesBy (universal) > orgMember.goesBy (legacy) > firstName (fallback)
+      goesBy: orgMember.contact?.goesBy || orgMember.goesBy || orgMember.contact?.firstName,
       street: orgMember.street,
       city: orgMember.city,
       state: orgMember.state,
