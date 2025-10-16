@@ -53,96 +53,58 @@ model Organization {
 model Contact {
   id String @id @default(cuid())
 
-  // ============================================
-  // PERSONHOOD (Universal, never changes)
-  // ============================================
+  // PERSONHOOD
   firstName String
   lastName  String
-  fullName  String? // Original full name for display
   email     String  @unique
   phone     String?
   goesBy    String?
-  
-  // Address
-  street   String?
-  city     String?
-  state    String?
-  zip      String?
-  
-  // Family
-  birthday     String?
-  married      Boolean @default(false)
-  spouseName   String?
-  numberOfKids Int     @default(0)
-  
-  // Work
-  employer String?
+  street    String?
+  city      String?
+  state     String?
+  zip       String?
+  birthday  String?
+  married   Boolean @default(false)
+  spouseName String?
+  numberOfKids Int @default(0)
+  employer  String?
 
-  // ============================================
-  // ORG RELATIONSHIP (Simple foreign key - MVP1)
-  // ============================================
-  orgId     String?
-  org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  
-  isOrgMember Boolean @default(false)  // Flag: is this person a "member"?
-  
-  // Org-member fields (only used if isOrgMember = true)
+  // ORG STUFF
+  chapterResponsibleFor String?
   yearsWithOrganization Int?
   leadershipRole        String?
-  orgNotes              String?
-  chapterResponsibleFor String?
+  engagementValue       Int?
   orgTags               String[] @default([])
   
-  // Engagement (1-4 scale)
-  engagementValue Int? // 1=undetermined, 2=low, 3=medium, 4=high
+  // FOREIGN KEYS (that's it!)
+  orgId      String?
+  org        Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
   
-  // ============================================
-  // PIPELINE TRACKING (The core targeting mechanism!)
-  // ============================================
-  pipelineId   String?   // Which pipeline/journey they're in
-  pipeline     Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
+  eventId    String?
+  event      Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
   
-  audienceType String?   // Which audience segment ("org_members", "prospects", "donors", "vip")
-  currentStage String?   // Where they are in the pipeline ("aware", "invited", "rsvped", "paid", etc.)
+  pipelineId String?
+  pipeline   Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
   
-  // ============================================
-  // EVENT RELATIONSHIP (Simple foreign key - MVP1)
-  // ============================================
-  eventId      String?
-  event        Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  // TARGETING
+  audienceType String?
+  currentStage String?
   
-  // Event-specific fields
-  attended     Boolean   @default(false)
-  amountPaid   Float     @default(0)
-  ticketType   String?
-  
-  // Party details
-  spouseOrOther  String? // "solo", "spouse", "other"
+  // EVENT DETAILS
+  attended     Boolean @default(false)
+  amountPaid   Float @default(0)
+  spouseOrOther String?
   howManyInParty Int?
   
-  // Form submission tracking
-  submittedFormId String?
-  submittedForm   PublicForm? @relation(fields: [submittedFormId], references: [id])
-
-  // ============================================
-  // OTHER RELATIONSHIPS
-  // ============================================
+  // OTHER
   contactListId String?
   contactList   ContactList? @relation(fields: [contactListId], references: [id])
-
-  // ⚠️ LEGACY RELATIONS (keep until migration complete)
-  orgMembers       OrgMember[]
-  eventAttendees   EventAttendee[]
   
   sequenceContacts SequenceContact[]
   emailEvents      EmailEvent[]
 
-  // ============================================
-  // METADATA
-  // ============================================
-  firebaseId String? @unique  // For login
+  firebaseId String? @unique
   photoURL   String?
-  role       String?          // System role
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -152,12 +114,7 @@ model Contact {
   @@index([eventId])
   @@index([pipelineId])
   @@index([firebaseId])
-  @@index([contactListId])
-  @@index([orgId, isOrgMember])           // Fast org member queries
-  @@index([eventId, currentStage])         // Fast event attendee queries
-  @@index([pipelineId, currentStage])      // Fast pipeline stage queries
-  @@index([pipelineId, audienceType])      // Fast pipeline audience queries
-  @@index([pipelineId, audienceType, currentStage])  // Fast pipeline targeting
+  @@index([pipelineId, audienceType, currentStage])
 }
 
 model Engagement {

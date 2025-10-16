@@ -1,0 +1,46 @@
+CONTACT MODEL - THE ONLY MODEL THAT MATTERS
+
+contactId (id) - THE primary key
+email - unique
+
+PERSONHOOD:
+firstName, lastName, goesBy, phone
+street, city, state, zip
+birthday, married, spouseName, numberOfKids
+employer
+
+ORG STUFF:
+chapterResponsibleFor
+yearsWithOrganization
+leadershipRole
+engagementValue (1-4)
+orgTags (array)
+
+FOREIGN KEYS:
+orgId → Organization
+eventId → Event
+pipelineId → Pipeline
+
+TARGETING:
+audienceType (org_members, prospects, donors, vip)
+currentStage (aware, invited, rsvped, paid, attended)
+
+EVENT DETAILS:
+attended (bool)
+amountPaid (float)
+spouseOrOther
+howManyInParty
+
+THAT'S IT!
+
+NO OrgMember relations
+NO EventAttendee relations  
+NO PublicForm relations
+Just foreign keys (orgId, eventId, pipelineId)
+
+QUERIES:
+- Org members: Contact.findMany({ where: { orgId } })
+- Event attendees: Contact.findMany({ where: { eventId } })
+- Pipeline contacts: Contact.findMany({ where: { pipelineId, audienceType, currentStage } })
+- Chapter: Contact.findMany({ where: { chapterResponsibleFor } })
+
