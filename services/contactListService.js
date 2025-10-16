@@ -54,7 +54,8 @@ class ContactListService {
     // Transform contacts to flatten orgMember data for frontend
     const transformedContacts = contacts.map(contact => ({
       ...contact,
-      goesBy: contact.orgMember?.goesBy || contact.firstName,
+      // Priority: contact.goesBy (universal) > orgMember.goesBy (org-specific) > firstName (fallback)
+      goesBy: contact.goesBy || contact.orgMember?.goesBy || contact.firstName,
       // Add other orgMember fields if needed
       memberSince: contact.orgMember?.memberSince,
       memberType: contact.orgMember?.memberType,

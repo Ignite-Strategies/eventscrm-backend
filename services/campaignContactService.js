@@ -51,7 +51,8 @@ class CampaignContactService {
       const transformedContacts = contacts.map(contact => {
         const result = {
           ...contact,
-          goesBy: contact.orgMember?.goesBy || contact.firstName,
+          // Priority: contact.goesBy (universal) > orgMember.goesBy (org-specific) > firstName (fallback)
+          goesBy: contact.goesBy || contact.orgMember?.goesBy || contact.firstName,
           // Include only requested fields + goesBy
           id: contact.id,
           firstName: contact.firstName,
