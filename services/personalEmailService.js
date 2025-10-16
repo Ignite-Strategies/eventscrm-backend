@@ -57,7 +57,7 @@ export class GmailService {
     
     // Start building the message
     const messageParts = [
-      `From: "${fromName}" <adam.cole.novadude@gmail.com>`,  // FIXED: Use actual email address!
+      `From: "Anchorman (Adam Cole)" <adam.cole.novadude@gmail.com>`,  // HARDCODED: Anchorman for morning sends!
       `To: ${to}`,
       `Subject: ${subject}`,
       `MIME-Version: 1.0`,
