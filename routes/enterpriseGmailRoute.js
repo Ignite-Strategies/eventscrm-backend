@@ -252,12 +252,12 @@ router.post("/send-campaign", verifyGmailToken, async (req, res) => {
           .replace(/\{\{goesBy\}\}/g, contact.goesBy || contact.firstName || '')
           .replace(/\{\{email\}\}/g, contact.email || '');
         
-        // Send via Gmail with attachments
+        // Send via Gmail with attachments (use env var or default)
         const result = await gmailService.sendEmail({
           to: contact.email,
           subject: personalizedSubject,
           body: personalizedMessage,
-          fromName: "Adam Cole - F3 Capital Impact",
+          fromName: process.env.GMAIL_FROM_NAME || "Adam Cole - F3 Capital Impact",
           attachments: attachments
         });
         
