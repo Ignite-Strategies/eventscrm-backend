@@ -53,6 +53,9 @@ router.get('/', async (req, res) => {
             engagementId: true,
             createdAt: true,
             updatedAt: true
+          },
+          include: {
+            engagement: true  // Include engagement to get the VALUE
           }
         },
         // Include ALL event attendee relationships
@@ -93,6 +96,7 @@ router.get('/', async (req, res) => {
       // Org member data (if they're a member)
       orgMember: contact.orgMember || null,
       isOrgMember: !!contact.orgMember,
+      engagementValue: contact.orgMember?.engagement?.value || null,  // Hydrate engagement value!
       
       // Event attendee data (all events they've attended)
       eventAttendees: contact.eventAttendees.map(ea => ({
