@@ -93,21 +93,6 @@ router.get('/', async (req, res) => {
     });
     console.log(`🔍 DEBUG: Total Event records for orgId ${orgId}: ${totalEvents}`);
     
-    // Debug: Check first member's upcoming events
-    if (members.length > 0) {
-      const firstMember = members[0];
-      console.log(`🔍 DEBUG: First member ${firstMember.firstName} ${firstMember.lastName}:`);
-      console.log(`🔍 - upcomingEventsCount: ${firstMember.upcomingEventsCount}`);
-      console.log(`🔍 - upcomingEventNames:`, firstMember.upcomingEventNames);  // Fixed: was checking upcomingEvents
-      console.log(`🔍 - Total eventAttendees:`, orgMembers[0]?.contact?.eventAttendees?.length || 0);
-      if (orgMembers[0]?.contact?.eventAttendees?.length > 0) {
-        orgMembers[0].contact.eventAttendees.forEach((ea, idx) => {
-          const eventStatus = ea.event?.status;
-          const isUpcoming = eventStatus === "upcoming";
-          console.log(`🔍 - EventAttendee ${idx}: event=${ea.event?.name}, status=${eventStatus}, isUpcoming=${isUpcoming}`);
-        });
-      }
-    }
     
     res.json({
       success: true,

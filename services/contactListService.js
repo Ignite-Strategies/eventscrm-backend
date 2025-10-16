@@ -39,7 +39,6 @@ class ContactListService {
    * Get contacts for a list - SIMPLE!
    */
   static async getContactsForList(listId) {
-    console.log('📞 Getting contacts for list (SIMPLE):', listId);
     
     const contacts = await prisma.contact.findMany({
       where: { contactListId: listId },
@@ -62,12 +61,6 @@ class ContactListService {
       isActive: contact.orgMember?.isActive
     }));
     
-    console.log('📞 Found contacts (SIMPLE):', transformedContacts.length);
-    console.log('📞 Sample contact data:', transformedContacts[0] ? {
-      firstName: transformedContacts[0].firstName,
-      goesBy: transformedContacts[0].goesBy,
-      hasOrgMember: !!transformedContacts[0].orgMember
-    } : 'No contacts');
     
     return transformedContacts;
   }
@@ -76,7 +69,6 @@ class ContactListService {
    * Assign specific contacts to a list - SIMPLE!
    */
   static async assignContactsToList(listId, contactIds) {
-    console.log('📋 Assigning contacts to list (SIMPLE):', listId, 'count:', contactIds.length);
     
     if (!contactIds || contactIds.length === 0) {
       console.warn('⚠️ No contact IDs provided');
@@ -105,7 +97,6 @@ class ContactListService {
    * Get contact list with contacts - SIMPLE!
    */
   static async getContactListWithContacts(listId) {
-    console.log('💧 Getting contact list with contacts (SIMPLE):', listId);
     
     const contactList = await prisma.contactList.findUnique({
       where: { id: listId },
