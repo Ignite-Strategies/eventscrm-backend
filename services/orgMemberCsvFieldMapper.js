@@ -19,7 +19,14 @@ const ORG_MEMBER_FIELD_MAP = {
   'years with org': 'yearsWithOrganization',
   'yearswithorg': 'yearsWithOrganization',
   'years': 'yearsWithOrganization',
-  'tenure': 'yearsWithOrganization'
+  'tenure': 'yearsWithOrganization',
+  
+  // Chapter variations
+  'chapter responsible for': 'chapterresponsiblefor',
+  'chapter responsible': 'chapterresponsiblefor',
+  'chapter': 'chapterresponsiblefor',
+  'region': 'chapterresponsiblefor',
+  'team': 'chapterresponsiblefor'
 };
 
 /**
@@ -64,7 +71,7 @@ export function normalizeRecord(record) {
 export function getFieldMapping(headers) {
   return headers.map(header => ({
     csvHeader: header,
-    mappedField: normalizeFieldName(header)
+    mappedField: normalizeOrgMemberFieldName(header)
   }));
 }
 
@@ -84,6 +91,7 @@ export function getAvailableFields() {
     { value: 'state', label: 'State' },
     { value: 'zip', label: 'ZIP Code' },
     { value: 'employer', label: 'Employer/Company' },
-    { value: 'yearsWithOrganization', label: 'Years With Organization' }
+    { value: 'yearsWithOrganization', label: 'Years With Organization' },
+    { value: 'chapterresponsiblefor', label: 'Chapter Responsible For' }
   ];
 }

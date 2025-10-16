@@ -100,6 +100,12 @@ export const UNIVERSAL_FIELD_MAP = {
   'notes': { field: 'notes', types: ['orgMember'] },
   'comments': { field: 'notes', types: ['orgMember'] },
   
+  'chapter responsible for': { field: 'chapterresponsiblefor', types: ['orgMember'] },
+  'chapter responsible': { field: 'chapterresponsiblefor', types: ['orgMember'] },
+  'chapter': { field: 'chapterresponsiblefor', types: ['orgMember'] },
+  'region': { field: 'chapterresponsiblefor', types: ['orgMember'] },
+  'team': { field: 'chapterresponsiblefor', types: ['orgMember'] },
+  
   // === EVENT ATTENDEE SPECIFIC FIELDS ===
   'audience type': { field: 'audienceType', types: ['eventAttendee'] },
   'audience': { field: 'audienceType', types: ['eventAttendee'] },
@@ -258,7 +264,7 @@ export function splitRecordForSave(mappedRecord, uploadType) {
   
   // OrgMember fields (org-specific relationship)
   const orgMemberFields = [
-    'yearsWithOrganization', 'leadershipRole', 'originStory', 'notes', 'tags'
+    'yearsWithOrganization', 'leadershipRole', 'originStory', 'notes', 'tags', 'chapterresponsiblefor'
   ];
   
   // EventAttendee fields (event-specific relationship)
