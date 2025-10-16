@@ -57,7 +57,7 @@ export class GmailService {
     
     // Start building the message
     const messageParts = [
-      `From: ${fromName} <me>`,  // THIS WAS MISSING!
+      `From: "${fromName}" <adam.cole.novadude@gmail.com>`,  // FIXED: Use actual email address!
       `To: ${to}`,
       `Subject: ${subject}`,
       `MIME-Version: 1.0`,
