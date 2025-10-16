@@ -12,7 +12,10 @@ const prisma = getPrismaClient();
  */
 router.post('/', async (req, res) => {
   try {
-    const { orgId, firstName, lastName, email, phone } = req.body;
+    const { 
+      orgId, firstName, lastName, email, phone, goesBy,
+      employer, street, city, state, zip, notes 
+    } = req.body;
 
     if (!orgId) {
       return res.status(400).json({ error: 'orgId is required' });
@@ -26,7 +29,14 @@ router.post('/', async (req, res) => {
         firstName,
         lastName,
         email,
-        phone
+        phone: phone || null,
+        goesBy: goesBy || null,
+        employer: employer || null,
+        street: street || null,
+        city: city || null,
+        state: state || null,
+        zip: zip || null
+        // Note: 'notes' is not a Contact field, it belongs to OrgMember
       }
     });
 

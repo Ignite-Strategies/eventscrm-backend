@@ -50,7 +50,8 @@ router.get('/', async (req, res) => {
       eventId: member.contact?.eventId || null,  // Include eventId for inline editing
       
       // Extended OrgMember data
-      goesBy: member.goesBy,
+      // Priority: contact.goesBy (universal) > orgMember.goesBy (legacy) > firstName (fallback)
+      goesBy: member.contact?.goesBy || member.goesBy || member.contact?.firstName,
       street: member.street,
       city: member.city,
       state: member.state,
@@ -185,6 +186,75 @@ router.get('/:orgMemberId', async (req, res) => {
   } catch (error) {
     console.error('❌ ORG MEMBER DETAIL ERROR:', error);
     res.status(500).json({ error: 'Failed to load org member: ' + error.message });
+  }
+});
+
+/**
+ * POST / - Create OrgMember from existing Contact
+ * This is the unified endpoint for creating org members
+ */
+router.post('/', async (req, res) => {
+  try {
+    const { contactId, orgId, yearsWithOrganization, categoryOfEngagement, notes, status } = req.body;
+
+    console.log('⬆️ CREATE ORG MEMBER: contactId:', contactId, 'orgId:', orgId);
+
+    if (!contactId) {
+      return res.status(400).json({ error: 'contactId is required' });
+    }
+
+    if (!orgId) {
+      return res.status(400).json({ error: 'orgId is required' });
+    }
+
+    // Check if contact exists
+    const contact = await prisma.contact.findUnique({
+      where: { id: contactId }
+    });
+
+    if (!contact) {
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+
+    // Check if already an org member
+    const existingOrgMember = await prisma.orgMember.findFirst({
+      where: {
+        contactId: contactId,
+        orgId: orgId
+      }
+    });
+
+    if (existingOrgMember) {
+      return res.status(400).json({ error: 'Contact is already an org member' });
+    }
+
+    // Create OrgMember record
+    const orgMember = await prisma.orgMember.create({
+      data: {
+        contactId: contactId,
+        orgId: orgId,
+        yearsWithOrganization: yearsWithOrganization || 0,
+        categoryOfEngagement: categoryOfEngagement || 'general',
+        notes: notes || null
+      }
+    });
+
+    console.log('✅ Created OrgMember:', orgMember.id);
+
+    res.json({
+      success: true,
+      orgMember: {
+        id: orgMember.id,
+        contactId: orgMember.contactId,
+        orgId: orgMember.orgId,
+        yearsWithOrganization: orgMember.yearsWithOrganization,
+        notes: orgMember.notes
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error creating OrgMember:', error);
+    res.status(500).json({ error: 'Failed to create org member' });
   }
 });
 

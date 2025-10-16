@@ -30,9 +30,15 @@ model Organization {
   googleAdsConfig String? // JSON: { refreshToken, customerId, connectedAt }
   metaConfig      String? // JSON: { accessToken, pageId, connectedAt }
 
+  // ✅ NEW: Direct relations to Contact
+  contacts        Contact[]
+  pipelines       Pipeline[]
+  
+  // ⚠️ LEGACY (to be removed)
   members         OrgMember[]
   supporters      Supporter[]
   familyProspects FamilyProspect[]
+  
   events          Event[]
   templates       Template[]
   contactLists    ContactList[]
@@ -47,40 +53,107 @@ model Organization {
 model Contact {
   id String @id @default(cuid())
 
-  // Basic identity
+  // ============================================
+  // PERSONHOOD (Universal, never changes)
+  // ============================================
   firstName String
   lastName  String
   fullName  String? // Original full name for display
   email     String  @unique
   phone     String?
-
-  // Universal personhood
-  goesBy   String?
-  employer String? // Where they work (universal, not org-specific!)
+  goesBy    String?
+  
+  // Address
   street   String?
   city     String?
   state    String?
   zip      String?
-
-  // Universal family
+  
+  // Family
   birthday     String?
   married      Boolean @default(false)
   spouseName   String?
   numberOfKids Int     @default(0)
+  
+  // Work
+  employer String?
 
+  // ============================================
+  // ORG RELATIONSHIP (Simple foreign key - MVP1)
+  // ============================================
+  orgId     String?
+  org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  isOrgMember Boolean @default(false)  // Flag: is this person a "member"?
+  
+  // Org-member fields (only used if isOrgMember = true)
+  yearsWithOrganization Int?
+  leadershipRole        String?
+  orgNotes              String?
+  chapterResponsibleFor String?
+  orgTags               String[] @default([])
+  
+  // Engagement (1-4 scale)
+  engagementValue Int? // 1=undetermined, 2=low, 3=medium, 4=high
+  
+  // ============================================
+  // PIPELINE TRACKING (The core targeting mechanism!)
+  // ============================================
+  pipelineId   String?   // Which pipeline/journey they're in
+  pipeline     Pipeline? @relation(fields: [pipelineId], references: [id], onDelete: SetNull)
+  
+  audienceType String?   // Which audience segment ("org_members", "prospects", "donors", "vip")
+  currentStage String?   // Where they are in the pipeline ("aware", "invited", "rsvped", "paid", etc.)
+  
+  // ============================================
+  // EVENT RELATIONSHIP (Simple foreign key - MVP1)
+  // ============================================
+  eventId      String?
+  event        Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  
+  // Event-specific fields
+  attended     Boolean   @default(false)
+  amountPaid   Float     @default(0)
+  ticketType   String?
+  
+  // Party details
+  spouseOrOther  String? // "solo", "spouse", "other"
+  howManyInParty Int?
+  
+  // Form submission tracking
+  submittedFormId String?
+  submittedForm   PublicForm? @relation(fields: [submittedFormId], references: [id])
+
+  // ============================================
+  // OTHER RELATIONSHIPS
+  // ============================================
   contactListId String?
   contactList   ContactList? @relation(fields: [contactListId], references: [id])
 
-  eventAttendees   EventAttendee[]
-  orgMember        OrgMember?
   sequenceContacts SequenceContact[]
   emailEvents      EmailEvent[]
 
+  // ============================================
+  // METADATA
+  // ============================================
+  firebaseId String? @unique  // For login
+  photoURL   String?
+  role       String?          // System role
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([email])
+  @@index([orgId])
+  @@index([eventId])
+  @@index([pipelineId])
+  @@index([firebaseId])
   @@index([contactListId])
+  @@index([orgId, isOrgMember])           // Fast org member queries
+  @@index([eventId, currentStage])         // Fast event attendee queries
+  @@index([pipelineId, currentStage])      // Fast pipeline stage queries
+  @@index([pipelineId, audienceType])      // Fast pipeline audience queries
+  @@index([pipelineId, audienceType, currentStage])  // Fast pipeline targeting
 }
 
 model Engagement {
@@ -121,11 +194,11 @@ model LeadershipRole {
 
 model OrgMember {
   id        String   @id @default(cuid())
-  contactId String?  @unique
-  contact   Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String   // 🔥 NO @unique! One Contact can be in MANY orgs
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
-  orgId String?
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId String
+  org   Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
 
   // Org-specific fields ONLY (relationship to THIS org)
   yearsWithOrganization Int?
@@ -137,7 +210,6 @@ model OrgMember {
   photoURL              String?
   tags                  String[] @default([])
   chapterresponsiblefor String? // Chapter/region/team responsible for (e.g., "Los Angeles", "Manhattan", "Product Team")
-  upcomingEventId       String? // Upcoming event this org member is assigned to
 
   // Engagement level (relationship to THIS org)
   engagementId String? 
@@ -146,6 +218,7 @@ model OrgMember {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([contactId, orgId]) // 🔥 One membership per Contact per Org
   @@index([contactId])
   @@index([firebaseId])
   @@index([orgId])
@@ -246,7 +319,12 @@ model Event {
   adsTargetCount        Int   @default(0)
   totalOutreachTarget   Int   @default(0)
 
+  // ✅ NEW: Direct relation to Contact
+  contacts        Contact[]
+  
+  // ⚠️ LEGACY (to be removed)
   attendees       EventAttendee[]
+  
   tasks           EventTask[]
   publicForms     PublicForm[]
   eventForms      EventForm[]
@@ -659,6 +737,29 @@ model EventTask {
 
   @@index([eventId])
   @@index([eventId, completed])
+}
+
+model Pipeline {
+  id      String @id @default(cuid())
+  orgId   String
+  org     Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  name    String  // "Nurture Pipeline 2024", "Event Funnel - Bros & Brews"
+  type    String  // "event", "nurture", "donor"
+  
+  // Pipeline definition
+  audiences String[]  // ["org_members", "prospects", "donors"]
+  stages    String[]  // ["aware", "invited", "rsvped", "paid", "attended"]
+  
+  // Contacts in this pipeline
+  contacts Contact[]
+  
+  isActive  Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([orgId])
+  @@index([type])
 }
 
 model PipelineEventConfig {
