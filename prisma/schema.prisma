@@ -99,6 +99,9 @@ model Contact {
   orgId      String?
   org        Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
   
+  contactListId String?
+  contactList   ContactList? @relation(fields: [contactListId], references: [id], onDelete: SetNull)
+  
   // Reverse relation - orgs where this contact is the primary
   ownedOrgs Organization[] @relation("OrgPrimaryContact")
   
