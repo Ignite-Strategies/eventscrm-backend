@@ -16,8 +16,6 @@ import templateRouter from './routes/templatesRoute.js';
 import orgMemberFormRouter from './routes/orgMemberFormRoute.js';
 import orgMembersHydrateRouter from './routes/orgMembersHydrateRoute.js';
 import listHydrationRouter from './routes/listHydrationRoute.js'; // List + Campaign hydration
-import eventAttendeeUpdateRouter from './routes/eventAttendeeUpdateRoute.js'; // UPDATE: EventAttendee updates
-import eventAttendeesRouter from './routes/eventAttendeesRoute.js'; // GET EventAttendees
 import pipelineConfigRouter from './routes/pipelineConfigRoute.js'; // Pipeline config from database
 import orgMemberCreateRouter from './routes/orgMemberCreateRoute.js'; // NEW: Create OrgMember from Contact
 import formResponsesRouter from './routes/formResponsesRoute.js'; // NEW: Form responses by event
@@ -63,8 +61,6 @@ app.use('/api/templates', templateRouter);
 app.use('/api/org-member-form', orgMemberFormRouter);
 app.use('/api/orgmembers', orgMembersHydrateRouter);  // ✅ Org Members Hydration
 app.use('/api/list-hydration', listHydrationRouter);  // ✅ List + Campaign Hydration
-app.use('/api/event-attendee-update', eventAttendeeUpdateRouter);
-app.use('/api/events', eventAttendeesRouter); // GET /events/:eventId/attendees
 app.use('/api/pipeline-config', pipelineConfigRouter);
 app.use('/api/org-member-create', orgMemberCreateRouter);
 app.use('/api/form-responses', formResponsesRouter);
