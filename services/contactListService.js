@@ -111,6 +111,62 @@ class ContactListService {
       contactCount: contacts.length
     };
   }
+
+  /**
+   * Update contact count for a list - FIXES STALE COUNTS!
+   */
+  static async updateContactCount(contactList) {
+    if (!contactList) {
+      console.warn('⚠️ No contact list provided for count update');
+      return;
+    }
+
+    try {
+      // Count actual contacts in the list
+      const actualCount = await prisma.contact.count({
+        where: { contactListId: contactList.id }
+      });
+
+      // Update the count if it's different
+      if (actualCount !== contactList.totalContacts) {
+        await prisma.contactList.update({
+          where: { id: contactList.id },
+          data: { 
+            totalContacts: actualCount,
+            lastUpdated: new Date()
+          }
+        });
+
+        console.log(`📊 Updated contact count for "${contactList.name}": ${contactList.totalContacts} → ${actualCount}`);
+      }
+
+      return actualCount;
+    } catch (error) {
+      console.error('❌ Error updating contact count:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update contact count for a specific list ID
+   */
+  static async updateContactCountById(listId) {
+    try {
+      const contactList = await prisma.contactList.findUnique({
+        where: { id: listId }
+      });
+
+      if (!contactList) {
+        console.warn(`⚠️ Contact list ${listId} not found`);
+        return 0;
+      }
+
+      return await this.updateContactCount(contactList);
+    } catch (error) {
+      console.error('❌ Error updating contact count by ID:', error);
+      throw error;
+    }
+  }
 }
 
 export default ContactListService;

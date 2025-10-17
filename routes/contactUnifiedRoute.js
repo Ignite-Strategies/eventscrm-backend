@@ -221,11 +221,34 @@ router.delete('/:contactId', async (req, res) => {
 
     console.log('🗑️  Deleting contact:', contactId);
 
+    // Get the contact first to find which list it belongs to
+    const contact = await prisma.contact.findUnique({
+      where: { id: contactId },
+      select: { contactListId: true }
+    });
+
+    if (!contact) {
+      return res.status(404).json({ error: 'Contact not found' });
+    }
+
+    // Delete the contact
     await prisma.contact.delete({
       where: { id: contactId }
     });
 
     console.log('✅ Contact deleted');
+
+    // Update contact count for the list if the contact was in one
+    if (contact.contactListId) {
+      try {
+        const ContactListService = (await import('../services/contactListService.js')).default;
+        await ContactListService.updateContactCountById(contact.contactListId);
+        console.log('📊 Updated contact count for list:', contact.contactListId);
+      } catch (countError) {
+        console.error('⚠️ Error updating contact count:', countError);
+        // Don't fail the deletion if count update fails
+      }
+    }
 
     res.json({
       success: true,

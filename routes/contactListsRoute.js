@@ -383,4 +383,62 @@ router.post("/from-selection", async (req, res) => {
   }
 });
 
+// POST /contact-lists/refresh-all-counts - Refresh contact counts for all lists (FIXES STALE DATA!)
+router.post("/refresh-all-counts", async (req, res) => {
+  try {
+    const { orgId } = req.body;
+    
+    if (!orgId) {
+      return res.status(400).json({ error: "orgId is required" });
+    }
+    
+    console.log('🔄 Refreshing contact counts for all lists in org:', orgId);
+    
+    // Get all contact lists for the org
+    const contactLists = await prisma.contactList.findMany({
+      where: { orgId, isActive: true }
+    });
+    
+    console.log(`📊 Found ${contactLists.length} contact lists to refresh`);
+    
+    const results = [];
+    
+    // Update count for each list
+    for (const list of contactLists) {
+      try {
+        const actualCount = await ContactListService.updateContactCount(list);
+        results.push({
+          listId: list.id,
+          listName: list.name,
+          oldCount: list.totalContacts,
+          newCount: actualCount,
+          updated: actualCount !== list.totalContacts
+        });
+      } catch (error) {
+        console.error(`❌ Error updating count for list ${list.name}:`, error);
+        results.push({
+          listId: list.id,
+          listName: list.name,
+          error: error.message
+        });
+      }
+    }
+    
+    const updatedCount = results.filter(r => r.updated).length;
+    
+    console.log(`✅ Refreshed ${updatedCount} lists with stale counts`);
+    
+    res.json({
+      success: true,
+      message: `Refreshed contact counts for ${contactLists.length} lists`,
+      updated: updatedCount,
+      results
+    });
+    
+  } catch (error) {
+    console.error("Error refreshing contact counts:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
