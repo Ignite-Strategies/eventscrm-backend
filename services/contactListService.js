@@ -42,28 +42,15 @@ class ContactListService {
     
     const contacts = await prisma.contact.findMany({
       where: { contactListId: listId },
-      include: {
-        orgMember: true
-      },
       orderBy: [
         { firstName: 'asc' },
         { lastName: 'asc' }
       ]
     });
     
-    // Transform contacts to flatten orgMember data for frontend
-    const transformedContacts = contacts.map(contact => ({
-      ...contact,
-      // Priority: contact.goesBy (universal) > orgMember.goesBy (org-specific) > firstName (fallback)
-      goesBy: contact.goesBy || contact.orgMember?.goesBy || contact.firstName,
-      // Add other orgMember fields if needed
-      memberSince: contact.orgMember?.memberSince,
-      memberType: contact.orgMember?.memberType,
-      isActive: contact.orgMember?.isActive
-    }));
+    console.log(`✅ Found ${contacts.length} contacts for list ${listId}`);
     
-    
-    return transformedContacts;
+    return contacts;
   }
   
   /**
