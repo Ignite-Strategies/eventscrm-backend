@@ -100,11 +100,11 @@ export const UNIVERSAL_FIELD_MAP = {
   'notes': { field: 'notes', types: ['contact', 'orgMember'] },
   'comments': { field: 'notes', types: ['contact', 'orgMember'] },
   
-  'chapter responsible for': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
-  'chapter responsible': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
-  'chapter': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
-  'region': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
-  'team': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
+  'chapter responsible for': { field: 'chapterResponsibleFor', types: ['contact', 'orgMember'] },
+  'chapter responsible': { field: 'chapterResponsibleFor', types: ['contact', 'orgMember'] },
+  'chapter': { field: 'chapterResponsibleFor', types: ['contact', 'orgMember'] },
+  'region': { field: 'chapterResponsibleFor', types: ['contact', 'orgMember'] },
+  'team': { field: 'chapterResponsibleFor', types: ['contact', 'orgMember'] },
   
   // === EVENT ATTENDEE SPECIFIC FIELDS ===
   'audience type': { field: 'audienceType', types: ['contact', 'eventAttendee'] },
@@ -282,7 +282,7 @@ export function mapCsvToContact(mappedRecord, uploadType, orgId, eventId) {
     originStory: mappedRecord.originStory || '',
     notes: mappedRecord.notes || '',
     tags: mappedRecord.tags || '',
-    chapterResponsibleFor: mappedRecord.chapterresponsiblefor || mappedRecord.chapterResponsible || '',
+    chapterResponsibleFor: mappedRecord.chapterResponsibleFor || '',
     
     // Event-specific fields (now in Contact!)
     currentStage: mappedRecord.currentStage || 'aware',
