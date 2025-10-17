@@ -289,9 +289,9 @@ export function mapCsvToContact(mappedRecord, uploadType, orgId, eventId) {
     audienceType: mappedRecord.audienceType || 'org_members',
     attended: mappedRecord.attended || false, // Boolean field, default to false
     ticketType: mappedRecord.ticketType || '',
-    amountPaid: mappedRecord.amountPaid || null,
+    amountPaid: mappedRecord.amountPaid || 0, // Float field, default to 0
     spouseOrOther: mappedRecord.spouseOrOther || '',
-    howManyInParty: mappedRecord.howManyInParty || null,
+    howManyInParty: mappedRecord.howManyInParty || undefined, // Int? field, use undefined
     
     // CONTACT-FIRST: Set containerId, orgId, eventId
     containerId: containerId,
