@@ -55,6 +55,13 @@ router.get('/', async (req, res) => {
     });
     console.log('🔍 DEBUG: Existing orgIds:', orgIds.map(c => c.orgId));
 
+    // DEBUG: Check what containerIds exist
+    const containerIds = await prisma.contact.findMany({
+      select: { containerId: true },
+      distinct: ['containerId']
+    });
+    console.log('🔍 DEBUG: Existing containerIds:', containerIds.map(c => c.containerId));
+
     // Build dynamic where clause
     const where = {};
     
