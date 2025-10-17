@@ -72,10 +72,10 @@ model Organization {
 model Contact {
   id String @id @default(cuid())
 
-  // PERSONHOOD
-  firstName String
-  lastName  String
-  email     String  @unique
+  // PERSONHOOD - ONLY EMAIL IS REQUIRED!
+  firstName String?
+  lastName  String?
+  email     String  @unique  // 🔥 ONLY REQUIRED FIELD!
   phone     String?
   goesBy    String?
   street    String?
@@ -83,7 +83,7 @@ model Contact {
   state     String?
   zip       String?
   birthday  String?
-  married   Boolean @default(false)
+  married   Boolean?
   spouseName String?
   numberOfKids Int?
   employer  String?
@@ -121,9 +121,9 @@ model Contact {
   audienceType String?
   currentStage String?
   
-  // EVENT DETAILS
-  attended     Boolean @default(false)
-  amountPaid   Float @default(0)
+  // EVENT DETAILS - ALL OPTIONAL!
+  attended     Boolean?
+  amountPaid   Float?
   spouseOrOther String?
   howManyInParty Int?
   

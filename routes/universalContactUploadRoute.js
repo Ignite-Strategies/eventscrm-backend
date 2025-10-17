@@ -202,10 +202,10 @@ router.post('/save', upload.single('file'), async (req, res) => {
               phone: contactData.phone || null,
               goesBy: contactData.goesBy || null,
               
-              // Safe defaults for required fields
-              married: contactData.married || false,
-              attended: contactData.attended || false,
-              amountPaid: contactData.amountPaid || 0,
+              // Optional fields (only if they have values)
+              ...(contactData.married !== undefined && { married: contactData.married }),
+              ...(contactData.attended !== undefined && { attended: contactData.attended }),
+              ...(contactData.amountPaid !== undefined && { amountPaid: contactData.amountPaid }),
               
               // Optional fields (only if they have values)
               ...(contactData.street && { street: contactData.street }),

@@ -272,9 +272,9 @@ export function mapCsvToContact(mappedRecord, uploadType, orgId, eventId) {
     state: mappedRecord.state || '',
     zip: mappedRecord.zip || '',
     birthday: mappedRecord.birthday || null,
-    married: mappedRecord.married || false, // Boolean field, default to false
-    spouseName: mappedRecord.spouseName || '',
-          numberOfKids: mappedRecord.numberOfKids || undefined,
+    married: mappedRecord.married || undefined, // Now optional Boolean
+    spouseName: mappedRecord.spouseName || undefined,
+    numberOfKids: mappedRecord.numberOfKids || undefined,
     
     // Org-specific fields (now in Contact!)
     yearsWithOrganization: mappedRecord.yearsWithOrganization || null,
@@ -287,10 +287,10 @@ export function mapCsvToContact(mappedRecord, uploadType, orgId, eventId) {
     // Event-specific fields (now in Contact!)
     currentStage: mappedRecord.currentStage || 'aware',
     audienceType: mappedRecord.audienceType || 'org_members',
-    attended: mappedRecord.attended || false, // Boolean field, default to false
-    ticketType: mappedRecord.ticketType || '',
-    amountPaid: mappedRecord.amountPaid || 0, // Float field, default to 0
-    spouseOrOther: mappedRecord.spouseOrOther || '',
+    attended: mappedRecord.attended || undefined, // Now optional Boolean
+    ticketType: mappedRecord.ticketType || undefined,
+    amountPaid: mappedRecord.amountPaid || undefined, // Now optional Float
+    spouseOrOther: mappedRecord.spouseOrOther || undefined,
     howManyInParty: mappedRecord.howManyInParty || undefined, // Int? field, use undefined
     
     // CONTACT-FIRST: Set containerId, orgId, eventId
