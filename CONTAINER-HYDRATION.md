@@ -116,3 +116,4 @@ WHERE "eventId" IS NULL;
 1. Run the SQL updates to populate `orgId` and `eventId`
 2. Verify all contacts have the same `containerId`
 3. Check foreign key constraints are satisfied
+

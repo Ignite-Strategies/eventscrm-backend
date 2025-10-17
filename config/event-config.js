@@ -21,3 +21,4 @@ export const getAllEvents = () => {
 };
 
 export default EVENT_CONFIG;
+

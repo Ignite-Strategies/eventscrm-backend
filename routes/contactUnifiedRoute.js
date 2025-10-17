@@ -146,29 +146,27 @@ router.get('/:contactId', async (req, res) => {
 // ============================================
 router.post('/', async (req, res) => {
   try {
-    const { email, containerId, ...contactData } = req.body;
+    const { email, containerId, orgId, ...contactData } = req.body;
 
-    console.log('💾 Saving contact:', email, 'with containerId:', containerId);
+    console.log('💾 Saving contact:', email, 'containerId:', containerId, 'orgId:', orgId);
 
-    // Generate unique containerId from the container name
-    const uniqueContainerId = containerId 
-      ? `${containerId.replace(/\s+/g, '_')}_${Date.now()}` 
-      : `default_container_${Date.now()}`;
-
+    // Everyone lives in a container AND has an org!
     const contact = await prisma.contact.upsert({
       where: { email },
       update: {
         ...contactData,
-        containerId: uniqueContainerId
+        containerId: containerId || 'cmgu7w02h0000ceaqt7iz6bf9', // Default F3 CRM container
+        orgId: orgId // Org membership
       },
       create: {
         email,
-        containerId: uniqueContainerId,
+        containerId: containerId || 'cmgu7w02h0000ceaqt7iz6bf9', // Default F3 CRM container
+        orgId: orgId, // Org membership
         ...contactData
       }
     });
 
-    console.log(`✅ Contact ${contact.id} saved with containerId: ${contact.containerId}`);
+    console.log(`✅ Contact ${contact.id} saved with containerId: ${contact.containerId}, orgId: ${contact.orgId}`);
 
     res.json({
       success: true,
