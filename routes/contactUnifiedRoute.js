@@ -42,6 +42,7 @@ router.get('/', async (req, res) => {
         firstName: true, 
         lastName: true, 
         email: true, 
+        containerId: true,
         orgId: true,
         eventId: true
       }
@@ -66,8 +67,11 @@ router.get('/', async (req, res) => {
     const where = {};
     
     // Filter by containerId (long-term solution!) or orgId (legacy)
-    if (containerId) where.containerId = containerId;
-    else if (orgId) where.orgId = orgId;
+    if (containerId) {
+      where.containerId = containerId;
+    } else if (orgId) {
+      where.orgId = orgId;
+    }
     if (eventId) where.eventId = eventId;
     if (audienceType) where.audienceType = audienceType;
     if (currentStage) where.currentStage = currentStage;
@@ -201,7 +205,12 @@ router.patch('/:contactId', async (req, res) => {
 
   } catch (error) {
     console.error('❌ Error updating contact:', error);
-    res.status(500).json({ error: 'Failed to update contact' });
+    console.error('❌ Full error details:', error.message);
+    console.error('❌ Error code:', error.code);
+    res.status(500).json({ 
+      error: 'Failed to update contact',
+      details: error.message 
+    });
   }
 });
 
