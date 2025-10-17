@@ -94,6 +94,9 @@ model Contact {
   leadershipRole        String?
   engagementValue       Int?
   orgTags               String[] @default([])
+  originStory           String?  // How they got involved with THIS org
+  notes                 String?  // General notes about this contact
+  tags                  String?  // Comma-separated tags
   
   // FOREIGN KEYS (that's it!)
   orgId      String?
@@ -126,6 +129,7 @@ model Contact {
   amountPaid   Float?
   spouseOrOther String?
   howManyInParty Int?
+  ticketType   String?  // Type of ticket/registration
   
   // OTHER
   sequenceContacts SequenceContact[]
