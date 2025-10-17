@@ -18,6 +18,7 @@ router.get('/', async (req, res) => {
   try {
     const { 
       orgId, 
+      containerId,
       eventId, 
       audienceType,
       currentStage,
@@ -57,7 +58,9 @@ router.get('/', async (req, res) => {
     // Build dynamic where clause
     const where = {};
     
-    // DON'T FILTER BY ORGID - GET ALL CONTACTS!
+    // Filter by containerId (long-term solution!) or orgId (legacy)
+    if (containerId) where.containerId = containerId;
+    else if (orgId) where.orgId = orgId;
     if (eventId) where.eventId = eventId;
     if (audienceType) where.audienceType = audienceType;
     if (currentStage) where.currentStage = currentStage;

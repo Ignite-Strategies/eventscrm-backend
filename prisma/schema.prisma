@@ -79,6 +79,8 @@ model Contact {
   orgId      String?
   org        Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
   
+  containerId String? // NEW: Groups contacts by organization/container
+  
   eventId    String?
   event      Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
   
