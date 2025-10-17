@@ -100,11 +100,11 @@ export const UNIVERSAL_FIELD_MAP = {
   'notes': { field: 'notes', types: ['orgMember'] },
   'comments': { field: 'notes', types: ['orgMember'] },
   
-  'chapter responsible for': { field: 'chapterresponsiblefor', types: ['orgMember'] },
-  'chapter responsible': { field: 'chapterresponsiblefor', types: ['orgMember'] },
-  'chapter': { field: 'chapterresponsiblefor', types: ['orgMember'] },
-  'region': { field: 'chapterresponsiblefor', types: ['orgMember'] },
-  'team': { field: 'chapterresponsiblefor', types: ['orgMember'] },
+  'chapter responsible for': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
+  'chapter responsible': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
+  'chapter': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
+  'region': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
+  'team': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
   
   // === EVENT ATTENDEE SPECIFIC FIELDS ===
   'audience type': { field: 'audienceType', types: ['eventAttendee'] },
