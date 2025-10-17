@@ -33,6 +33,20 @@ router.get('/', async (req, res) => {
     const totalContacts = await prisma.contact.count();
     console.log('🔍 DEBUG: Total contacts in database:', totalContacts);
 
+    // DEBUG: Get ALL contacts to see what's there
+    const allContacts = await prisma.contact.findMany({
+      take: 5,
+      select: { 
+        id: true, 
+        firstName: true, 
+        lastName: true, 
+        email: true, 
+        orgId: true,
+        eventId: true
+      }
+    });
+    console.log('🔍 DEBUG: Sample contacts:', allContacts);
+
     // DEBUG: Check what orgIds exist
     const orgIds = await prisma.contact.findMany({
       select: { orgId: true },
