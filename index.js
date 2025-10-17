@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 
 // Import database connection
 import { connectDatabase } from './config/database.js';
+import seedContainer from './scripts/seed-container.js';
 
 // Import all routes
 import orgRouter from './routes/orgsRoute.js';

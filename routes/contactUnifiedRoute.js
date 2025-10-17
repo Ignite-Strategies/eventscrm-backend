@@ -135,20 +135,29 @@ router.get('/:contactId', async (req, res) => {
 // ============================================
 router.post('/', async (req, res) => {
   try {
-    const { email, ...contactData } = req.body;
+    const { email, containerId, ...contactData } = req.body;
 
-    console.log('💾 Saving contact:', email);
+    console.log('💾 Saving contact:', email, 'with containerId:', containerId);
+
+    // Generate unique containerId from the container name
+    const uniqueContainerId = containerId 
+      ? `${containerId.replace(/\s+/g, '_')}_${Date.now()}` 
+      : `default_container_${Date.now()}`;
 
     const contact = await prisma.contact.upsert({
       where: { email },
-      update: contactData,
+      update: {
+        ...contactData,
+        containerId: uniqueContainerId
+      },
       create: {
         email,
+        containerId: uniqueContainerId,
         ...contactData
       }
     });
 
-    console.log(`✅ Contact ${contact.id} saved`);
+    console.log(`✅ Contact ${contact.id} saved with containerId: ${contact.containerId}`);
 
     res.json({
       success: true,

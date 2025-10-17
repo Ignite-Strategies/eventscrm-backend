@@ -7,6 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Container {
+  id      String  @id @default(cuid())
+  name    String
+  slug    String  @unique
+  description String?
+
+  // Direct relations to Contact
+  contacts Contact[]
+  
+  // Reference to primary contact (who owns this container)
+  primaryContactId String?
+  primaryContact   Contact? @relation("ContainerPrimaryContact", fields: [primaryContactId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Organization {
   id      String  @id @default(cuid())
   name    String
@@ -32,6 +49,9 @@ model Organization {
 
   // ✅ NEW: Direct relations to Contact
   contacts        Contact[]
+  
+  // Reverse relation - contacts where this org is the primary
+  primaryContacts Contact[] @relation("OrgPrimaryContact")
   
   // ⚠️ LEGACY (to be removed)
   members         OrgMember[]
@@ -79,10 +99,20 @@ model Contact {
   orgId      String?
   org        Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
   
-  containerId String? // NEW: Groups contacts by organization/container
+  // Reverse relation - orgs where this contact is the primary
+  ownedOrgs Organization[] @relation("OrgPrimaryContact")
+  
+  containerId String?
+  container   Container? @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  
+  // Reverse relation - containers where this contact is the primary
+  ownedContainers Container[] @relation("ContainerPrimaryContact")
   
   eventId    String?
   event      Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  
+  // Reverse relation - events where this contact is the primary
+  ownedEvents Event[] @relation("EventPrimaryContact")
   
   // TARGETING
   audienceType String?
@@ -278,6 +308,9 @@ model Event {
 
   // ✅ NEW: Direct relation to Contact
   contacts        Contact[]
+  
+  // Reverse relation - contacts where this event is the primary
+  primaryContacts Contact[] @relation("EventPrimaryContact")
   
   // ⚠️ LEGACY (to be removed)
   attendees       EventAttendee[]
