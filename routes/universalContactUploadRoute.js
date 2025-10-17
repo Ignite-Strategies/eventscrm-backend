@@ -141,9 +141,15 @@ router.post('/save', upload.single('file'), async (req, res) => {
     const validRecords = [];
     const errors = [];
 
+    console.log('📊 CSV Records to process:', readResult.records.length);
+    console.log('📊 First record sample:', readResult.records[0]);
+
     for (const record of readResult.records) {
       const mapped = mapFieldsForType(record, uploadType);
       const validation = validateMappedRecord(mapped, uploadType);
+      
+      console.log('📊 Mapped record:', mapped);
+      console.log('📊 Validation result:', validation);
       
       if (validation.isValid) {
         validRecords.push(mapped);
@@ -155,6 +161,9 @@ router.post('/save', upload.single('file'), async (req, res) => {
       }
     }
 
+    console.log('📊 Valid records:', validRecords.length);
+    console.log('📊 Errors:', errors.length);
+
     // 3. CONTACT-FIRST SAVE: Everything goes into Contact model!
     let contactResults = [];
     let contactsCreated = 0;
@@ -162,8 +171,12 @@ router.post('/save', upload.single('file'), async (req, res) => {
 
     for (const record of validRecords) {
       try {
+        console.log('💾 Processing record:', record);
+        
         // CONTACT-FIRST: Everything goes into Contact model with containerId/orgId/eventId!
         const { contactData } = splitRecordForSave(record, uploadType, orgId, eventId);
+        
+        console.log('💾 Contact data to save:', contactData);
 
         // Upsert Contact with ALL data
         const existingContact = await prisma.contact.findUnique({
