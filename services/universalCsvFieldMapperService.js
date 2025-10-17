@@ -272,7 +272,7 @@ export function splitRecordForSave(mappedRecord, uploadType, orgId, eventId) {
     state: mappedRecord.state || '',
     zip: mappedRecord.zip || '',
     birthday: mappedRecord.birthday || null,
-    married: mappedRecord.married || null,
+    married: mappedRecord.married || false, // Boolean field, default to false
     spouseName: mappedRecord.spouseName || '',
     numberOfKids: mappedRecord.numberOfKids || null,
     
@@ -287,7 +287,7 @@ export function splitRecordForSave(mappedRecord, uploadType, orgId, eventId) {
     // Event-specific fields (now in Contact!)
     currentStage: mappedRecord.currentStage || 'aware',
     audienceType: mappedRecord.audienceType || 'org_members',
-    attended: mappedRecord.attended || false,
+    attended: mappedRecord.attended || false, // Boolean field, default to false
     ticketType: mappedRecord.ticketType || '',
     amountPaid: mappedRecord.amountPaid || null,
     spouseOrOther: mappedRecord.spouseOrOther || '',
