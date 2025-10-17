@@ -16,7 +16,8 @@
     "db:check": "node scripts/checkDatabase.js",
     "db:migrate-contacts": "node scripts/migrateOrgMembersToContacts.js",
     "db:studio": "npx prisma studio",
-    "postinstall": "npx prisma generate && npx prisma db push --accept-data-loss && npm run db:seed-engagement && npm run db:seed-leadership"
+    "pre-migration": "node scripts/pre-migration-fix.js",
+    "postinstall": "npm run pre-migration && npx prisma generate && npx prisma db push --accept-data-loss && npm run db:seed-engagement && npm run db:seed-leadership && node scripts/seed-container.js"
   },
   "dependencies": {
     "@paralleldrive/cuid2": "^2.2.2",
