@@ -178,24 +178,64 @@ router.post('/save', upload.single('file'), async (req, res) => {
         
         console.log('💾 Contact data to save:', contactData);
 
-        // Upsert Contact with ALL data
+        // 🔥 FIND FIRST, THEN UPDATE OR CREATE!
         const existingContact = await prisma.contact.findUnique({
           where: { email: contactData.email }
         });
         
-        const contact = await prisma.contact.upsert({
-          where: { email: contactData.email },
-          update: contactData,
-          create: contactData
-        });
-
-        contactResults.push(contact);
-        
+        let contact;
         if (existingContact) {
+          // UPDATE: Only update the fields we have data for
+          contact = await prisma.contact.update({
+            where: { email: contactData.email },
+            data: contactData
+          });
           contactsUpdated++;
         } else {
+          // CREATE: Only create with essential fields + safe defaults
+          contact = await prisma.contact.create({
+            data: {
+              // Essential fields
+              firstName: contactData.firstName,
+              lastName: contactData.lastName,
+              email: contactData.email,
+              phone: contactData.phone || null,
+              goesBy: contactData.goesBy || null,
+              
+              // Safe defaults for required fields
+              married: contactData.married || false,
+              attended: contactData.attended || false,
+              amountPaid: contactData.amountPaid || 0,
+              
+              // Optional fields (only if they have values)
+              ...(contactData.street && { street: contactData.street }),
+              ...(contactData.city && { city: contactData.city }),
+              ...(contactData.state && { state: contactData.state }),
+              ...(contactData.zip && { zip: contactData.zip }),
+              ...(contactData.birthday && { birthday: contactData.birthday }),
+              ...(contactData.spouseName && { spouseName: contactData.spouseName }),
+              ...(contactData.numberOfKids !== undefined && { numberOfKids: contactData.numberOfKids }),
+              ...(contactData.employer && { employer: contactData.employer }),
+              ...(contactData.yearsWithOrganization && { yearsWithOrganization: contactData.yearsWithOrganization }),
+              ...(contactData.leadershipRole && { leadershipRole: contactData.leadershipRole }),
+              ...(contactData.engagementValue && { engagementValue: contactData.engagementValue }),
+              ...(contactData.chapterResponsible && { chapterResponsible: contactData.chapterResponsible }),
+              ...(contactData.currentStage && { currentStage: contactData.currentStage }),
+              ...(contactData.audienceType && { audienceType: contactData.audienceType }),
+              ...(contactData.ticketType && { ticketType: contactData.ticketType }),
+              ...(contactData.spouseOrOther && { spouseOrOther: contactData.spouseOrOther }),
+              ...(contactData.howManyInParty !== undefined && { howManyInParty: contactData.howManyInParty }),
+              
+              // Always set these
+              containerId: contactData.containerId,
+              orgId: contactData.orgId,
+              eventId: contactData.eventId
+            }
+          });
           contactsCreated++;
         }
+
+        contactResults.push(contact);
 
         console.log(`✅ Contact processed: ${contact.email} (${existingContact ? 'updated' : 'created'})`);
 
