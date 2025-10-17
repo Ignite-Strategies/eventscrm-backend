@@ -282,7 +282,7 @@ export function mapCsvToContact(mappedRecord, uploadType, orgId, eventId) {
     originStory: mappedRecord.originStory || '',
     notes: mappedRecord.notes || '',
     tags: mappedRecord.tags || '',
-    chapterResponsible: mappedRecord.chapterresponsiblefor || mappedRecord.chapterResponsible || '',
+    chapterResponsibleFor: mappedRecord.chapterresponsiblefor || mappedRecord.chapterResponsible || '',
     
     // Event-specific fields (now in Contact!)
     currentStage: mappedRecord.currentStage || 'aware',
