@@ -272,5 +272,40 @@ router.post('/move-stage', async (req, res) => {
   }
 });
 
+// ============================================
+// GET /contacts/debug-all - Get ALL contacts (no filters)
+// ============================================
+router.get('/debug-all', async (req, res) => {
+  try {
+    console.log('🔍 DEBUG: Getting ALL contacts from Contact table');
+
+    const allContacts = await prisma.contact.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        orgId: true,
+        eventId: true,
+        currentStage: true,
+        audienceType: true
+      }
+    });
+
+    console.log(`🔍 DEBUG: Found ${allContacts.length} total contacts`);
+    console.log('🔍 DEBUG: First 3 contacts:', allContacts.slice(0, 3));
+
+    res.json({
+      success: true,
+      totalCount: allContacts.length,
+      contacts: allContacts
+    });
+
+  } catch (error) {
+    console.error('❌ Debug error:', error);
+    res.status(500).json({ error: 'Failed to get all contacts' });
+  }
+});
+
 export default router;
 
