@@ -57,7 +57,7 @@ router.get('/', async (req, res) => {
     // Build dynamic where clause
     const where = {};
     
-    if (orgId) where.orgId = orgId;
+    // DON'T FILTER BY ORGID - GET ALL CONTACTS!
     if (eventId) where.eventId = eventId;
     if (audienceType) where.audienceType = audienceType;
     if (currentStage) where.currentStage = currentStage;
@@ -77,41 +77,11 @@ router.get('/', async (req, res) => {
 
     console.log('📋 UNIFIED CONTACTS QUERY:', where);
 
-    // If orgId is provided, we need to get contacts through OrgMember relationship
-    let contacts;
-    if (orgId) {
-      console.log('🔍 Getting contacts via OrgMember for orgId:', orgId);
-      
-      // Get all OrgMembers for this org, then get their Contact data
-      const orgMembers = await prisma.orgMember.findMany({
-        where: { orgId },
-        include: {
-          // This will fail because there's no direct relation - we need to manually join
-        }
-      });
-      
-      console.log('📋 Found orgMembers:', orgMembers.length);
-      
-      // Get contactIds from orgMembers
-      const contactIds = orgMembers.map(om => om.contactId).filter(Boolean);
-      console.log('📋 ContactIds from orgMembers:', contactIds);
-      
-      // Get contacts by contactIds
-      contacts = await prisma.contact.findMany({
-        where: {
-          id: { in: contactIds },
-          ...where // Apply other filters to contacts
-        },
-        orderBy: { createdAt: 'desc' }
-      });
-      
-    } else {
-      // No orgId - get all contacts directly
-      contacts = await prisma.contact.findMany({
-        where,
-        orderBy: { createdAt: 'desc' }
-      });
-    }
+    // SIMPLE: Just get all contacts directly - no complex joins needed
+    const contacts = await prisma.contact.findMany({
+      where,
+      orderBy: { createdAt: 'desc' }
+    });
 
     console.log(`✅ Found ${contacts.length} contacts`);
 
