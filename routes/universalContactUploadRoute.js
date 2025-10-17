@@ -219,7 +219,7 @@ router.post('/save', upload.single('file'), async (req, res) => {
               ...(contactData.yearsWithOrganization && { yearsWithOrganization: contactData.yearsWithOrganization }),
               ...(contactData.leadershipRole && { leadershipRole: contactData.leadershipRole }),
               ...(contactData.engagementValue && { engagementValue: contactData.engagementValue }),
-              ...(contactData.chapterResponsible && { chapterResponsible: contactData.chapterResponsible }),
+              ...(contactData.chapterResponsibleFor && { chapterResponsibleFor: contactData.chapterResponsibleFor }),
               ...(contactData.currentStage && { currentStage: contactData.currentStage }),
               ...(contactData.audienceType && { audienceType: contactData.audienceType }),
               ...(contactData.ticketType && { ticketType: contactData.ticketType }),
