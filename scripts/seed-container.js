@@ -26,11 +26,14 @@ async function seedContainer() {
     });
 
     console.log('🎉 Container created:', container.id);
-    console.log('📋 Container details:', {
-      id: container.id,
-      name: container.name,
-      slug: container.slug
+
+    // Update all existing contacts to use this container
+    const updateResult = await prisma.contact.updateMany({
+      where: { containerId: null },
+      data: { containerId: container.id }
     });
+
+    console.log(`📋 Updated ${updateResult.count} contacts with containerId`);
 
     return container;
 
