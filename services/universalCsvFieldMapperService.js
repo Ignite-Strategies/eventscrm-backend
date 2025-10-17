@@ -274,7 +274,7 @@ export function mapCsvToContact(mappedRecord, uploadType, orgId, eventId) {
     birthday: mappedRecord.birthday || null,
     married: mappedRecord.married || false, // Boolean field, default to false
     spouseName: mappedRecord.spouseName || '',
-    numberOfKids: mappedRecord.numberOfKids || null,
+          numberOfKids: mappedRecord.numberOfKids || undefined,
     
     // Org-specific fields (now in Contact!)
     yearsWithOrganization: mappedRecord.yearsWithOrganization || null,

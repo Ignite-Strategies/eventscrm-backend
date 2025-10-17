@@ -85,7 +85,7 @@ model Contact {
   birthday  String?
   married   Boolean @default(false)
   spouseName String?
-  numberOfKids Int @default(0)
+  numberOfKids Int?
   employer  String?
 
   // ORG STUFF
