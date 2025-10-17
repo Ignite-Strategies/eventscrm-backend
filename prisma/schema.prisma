@@ -13,12 +13,12 @@ model Container {
   slug    String  @unique
   description String?
 
-  // Direct relations to Contact
-  contacts Contact[]
+  // Direct relations to Contact (no foreign key constraint)
+  // contacts Contact[]
   
   // Reference to primary contact (who owns this container)
-  primaryContactId String?
-  primaryContact   Contact? @relation("ContainerPrimaryContact", fields: [primaryContactId], references: [id])
+  // primaryContactId String?
+  // primaryContact   Contact? @relation("ContainerPrimaryContact", fields: [primaryContactId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -103,7 +103,7 @@ model Contact {
   ownedOrgs Organization[] @relation("OrgPrimaryContact")
   
   containerId String?
-  container   Container? @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  // container   Container? @relation(fields: [containerId], references: [id], onDelete: Cascade)
   
   // Reverse relation - containers where this contact is the primary
   ownedContainers Container[] @relation("ContainerPrimaryContact")
