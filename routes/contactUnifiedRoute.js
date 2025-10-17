@@ -19,7 +19,6 @@ router.get('/', async (req, res) => {
     const { 
       orgId, 
       eventId, 
-      pipelineId,
       audienceType,
       currentStage,
       isOrgMember,
@@ -33,7 +32,6 @@ router.get('/', async (req, res) => {
     
     if (orgId) where.orgId = orgId;
     if (eventId) where.eventId = eventId;
-    if (pipelineId) where.pipelineId = pipelineId;
     if (audienceType) where.audienceType = audienceType;
     if (currentStage) where.currentStage = currentStage;
     if (chapterResponsibleFor) where.chapterResponsibleFor = chapterResponsibleFor;
@@ -220,13 +218,13 @@ router.post('/bulk-update', async (req, res) => {
 // ============================================
 router.post('/move-stage', async (req, res) => {
   try {
-    const { pipelineId, fromStage, toStage } = req.body;
+    const { eventId, fromStage, toStage } = req.body;
 
-    console.log(`🚀 Moving contacts: ${pipelineId} from ${fromStage} → ${toStage}`);
+    console.log(`🚀 Moving contacts: ${eventId} from ${fromStage} → ${toStage}`);
 
     const result = await prisma.contact.updateMany({
       where: {
-        pipelineId,
+        eventId,
         currentStage: fromStage
       },
       data: {
