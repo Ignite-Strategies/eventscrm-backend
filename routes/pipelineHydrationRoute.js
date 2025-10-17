@@ -8,8 +8,8 @@ const prisma = getPrismaClient();
 /**
  * GET /events/:eventId/pipeline?audienceType=org_members
  * 
- * Returns EventAttendees grouped by currentStage for a specific audienceType
- * This is the NEW pipeline - queries EventAttendee directly (no EventPipeline model)
+ * 🔥 CONTACT-FIRST: Returns Contacts grouped by currentStage for a specific audienceType
+ * Uses Contact model directly - no EventAttendee!
  */
 router.get('/:eventId/pipeline', async (req, res) => {
   try {
@@ -22,7 +22,7 @@ router.get('/:eventId/pipeline', async (req, res) => {
     try {
       const allAudiences = await prisma.$queryRaw`
         SELECT DISTINCT "audienceType", COUNT(*) as count 
-        FROM "EventAttendee" 
+        FROM "Contact" 
         WHERE "eventId" = ${eventId}
         GROUP BY "audienceType"
       `;
@@ -36,48 +36,37 @@ router.get('/:eventId/pipeline', async (req, res) => {
     }
 
 
-    // CLEAN SQL query that joins EventAttendee + Contact in one result
-    const attendees = await prisma.$queryRaw`
-      SELECT 
-        ea.id as "attendeeId",
-        ea."eventId",
-        ea."contactId",
-        ea."currentStage",
-        ea."audienceType",
-        ea."attended",
-        ea."createdAt",
-        c.id as "contactId",
-        c."firstName",
-        c."lastName", 
-        c.email,
-        c.phone,
-        ea."orgId" as "contactOrgId"
-      FROM "EventAttendee" ea
-      LEFT JOIN "Contact" c ON ea."contactId" = c.id
-      WHERE ea."eventId" = ${eventId} AND ea."audienceType" = ${audienceType}
-      ORDER BY ea."createdAt" DESC
-    `;
+    // 🔥 CONTACT-FIRST: Query Contact model directly
+    const contacts = await prisma.contact.findMany({
+      where: {
+        eventId,
+        audienceType
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
 
-    console.log(`✅ Found ${attendees.length} attendees for audienceType: ${audienceType}`);
-    console.log('🔍 Raw SQL result:', attendees);
+    console.log(`✅ Found ${contacts.length} contacts for audienceType: ${audienceType}`);
+    console.log('🔍 Contact results:', contacts);
     
-    // DEBUG: Check if contacts are missing
-    attendees.forEach((attendee, index) => {
-      if (!attendee.firstName) {
-        console.log(`❌ Attendee ${index} missing contact data:`, attendee);
+    // DEBUG: Check if contacts are missing data
+    contacts.forEach((contact, index) => {
+      if (!contact.firstName) {
+        console.log(`❌ Contact ${index} missing first name:`, contact);
       } else {
-        console.log(`✅ Attendee ${index} has contact:`, attendee.firstName, attendee.lastName);
+        console.log(`✅ Contact ${index} has data:`, contact.firstName, contact.lastName);
       }
     });
 
     // Group by currentStage (mapped to official schema stages)
     const stageGroups = {};
-    attendees.forEach(attendee => {
-      const rawStage = attendee.currentStage || 'in_funnel';
+    contacts.forEach(contact => {
+      const rawStage = contact.currentStage || 'in_funnel';
       const mappedStage = mapToOfficialStage(rawStage); // Map to official stage
       
       if (rawStage !== mappedStage) {
-        console.log(`🔄 Mapping stage: "${rawStage}" → "${mappedStage}" for attendee ${attendee.attendeeId}`);
+        console.log(`🔄 Mapping stage: "${rawStage}" → "${mappedStage}" for contact ${contact.id}`);
       }
       
       if (!stageGroups[mappedStage]) {
@@ -85,24 +74,23 @@ router.get('/:eventId/pipeline', async (req, res) => {
       }
       
       // Check if contact data exists
-      if (!attendee.firstName) {
-        console.log('⚠️ EventAttendee missing contact data:', attendee.attendeeId, 'contactId:', attendee.contactId);
-        return; // Skip this attendee
+      if (!contact.firstName) {
+        console.log('⚠️ Contact missing first name:', contact.id);
+        return; // Skip this contact
       }
 
       // Map to frontend-friendly format
       stageGroups[mappedStage].push({
-        _id: attendee.contactId,  // Use contactId as _id for frontend compatibility
-        contactId: attendee.contactId,  // Explicit contactId for clarity
-        attendeeId: attendee.attendeeId,  // EventAttendee ID for updates
-        firstName: attendee.firstName,
-        lastName: attendee.lastName,
-        email: attendee.email,
-        phone: attendee.phone,
+        _id: contact.id,  // Use contact id as _id for frontend compatibility
+        contactId: contact.id,  // Explicit contactId for clarity
+        firstName: contact.firstName,
+        lastName: contact.lastName,
+        email: contact.email,
+        phone: contact.phone,
         categoryOfEngagement: 'medium',  // Default to medium
         currentStage: mappedStage,  // Use mapped stage for consistency
         rawStage: rawStage,  // Keep original for debugging
-        audienceType: attendee.audienceType
+        audienceType: contact.audienceType
       });
     });
 
@@ -126,7 +114,8 @@ router.get('/:eventId/pipeline', async (req, res) => {
 /**
  * PATCH /events/:eventId/pipeline/move
  * 
- * Moves a contact from one stage to another in the pipeline
+ * 🔥 CONTACT-FIRST: Moves a contact from one stage to another in the pipeline
+ * Updates Contact.currentStage directly
  */
 router.patch('/:eventId/pipeline/move', async (req, res) => {
   try {
@@ -135,11 +124,11 @@ router.patch('/:eventId/pipeline/move', async (req, res) => {
 
     console.log('🔄 Moving contact:', supporterId, 'from', fromStage, 'to', toStage);
 
-    // Update the EventAttendee's currentStage
-    const updated = await prisma.eventAttendee.updateMany({
+    // 🔥 CONTACT-FIRST: Update Contact's currentStage
+    const updated = await prisma.contact.updateMany({
       where: {
+        id: supporterId,
         eventId,
-        contactId: supporterId,  // supporterId is actually contactId
         audienceType
       },
       data: {
@@ -147,7 +136,7 @@ router.patch('/:eventId/pipeline/move', async (req, res) => {
       }
     });
 
-    console.log('✅ Updated attendee stage');
+    console.log('✅ Updated contact stage');
 
     res.json({ success: true, updated: updated.count });
 
@@ -160,7 +149,8 @@ router.patch('/:eventId/pipeline/move', async (req, res) => {
 /**
  * POST /events/:eventId/pipeline/push
  * 
- * Adds selected supporters to the pipeline
+ * 🔥 CONTACT-FIRST: Adds selected supporters to the pipeline
+ * Updates Contact records to set eventId, audienceType, and currentStage
  */
 router.post('/:eventId/pipeline/push', async (req, res) => {
   try {
@@ -174,35 +164,30 @@ router.post('/:eventId/pipeline/push', async (req, res) => {
       failed: []
     };
 
-    // Create EventAttendee records for each supporter
+    // 🔥 CONTACT-FIRST: Update Contact records for each supporter
     for (const supporterId of supporterIds) {
       try {
-        // Check if already exists
-        const existing = await prisma.eventAttendee.findUnique({
+        // Check if contact already has this eventId
+        const existing = await prisma.contact.findFirst({
           where: {
-            eventId_contactId_audienceType: {
-              eventId,
-              contactId: supporterId,
-              audienceType
-            }
+            id: supporterId,
+            eventId
           }
         });
 
         if (existing) {
-          console.log('⚠️ Attendee already exists:', supporterId);
+          console.log('⚠️ Contact already in pipeline:', supporterId);
           results.failed.push({ id: supporterId, reason: 'Already in pipeline' });
           continue;
         }
 
-        // Create new EventAttendee
-        await prisma.eventAttendee.create({
+        // Update Contact with event info
+        await prisma.contact.update({
+          where: { id: supporterId },
           data: {
-            orgId,
             eventId,
-            contactId: supporterId,
-            audienceType,
-            currentStage: stage || 'in_funnel',
-            source: source || 'admin_add'
+            audienceType: audienceType || 'org_members',
+            currentStage: stage || 'in_funnel'
           }
         });
 
@@ -227,18 +212,26 @@ router.post('/:eventId/pipeline/push', async (req, res) => {
 /**
  * POST /events/:eventId/pipeline/push-all
  * 
- * Adds ALL supporters (OrgMembers) to the pipeline
+ * 🔥 CONTACT-FIRST: Adds ALL supporters (org members) to the pipeline
+ * Updates Contact records for the entire org
  */
 router.post('/:eventId/pipeline/push-all', async (req, res) => {
   try {
     const { eventId } = req.params;
     const { orgId, audienceType, stage, source } = req.body;
 
-    console.log('➕ Adding ALL supporters to pipeline for event:', eventId);
+    console.log('➕ Adding ALL org members to pipeline for event:', eventId);
 
-    // Get all OrgMembers (via Contact) for this org
+    // Get all org member contacts for this org (that aren't already in this event)
     const contacts = await prisma.contact.findMany({
-      where: { orgId }
+      where: { 
+        orgId,
+        isOrgMember: true,
+        OR: [
+          { eventId: null },
+          { eventId: { not: eventId } }
+        ]
+      }
     });
 
     const supporterIds = contacts.map(c => c.id);
@@ -248,35 +241,16 @@ router.post('/:eventId/pipeline/push-all', async (req, res) => {
       failed: []
     };
 
-    // Create EventAttendee records for each contact
+    // 🔥 CONTACT-FIRST: Update Contact records for each member
     for (const supporterId of supporterIds) {
       try {
-        // Check if already exists
-        const existing = await prisma.eventAttendee.findUnique({
-          where: {
-            eventId_contactId_audienceType: {
-              eventId,
-              contactId: supporterId,
-              audienceType
-            }
-          }
-        });
-
-        if (existing) {
-          console.log('⚠️ Attendee already exists:', supporterId);
-          results.failed.push({ id: supporterId, reason: 'Already in pipeline' });
-          continue;
-        }
-
-        // Create new EventAttendee
-        await prisma.eventAttendee.create({
+        // Update Contact with event info
+        await prisma.contact.update({
+          where: { id: supporterId },
           data: {
-            orgId,
             eventId,
-            contactId: supporterId,
-            audienceType,
-            currentStage: stage || 'in_funnel',
-            source: source || 'bulk_add'
+            audienceType: audienceType || 'org_members',
+            currentStage: stage || 'in_funnel'
           }
         });
 
