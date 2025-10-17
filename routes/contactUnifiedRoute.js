@@ -27,6 +27,19 @@ router.get('/', async (req, res) => {
       attended
     } = req.query;
 
+    console.log('🔍 DEBUG: Looking for contacts with orgId:', orgId);
+
+    // DEBUG: Check if ANY contacts exist
+    const totalContacts = await prisma.contact.count();
+    console.log('🔍 DEBUG: Total contacts in database:', totalContacts);
+
+    // DEBUG: Check what orgIds exist
+    const orgIds = await prisma.contact.findMany({
+      select: { orgId: true },
+      distinct: ['orgId']
+    });
+    console.log('🔍 DEBUG: Existing orgIds:', orgIds.map(c => c.orgId));
+
     // Build dynamic where clause
     const where = {};
     
