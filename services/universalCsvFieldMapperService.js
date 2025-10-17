@@ -83,22 +83,22 @@ export const UNIVERSAL_FIELD_MAP = {
   'kids': { field: 'numberOfKids', types: ['contact', 'orgMember', 'eventAttendee'] },
   'children': { field: 'numberOfKids', types: ['contact', 'orgMember', 'eventAttendee'] },
   
-  // === ORG MEMBER SPECIFIC FIELDS ===
-  'years with organization': { field: 'yearsWithOrganization', types: ['orgMember'] },
-  'years with org': { field: 'yearsWithOrganization', types: ['orgMember'] },
-  'yearswithorg': { field: 'yearsWithOrganization', types: ['orgMember'] },
-  'years': { field: 'yearsWithOrganization', types: ['orgMember'] },
-  'tenure': { field: 'yearsWithOrganization', types: ['orgMember'] },
+  // === ORG MEMBER SPECIFIC FIELDS (NOW IN CONTACT!) ===
+  'years with organization': { field: 'yearsWithOrganization', types: ['contact', 'orgMember'] },
+  'years with org': { field: 'yearsWithOrganization', types: ['contact', 'orgMember'] },
+  'yearswithorg': { field: 'yearsWithOrganization', types: ['contact', 'orgMember'] },
+  'years': { field: 'yearsWithOrganization', types: ['contact', 'orgMember'] },
+  'tenure': { field: 'yearsWithOrganization', types: ['contact', 'orgMember'] },
   
-  'leadership role': { field: 'leadershipRole', types: ['orgMember'] },
-  'role': { field: 'leadershipRole', types: ['orgMember'] },
-  'position': { field: 'leadershipRole', types: ['orgMember'] },
+  'leadership role': { field: 'leadershipRole', types: ['contact', 'orgMember'] },
+  'role': { field: 'leadershipRole', types: ['contact', 'orgMember'] },
+  'position': { field: 'leadershipRole', types: ['contact', 'orgMember'] },
   
-  'origin story': { field: 'originStory', types: ['orgMember'] },
-  'how they joined': { field: 'originStory', types: ['orgMember'] },
+  'origin story': { field: 'originStory', types: ['contact', 'orgMember'] },
+  'how they joined': { field: 'originStory', types: ['contact', 'orgMember'] },
   
-  'notes': { field: 'notes', types: ['orgMember'] },
-  'comments': { field: 'notes', types: ['orgMember'] },
+  'notes': { field: 'notes', types: ['contact', 'orgMember'] },
+  'comments': { field: 'notes', types: ['contact', 'orgMember'] },
   
   'chapter responsible for': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
   'chapter responsible': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
@@ -107,17 +107,17 @@ export const UNIVERSAL_FIELD_MAP = {
   'team': { field: 'chapterresponsiblefor', types: ['contact', 'orgMember'] },
   
   // === EVENT ATTENDEE SPECIFIC FIELDS ===
-  'audience type': { field: 'audienceType', types: ['eventAttendee'] },
-  'audience': { field: 'audienceType', types: ['eventAttendee'] },
-  'contact type': { field: 'audienceType', types: ['eventAttendee'] },
+  'audience type': { field: 'audienceType', types: ['contact', 'eventAttendee'] },
+  'audience': { field: 'audienceType', types: ['contact', 'eventAttendee'] },
+  'contact type': { field: 'audienceType', types: ['contact', 'eventAttendee'] },
   
-  'current stage': { field: 'currentStage', types: ['eventAttendee'] },
-  'stage': { field: 'currentStage', types: ['eventAttendee'] },
-  'pipeline stage': { field: 'currentStage', types: ['eventAttendee'] },
-  'status': { field: 'currentStage', types: ['eventAttendee'] },
+  'current stage': { field: 'currentStage', types: ['contact', 'eventAttendee'] },
+  'stage': { field: 'currentStage', types: ['contact', 'eventAttendee'] },
+  'pipeline stage': { field: 'currentStage', types: ['contact', 'eventAttendee'] },
+  'status': { field: 'currentStage', types: ['contact', 'eventAttendee'] },
   
-  'attended': { field: 'attended', types: ['eventAttendee'] },
-  'checked in': { field: 'attended', types: ['eventAttendee'] },
+  'attended': { field: 'attended', types: ['contact', 'eventAttendee'] },
+  'checked in': { field: 'attended', types: ['contact', 'eventAttendee'] },
   
   'ticket type': { field: 'ticketType', types: ['eventAttendee'] },
   'ticket': { field: 'ticketType', types: ['eventAttendee'] },
