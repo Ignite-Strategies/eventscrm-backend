@@ -273,37 +273,48 @@ router.post('/move-stage', async (req, res) => {
 });
 
 // ============================================
-// GET /contacts/debug-all - Get ALL contacts (no filters)
+// GET /contacts/sql-admin - SQL Admin to query Contact table directly
 // ============================================
-router.get('/debug-all', async (req, res) => {
+router.get('/sql-admin', async (req, res) => {
   try {
-    console.log('🔍 DEBUG: Getting ALL contacts from Contact table');
+    console.log('🔍 SQL ADMIN: Querying Contact table directly');
 
-    const allContacts = await prisma.contact.findMany({
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        email: true,
-        orgId: true,
-        eventId: true,
-        currentStage: true,
-        audienceType: true
-      }
-    });
+    // Raw SQL to get ALL contacts
+    const result = await prisma.$queryRaw`
+      SELECT 
+        id,
+        "firstName",
+        "lastName", 
+        email,
+        "orgId",
+        "eventId",
+        "currentStage",
+        "audienceType",
+        "createdAt"
+      FROM "Contact" 
+      ORDER BY "createdAt" DESC
+      LIMIT 20
+    `;
 
-    console.log(`🔍 DEBUG: Found ${allContacts.length} total contacts`);
-    console.log('🔍 DEBUG: First 3 contacts:', allContacts.slice(0, 3));
+    console.log(`🔍 SQL ADMIN: Found ${result.length} contacts`);
+    console.log('🔍 SQL ADMIN: First 3 contacts:', result.slice(0, 3));
+
+    // Also get count
+    const countResult = await prisma.$queryRaw`
+      SELECT COUNT(*) as total FROM "Contact"
+    `;
+    const totalCount = parseInt(countResult[0].total);
 
     res.json({
       success: true,
-      totalCount: allContacts.length,
-      contacts: allContacts
+      totalCount,
+      showing: result.length,
+      contacts: result
     });
 
   } catch (error) {
-    console.error('❌ Debug error:', error);
-    res.status(500).json({ error: 'Failed to get all contacts' });
+    console.error('❌ SQL Admin error:', error);
+    res.status(500).json({ error: 'Failed to query contacts', details: error.message });
   }
 });
 
