@@ -207,13 +207,31 @@ router.post('/save', upload.single('file'), async (req, res) => {
 
     console.log(`📊 CONTACT-FIRST CSV Save Complete: ${contactsCreated} created, ${contactsUpdated} updated`);
 
+    // Check if we actually processed any records
+    const totalProcessed = contactsCreated + contactsUpdated;
+    
+    if (totalProcessed === 0) {
+      console.log('❌ NO RECORDS PROCESSED - Returning error response');
+      return res.status(400).json({
+        success: false,
+        error: 'No records were successfully processed',
+        message: 'All records failed validation or database save',
+        results: {
+          contactsCreated: 0,
+          contactsUpdated: 0,
+          totalProcessed: 0
+        },
+        errors: errors
+      });
+    }
+
     res.json({
       success: true,
-      message: `Successfully processed ${contactsCreated + contactsUpdated} contacts`,
+      message: `Successfully processed ${totalProcessed} contacts`,
       results: {
         contactsCreated,
         contactsUpdated,
-        totalProcessed: contactsCreated + contactsUpdated
+        totalProcessed
       },
       errors: errors
     });
