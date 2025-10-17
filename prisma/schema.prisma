@@ -106,7 +106,7 @@ model Contact {
   // container   Container? @relation(fields: [containerId], references: [id], onDelete: Cascade)
   
   // Reverse relation - containers where this contact is the primary
-  ownedContainers Container[] @relation("ContainerPrimaryContact")
+  // ownedContainers Container[] @relation("ContainerPrimaryContact")
   
   eventId    String?
   event      Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
