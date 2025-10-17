@@ -128,9 +128,6 @@ model Contact {
   howManyInParty Int?
   
   // OTHER
-  contactListId String?
-  contactList   ContactList? @relation(fields: [contactListId], references: [id])
-  
   sequenceContacts SequenceContact[]
   emailEvents      EmailEvent[]
 
@@ -589,9 +586,6 @@ model Campaign {
 
   name        String
   description String?
-
-  contactListId String?
-  contactList   ContactList? @relation(fields: [contactListId], references: [id])
 
   // Email content
   subject String?
