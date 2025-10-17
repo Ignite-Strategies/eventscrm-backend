@@ -251,48 +251,54 @@ export function getFieldMappingSuggestions(headers, uploadType) {
 }
 
 /**
- * UNIVERSAL SAVE - Split mapped record into Contact, OrgMember, and EventAttendee data
- * This is the key to making saves universal across all upload types
+ * CONTACT-FIRST SAVE - Everything goes into Contact model!
+ * Sets containerId, orgId, eventId, audienceType, currentStage
  */
-export function splitRecordForSave(mappedRecord, uploadType) {
-  // Contact fields (universal personhood)
-  const contactFields = [
-    'firstName', 'lastName', 'email', 'phone', 'goesBy', 
-    'employer', 'street', 'city', 'state', 'zip',
-    'birthday', 'married', 'spouseName', 'numberOfKids'
-  ];
+export function splitRecordForSave(mappedRecord, uploadType, orgId, eventId) {
+  // Default containerId (F3 CRM)
+  const containerId = 'cmgu7w02h0000ceaqt7iz6bf9';
   
-  // OrgMember fields (org-specific relationship)
-  const orgMemberFields = [
-    'yearsWithOrganization', 'leadershipRole', 'originStory', 'notes', 'tags', 'chapterresponsiblefor'
-  ];
-  
-  // EventAttendee fields (event-specific relationship)
-  const eventAttendeeFields = [
-    'currentStage', 'audienceType', 'attended', 'ticketType', 
-    'amountPaid', 'spouseOrOther', 'howManyInParty'
-  ];
-  
-  const contactData = {};
-  const orgMemberData = {};
-  const eventAttendeeData = {};
-  
-  // Split the mapped record
-  Object.keys(mappedRecord).forEach(field => {
-    if (contactFields.includes(field)) {
-      contactData[field] = mappedRecord[field];
-    }
-    if (orgMemberFields.includes(field) && uploadType === 'orgMember') {
-      orgMemberData[field] = mappedRecord[field];
-    }
-    if (eventAttendeeFields.includes(field) && uploadType === 'eventAttendee') {
-      eventAttendeeData[field] = mappedRecord[field];
-    }
-  });
-  
-  return {
-    contactData,
-    orgMemberData: uploadType === 'orgMember' ? orgMemberData : null,
-    eventAttendeeData: uploadType === 'eventAttendee' ? eventAttendeeData : null
+  // CONTACT-FIRST: Everything goes into Contact model!
+  const contactData = {
+    // Universal contact fields
+    firstName: mappedRecord.firstName || '',
+    lastName: mappedRecord.lastName || '',
+    email: mappedRecord.email || '',
+    phone: mappedRecord.phone || '',
+    goesBy: mappedRecord.goesBy || '',
+    employer: mappedRecord.employer || '',
+    street: mappedRecord.street || '',
+    city: mappedRecord.city || '',
+    state: mappedRecord.state || '',
+    zip: mappedRecord.zip || '',
+    birthday: mappedRecord.birthday || null,
+    married: mappedRecord.married || null,
+    spouseName: mappedRecord.spouseName || '',
+    numberOfKids: mappedRecord.numberOfKids || null,
+    
+    // Org-specific fields (now in Contact!)
+    yearsWithOrganization: mappedRecord.yearsWithOrganization || null,
+    leadershipRole: mappedRecord.leadershipRole || '',
+    originStory: mappedRecord.originStory || '',
+    notes: mappedRecord.notes || '',
+    tags: mappedRecord.tags || '',
+    chapterResponsible: mappedRecord.chapterresponsiblefor || mappedRecord.chapterResponsible || '',
+    
+    // Event-specific fields (now in Contact!)
+    currentStage: mappedRecord.currentStage || 'aware',
+    audienceType: mappedRecord.audienceType || 'org_members',
+    attended: mappedRecord.attended || false,
+    ticketType: mappedRecord.ticketType || '',
+    amountPaid: mappedRecord.amountPaid || null,
+    spouseOrOther: mappedRecord.spouseOrOther || '',
+    howManyInParty: mappedRecord.howManyInParty || null,
+    
+    // CONTACT-FIRST: Set containerId, orgId, eventId
+    containerId: containerId,
+    orgId: orgId || null,
+    eventId: eventId || null
   };
+  
+  // NO MORE separate tables! Everything in Contact!
+  return { contactData };
 }

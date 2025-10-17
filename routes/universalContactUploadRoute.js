@@ -118,14 +118,14 @@ router.post('/preview', upload.single('file'), async (req, res) => {
 
 /**
  * POST /api/contacts/upload/save
- * Universal CSV save - handles Contact, OrgMember, and EventAttendee creation
+ * CONTACT-FIRST CSV save - Everything goes into Contact model!
  */
 router.post('/save', upload.single('file'), async (req, res) => {
   try {
     const { uploadType, orgId, eventId, assignments } = req.body;
     const parsedAssignments = assignments ? JSON.parse(assignments) : {};
     
-    console.log('📝 UNIVERSAL SAVE: Contact Save Request for type:', uploadType, 'orgId:', orgId);
+    console.log('📝 CONTACT-FIRST SAVE: CSV Save Request for type:', uploadType, 'orgId:', orgId);
 
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
@@ -155,21 +155,17 @@ router.post('/save', upload.single('file'), async (req, res) => {
       }
     }
 
-    // 3. Universal save logic
+    // 3. CONTACT-FIRST SAVE: Everything goes into Contact model!
     let contactResults = [];
-    let orgMemberResults = [];
-    let eventAttendeeResults = [];
     let contactsCreated = 0;
     let contactsUpdated = 0;
-    let orgMembersCreated = 0;
-    let orgMembersUpdated = 0;
 
     for (const record of validRecords) {
       try {
-        // CONTACT-FIRST ARCHITECTURE: Everything goes into Contact model!
-        const contactData = splitRecordForContact(record, uploadType, orgId, eventId);
+        // CONTACT-FIRST: Everything goes into Contact model with containerId/orgId/eventId!
+        const { contactData } = splitRecordForSave(record, uploadType, orgId, eventId);
 
-        // 1. Upsert Contact with ALL data (orgId, eventId, containerId)
+        // Upsert Contact with ALL data
         const existingContact = await prisma.contact.findUnique({
           where: { email: contactData.email }
         });
@@ -188,104 +184,34 @@ router.post('/save', upload.single('file'), async (req, res) => {
           contactsCreated++;
         }
 
-        // NO MORE OrgMember or EventAttendee tables!
-        // Everything is in the Contact model now!
-
-        // 2. Create OrgMember if orgMemberData exists
-        if (orgMemberData && uploadType === 'orgMember') {
-          const existingOrgMember = await prisma.orgMember.findUnique({
-            where: { contactId: contact.id }
-          });
-          
-          const orgMember = await prisma.orgMember.upsert({
-            where: { 
-              contactId: contact.id
-            },
-            update: {
-              orgId: orgId,
-              ...orgMemberData
-            },
-            create: {
-              contactId: contact.id,
-              orgId: orgId,
-              ...orgMemberData
-            }
-          });
-          orgMemberResults.push(orgMember);
-          
-          if (existingOrgMember) {
-            orgMembersUpdated++;
-          } else {
-            orgMembersCreated++;
-          }
-        }
-
-        // 3. Create EventAttendee if eventAttendeeData exists
-        if (eventAttendeeData && uploadType === 'eventAttendee' && eventId) {
-          const eventAttendee = await prisma.eventAttendee.create({
-            data: {
-              contactId: contact.id,
-              eventId: eventId,
-              orgId: orgId,
-              ...eventAttendeeData
-            }
-          });
-          eventAttendeeResults.push(eventAttendee);
-        }
-
-        // 4. Handle assignments for special cases (like champions upload)
-        if (parsedAssignments.audienceType && eventId) {
-          await prisma.eventAttendee.upsert({
-            where: {
-              eventId_contactId_audienceType: {
-                eventId: eventId,
-                contactId: contact.id,
-                audienceType: parsedAssignments.audienceType
-              }
-            },
-            update: {
-              currentStage: parsedAssignments.defaultStage || 'aware'
-            },
-            create: {
-              eventId: eventId,
-              contactId: contact.id,
-              orgId: orgId,
-              audienceType: parsedAssignments.audienceType,
-              currentStage: parsedAssignments.defaultStage || 'aware'
-            }
-          });
-        }
+        console.log(`✅ Contact processed: ${contact.email} (${existingContact ? 'updated' : 'created'})`);
 
       } catch (error) {
-        console.error('❌ Error processing record:', error);
-        errors.push({
-          record,
-          error: error.message
-        });
+        console.error(`❌ Error processing record:`, error);
+        errors.push(`Record ${validRecords.indexOf(record) + 1}: ${error.message}`);
       }
     }
 
+    console.log(`📊 CONTACT-FIRST CSV Save Complete: ${contactsCreated} created, ${contactsUpdated} updated`);
+
     res.json({
       success: true,
-      message: `Universal upload completed for ${uploadType}`,
-      uploadType,
-      contacts: contactResults.length,
-      contactsCreated,
-      contactsUpdated,
-      orgMembers: orgMemberResults.length,
-      orgMembersCreated,
-      orgMembersUpdated,
-      eventAttendees: eventAttendeeResults.length,
-      totalProcessed: readResult.records.length,
-      validCount: validRecords.length,
-      errorCount: errors.length,
-      errors
+      message: `Successfully processed ${contactsCreated + contactsUpdated} contacts`,
+      results: {
+        contactsCreated,
+        contactsUpdated,
+        totalProcessed: contactsCreated + contactsUpdated
+      },
+      errors: errors
     });
 
   } catch (error) {
-    console.error('❌ UNIVERSAL SAVE ERROR:', error);
-    res.status(500).json({ error: 'Save failed: ' + error.message });
+    console.error('❌ CSV Save Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to save CSV data',
+      details: error.message 
+    });
   }
 });
 
-export default router;
+module.exports = router;
