@@ -32,8 +32,7 @@ import googleAdsRouter from './routes/googleAdsRoute.js'; // Google Ads API inte
 import fileUploadRouter from './routes/fileUploadRoute.js'; // File upload for campaign attachments
 import metaRouter from './routes/metaRoute.js'; // Meta/Facebook Page management
 import universalContactUploadRouter from './routes/universalContactUploadRoute.js'; // Universal CSV upload
-import contactSaveRouter from './routes/contactSaveRoute.js'; // Contact creation/editing
-import contactHydrateRouter from './routes/contactHydrateRoute.js'; // Contact detail hydration
+import contactUnifiedRouter from './routes/contactUnifiedRoute.js'; // 🔥 UNIFIED CONTACT API - Everything Contact!
 import universalListRouter from './routes/universalListRoute.js'; // Universal list building
 
 dotenv.config();
@@ -80,8 +79,7 @@ app.use('/api/google-ads', googleAdsRouter);  // ✅ Google Ads API integration
 app.use('/api/file-upload', fileUploadRouter);  // 📎 File upload for campaign attachments
 app.use('/api/meta', metaRouter);  // ✅ Meta/Facebook Page management
 app.use('/api/contacts/upload', universalContactUploadRouter);  // ✅ Universal CSV upload
-app.use('/api/contacts', contactHydrateRouter);  // ✅ Contact detail hydration (GET /contacts/:id)
-app.use('/api/contacts', contactSaveRouter);  // ✅ Contact creation/editing (POST /contacts)
+app.use('/api/contacts', contactUnifiedRouter);  // 🔥 UNIFIED CONTACT API - Query, Get, Create, Update, Delete (NO orgId required!)
 app.use('/api/lists', universalListRouter);  // ✅ Universal list building
 
 // Health check
