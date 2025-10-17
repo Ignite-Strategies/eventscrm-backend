@@ -32,7 +32,8 @@ import stageMovementRouter from './routes/stageMovementRoute.js'; // Stage movem
 import googleAdsRouter from './routes/googleAdsRoute.js'; // Google Ads API integration
 import fileUploadRouter from './routes/fileUploadRoute.js'; // File upload for campaign attachments
 import metaRouter from './routes/metaRoute.js'; // Meta/Facebook Page management
-import universalContactUploadRouter from './routes/universalContactUploadRoute.js'; // Universal CSV upload
+import universalContactUploadRouter from './routes/universalContactUploadRoute.js'; // Universal CSV upload (OLD)
+import contactCSVUploadRouter from './routes/contactCSVUploadRoute.js'; // 🔥 CONTACT-FIRST CSV UPLOAD
 import contactUnifiedRouter from './routes/contactUnifiedRoute.js'; // 🔥 UNIFIED CONTACT API - Everything Contact!
 import universalListRouter from './routes/universalListRoute.js'; // Universal list building
 
@@ -79,7 +80,8 @@ app.use('/api/stage-movement', stageMovementRouter);  // ✅ Stage movement auto
 app.use('/api/google-ads', googleAdsRouter);  // ✅ Google Ads API integration
 app.use('/api/file-upload', fileUploadRouter);  // 📎 File upload for campaign attachments
 app.use('/api/meta', metaRouter);  // ✅ Meta/Facebook Page management
-app.use('/api/contacts/upload', universalContactUploadRouter);  // ✅ Universal CSV upload
+app.use('/api/contacts/upload', universalContactUploadRouter);  // ✅ Universal CSV upload (OLD)
+app.use('/api/contacts/csv', contactCSVUploadRouter);  // 🔥 CONTACT-FIRST CSV UPLOAD - Everything in Contact model!
 app.use('/api/contacts', contactUnifiedRouter);  // 🔥 UNIFIED CONTACT API - Query, Get, Create, Update, Delete (NO orgId required!)
 app.use('/api/lists', universalListRouter);  // ✅ Universal list building
 

@@ -166,10 +166,10 @@ router.post('/save', upload.single('file'), async (req, res) => {
 
     for (const record of validRecords) {
       try {
-        // Split record into Contact, OrgMember, EventAttendee data
-        const { contactData, orgMemberData, eventAttendeeData } = splitRecordForSave(record, uploadType);
+        // CONTACT-FIRST ARCHITECTURE: Everything goes into Contact model!
+        const contactData = splitRecordForContact(record, uploadType, orgId, eventId);
 
-        // 1. Check if contact exists before upsert
+        // 1. Upsert Contact with ALL data (orgId, eventId, containerId)
         const existingContact = await prisma.contact.findUnique({
           where: { email: contactData.email }
         });
@@ -187,6 +187,9 @@ router.post('/save', upload.single('file'), async (req, res) => {
         } else {
           contactsCreated++;
         }
+
+        // NO MORE OrgMember or EventAttendee tables!
+        // Everything is in the Contact model now!
 
         // 2. Create OrgMember if orgMemberData exists
         if (orgMemberData && uploadType === 'orgMember') {

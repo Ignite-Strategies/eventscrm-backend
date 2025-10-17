@@ -1,145 +1,134 @@
-import express from 'express';
-import multer from 'multer';
-import { readCSV } from '../services/csvReader.js';
-import { normalizeRecord } from '../services/orgMemberCsvFieldMapper.js';
-import { validateBatch } from '../services/orgMemberCsvValidator.js';
-import { getPrismaClient } from '../config/database.js';
+/**
+ * CONTACT-FIRST CSV UPLOAD ROUTE
+ * 
+ * Uses Contact model with containerId/orgId/eventId
+ * NO separate OrgMember/EventAttendee tables!
+ */
+
+const express = require('express');
+const multer = require('multer');
+const csv = require('csv-parser');
+const { PrismaClient } = require('@prisma/client');
 
 const router = express.Router();
-const prisma = getPrismaClient();
-const upload = multer({ storage: multer.memoryStorage() });
+const prisma = new PrismaClient();
+
+// Configure multer for CSV uploads
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
 /**
- * POST /contacts/upload
- * 
- * Upload CSV of contacts - creates/updates Contact records directly
- * No more Contact → OrgMember chain!
+ * POST /api/contacts/csv-upload
+ * Contact-first CSV upload - everything goes into Contact model
  */
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post('/csv-upload', upload.single('file'), async (req, res) => {
   try {
-    const { 
-      orgId, 
-      isOrgMember,
-      pipelineId,
-      audienceType,
-      currentStage,
-      eventId 
-    } = req.body;
-    
-    console.log('📝 CONTACT CSV UPLOAD:', { orgId, isOrgMember, pipelineId, audienceType, currentStage, eventId });
+    const { orgId, eventId } = req.body;
+    console.log('📝 CONTACT-FIRST CSV UPLOAD: orgId:', orgId, 'eventId:', eventId);
 
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    // 1. Read CSV
-    const readResult = readCSV(req.file.buffer);
-    if (!readResult.success) {
-      return res.status(400).json({ error: readResult.error });
-    }
-
-    // 2. Normalize records
-    const normalizedRecords = readResult.records.map(record => normalizeRecord(record));
-
-    // 3. Validate records
-    const validationResult = validateBatch(normalizedRecords);
-
-    if (validationResult.errorCount > 0) {
-      return res.status(400).json({
-        error: 'Validation failed for some records',
-        errors: validationResult.errors,
-        validCount: validationResult.validCount
-      });
-    }
-
-    // 4. Create/Update Contacts directly (FLAT MODEL!)
-    let created = 0;
-    let updated = 0;
+    // Default containerId (F3 CRM)
+    const containerId = 'cmgu7w02h0000ceaqt7iz6bf9';
+    
+    const results = [];
     const errors = [];
 
-    for (const recordData of validationResult.validRecords) {
+    // Parse CSV
+    const csvData = [];
+    const buffer = req.file.buffer.toString();
+    const lines = buffer.split('\n');
+    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+
+    console.log('📋 CSV Headers:', headers);
+
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim()) {
+        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+        const row = {};
+        headers.forEach((header, index) => {
+          row[header.toLowerCase()] = values[index] || '';
+        });
+        csvData.push(row);
+      }
+    }
+
+    console.log(`📊 Processing ${csvData.length} records...`);
+
+    // Process each row
+    for (const row of csvData) {
       try {
-        // Prepare contact data
+        // Map CSV fields to Contact model
         const contactData = {
-          // Personhood
-          firstName: recordData.firstName,
-          lastName: recordData.lastName,
-          email: recordData.email,
-          phone: recordData.phone || null,
-          goesBy: recordData.goesBy || null,
-          
-          // Address
-          street: recordData.street || null,
-          city: recordData.city || null,
-          state: recordData.state || null,
-          zip: recordData.zip || null,
-          
-          // Family
-          married: recordData.married === 'true',
-          spouseName: recordData.spouseName || null,
-          numberOfKids: recordData.numberOfKids ? parseInt(recordData.numberOfKids) : 0,
-          
-          // Work
-          employer: recordData.employer || null,
-          
-          // Org relationship
+          email: row.email || row.e_mail || '',
+          firstName: row.firstname || row.first_name || row.first || '',
+          lastName: row.lastname || row.last_name || row.last || '',
+          goesBy: row.goesby || row.goes_by || row.nickname || '',
+          phone: row.phone || row.phone_number || '',
+          street: row.street || row.address || '',
+          city: row.city || '',
+          state: row.state || '',
+          zip: row.zip || row.zipcode || '',
+          employer: row.employer || row.company || '',
+          yearsWithOrganization: row.yearswithorg || row.years_with_org || row.years || '',
+          chapterResponsible: row.chapter || row.chapter_responsible || '',
+          // CONTACT-FIRST: Set containerId, orgId, eventId
+          containerId: containerId,
           orgId: orgId || null,
-          isOrgMember: isOrgMember === 'true',
-          yearsWithOrganization: recordData.yearsWithOrganization ? parseInt(recordData.yearsWithOrganization) : null,
-          leadershipRole: recordData.leadershipRole || null,
-          orgNotes: recordData.notes || null,
-          chapterResponsibleFor: recordData.chapterResponsibleFor || null,
-          orgTags: recordData.tags ? recordData.tags.split(',').map(tag => tag.trim()) : [],
-          engagementValue: recordData.engagementValue ? parseInt(recordData.engagementValue) : null,
-          
-          // Pipeline tracking
-          pipelineId: pipelineId || null,
-          audienceType: audienceType || null,
-          currentStage: currentStage || null,
-          
-          // Event relationship
           eventId: eventId || null
         };
 
-        // Upsert Contact
+        // Skip if no email
+        if (!contactData.email) {
+          errors.push(`Row ${csvData.indexOf(row) + 2}: No email provided`);
+          continue;
+        }
+
+        // Upsert contact
         const contact = await prisma.contact.upsert({
-          where: { email: recordData.email },
+          where: { email: contactData.email },
           update: contactData,
           create: contactData
         });
 
-        if (contact.createdAt === contact.updatedAt) {
-          created++;
-        } else {
-          updated++;
-        }
+        results.push({
+          email: contact.email,
+          name: `${contact.firstName} ${contact.lastName}`,
+          action: 'created' // Could be 'updated' if we track this
+        });
+
+        console.log(`✅ Contact processed: ${contact.email}`);
 
       } catch (error) {
-        console.error('❌ Error creating/updating Contact:', recordData.email, error);
-        errors.push({
-          email: recordData.email,
-          error: error.message
-        });
+        console.error(`❌ Error processing row:`, error);
+        errors.push(`Row ${csvData.indexOf(row) + 2}: ${error.message}`);
       }
     }
 
-    console.log(`✅ CSV Upload Complete: ${created} created, ${updated} updated`);
+    console.log(`📊 CSV Upload Complete: ${results.length} contacts processed, ${errors.length} errors`);
 
     res.json({
       success: true,
-      message: 'Contacts uploaded successfully',
-      created,
-      updated,
-      totalProcessed: validationResult.totalProcessed,
-      validCount: validationResult.validCount,
-      errors
+      message: `Successfully processed ${results.length} contacts`,
+      results: results,
+      errors: errors,
+      summary: {
+        totalProcessed: results.length,
+        totalErrors: errors.length
+      }
     });
 
   } catch (error) {
-    console.error('❌ CONTACT CSV UPLOAD ERROR:', error);
-    res.status(500).json({ error: 'Upload failed: ' + error.message });
+    console.error('❌ CSV Upload Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to process CSV upload',
+      details: error.message 
+    });
   }
 });
 
-export default router;
-
+module.exports = router;
