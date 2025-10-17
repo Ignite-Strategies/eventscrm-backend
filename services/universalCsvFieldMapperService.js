@@ -251,10 +251,10 @@ export function getFieldMappingSuggestions(headers, uploadType) {
 }
 
 /**
- * CONTACT-FIRST SAVE - Everything goes into Contact model!
+ * CSV TO CONTACT MAPPER - Converts CSV data to Contact model format
  * Sets containerId, orgId, eventId, audienceType, currentStage
  */
-export function splitRecordForSave(mappedRecord, uploadType, orgId, eventId) {
+export function mapCsvToContact(mappedRecord, uploadType, orgId, eventId) {
   // Default containerId (F3 CRM)
   const containerId = 'cmgu7w02h0000ceaqt7iz6bf9';
   

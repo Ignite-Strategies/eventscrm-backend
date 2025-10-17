@@ -4,7 +4,7 @@ import { parseAndPrepareCSV } from '../services/csvParserService.js';
 import { 
   mapFieldsForType, 
   validateMappedRecord, 
-  splitRecordForSave,
+  mapCsvToContact,
   getFieldMappingSuggestions,
   UNIVERSAL_FIELD_MAP
 } from '../services/universalCsvFieldMapperService.js';
@@ -174,7 +174,7 @@ router.post('/save', upload.single('file'), async (req, res) => {
         console.log('💾 Processing record:', record);
         
         // CONTACT-FIRST: Everything goes into Contact model with containerId/orgId/eventId!
-        const { contactData } = splitRecordForSave(record, uploadType, orgId, eventId);
+        const { contactData } = mapCsvToContact(record, uploadType, orgId, eventId);
         
         console.log('💾 Contact data to save:', contactData);
 
