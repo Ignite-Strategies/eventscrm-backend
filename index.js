@@ -19,6 +19,8 @@ import listHydrationRouter from './routes/listHydrationRoute.js'; // List + Camp
 import pipelineConfigRouter from './routes/pipelineConfigRoute.js'; // Pipeline config from database
 import orgMemberCreateRouter from './routes/orgMemberCreateRoute.js'; // NEW: Create OrgMember from Contact
 import formResponsesRouter from './routes/formResponsesRoute.js'; // NEW: Form responses by event
+import formCreatorSaverRouter from './routes/formCreatorSaverRoute.js'; // Form creation and management
+import formDashHydratorRouter from './routes/formDashHydratorRoute.js'; // Form listing and hydration
 import adsRouter from './routes/adsRoute.js'; // Ad Management (Google Ads integration)
 import testEmailRouter from './routes/testEmailRoute.js'; // Test email sending (SendGrid testing)
 // import enterpriseEmailRouter from './routes/enterpriseEmailRoute.js'; // DELETED - too confusing with Gmail // Enterprise email sending (SendGrid production)
@@ -68,6 +70,8 @@ app.use('/api/list-hydration', listHydrationRouter);  // ✅ List + Campaign Hyd
 app.use('/api/pipeline-config', pipelineConfigRouter);
 app.use('/api/org-member-create', orgMemberCreateRouter);
 app.use('/api/form-responses', formResponsesRouter);
+app.use('/api/forms', formDashHydratorRouter);  // ✅ Form listing and hydration (GET)
+app.use('/api/forms/saver', formCreatorSaverRouter);  // ✅ Form creation and management (POST/PATCH/DELETE)
 app.use('/api/ads', adsRouter);
 app.use('/api/test-email', testEmailRouter);
 // app.use('/api/enterprise-email', enterpriseEmailRouter); // DELETED - too confusing with Gmail
