@@ -139,6 +139,7 @@ model Contact {
   // OTHER
   sequenceContacts SequenceContact[]
   emailEvents      EmailEvent[]
+  memberJourneys   OrgMemberJourney[]  // 🗺️ Org member journey tracking
 
   firebaseId String? @unique
   photoURL   String?
