@@ -77,6 +77,10 @@ model Organization {
 model Contact {
   id String @id @default(cuid())
 
+  // PROSPECT TRACKING (before org membership)
+  prospectId       String?   @unique  // Generated if no orgId (pre-conversion)
+  becameProspectAt DateTime?          // When prospect record created
+  
   // PERSONHOOD - ONLY EMAIL IS REQUIRED!
   firstName String?
   lastName  String?
@@ -151,6 +155,7 @@ model Contact {
   @@index([orgId])
   @@index([eventId])
   @@index([firebaseId])
+  @@index([prospectId])
   @@index([eventId, audienceType, currentStage])
 }
 
