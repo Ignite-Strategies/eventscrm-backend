@@ -33,6 +33,7 @@ import metaRouter from './routes/metaRoute.js'; // Meta/Facebook Page management
 import universalContactUploadRouter from './routes/universalContactUploadRoute.js'; // Universal CSV upload
 import contactUnifiedRouter from './routes/contactUnifiedRoute.js'; // 🔥 UNIFIED CONTACT API - Everything Contact!
 import universalListRouter from './routes/universalListRoute.js'; // Universal list building
+import formsPublicHydrateRouter from './routes/formsPublicHydrateRoute.js'; // Public forms for external display
 
 dotenv.config();
 
@@ -78,6 +79,7 @@ app.use('/api/meta', metaRouter);  // ✅ Meta/Facebook Page management
 app.use('/api/contacts/upload', universalContactUploadRouter);  // ✅ Universal CSV upload
 app.use('/api/contacts', contactUnifiedRouter);  // 🔥 UNIFIED CONTACT API - Query, Get, Create, Update, Delete (NO orgId required!)
 app.use('/api/lists', universalListRouter);  // ✅ Universal list building
+app.use('/api/forms/public', formsPublicHydrateRouter);  // ✅ Public forms for external display
 
 // Health check
 app.get('/health', (req, res) => {
