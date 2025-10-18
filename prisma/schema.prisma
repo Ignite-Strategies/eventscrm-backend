@@ -168,7 +168,7 @@ model LikelihoodToAttend {
   id    String @id @default(cuid())
   value Int    @unique // 1=high, 2=medium, 3=low, 4=support_from_afar
   
-  eventAttendees EventAttendee[]
+  // DELETED - eventAttendees relation (EventAttendee model removed)
   
   createdAt DateTime @default(now())
   
@@ -329,8 +329,8 @@ model Event {
   // Reverse relation - contacts where this event is the primary
   primaryContacts Contact[] @relation("EventPrimaryContact")
   
-  // ⚠️ LEGACY (to be removed)
-  attendees       EventAttendee[]
+  // ⚠️ DELETED - Legacy attendees (Contact-first now)
+  // Use Contact.eventId to query event attendees
   
   tasks           EventTask[]
   publicForms     PublicForm[]
@@ -366,7 +366,7 @@ model PublicForm {
   fields Json?
 
   eventForms     EventForm[]
-  eventAttendees EventAttendee[]
+  // DELETED - eventAttendees relation (EventAttendee model removed)
 
   isActive        Boolean @default(true)
   submissionCount Int     @default(0)
@@ -448,48 +448,10 @@ model AdminProfile {
   @@index([email])
 }
 
-model EventAttendee {
-  id      String @id @default(cuid())
-  orgId   String
-  eventId String
-  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
-
-  contactId String?  // LEGACY - not used in new Contact-first model
-
-  currentStage String @default("aware")
-  audienceType String
-
-  submittedFormId String?
-  submittedForm   PublicForm? @relation(fields: [submittedFormId], references: [id])
-
-  attended    Boolean   @default(false)
-  checkedInAt DateTime?
-  ticketType  String?
-  amountPaid  Float     @default(0)
-  
-  // Event-specific data from forms (rock solid columns!)
-  spouseOrOther        String?  // "solo", "spouse", "other"
-  howManyInParty       Int?     // Total attendees in their party
-  
-  // Likelihood to attend (FK to reference table)
-  likelihoodToAttendId String?
-  likelihoodToAttend   LikelihoodToAttend? @relation(fields: [likelihoodToAttendId], references: [id])
-  
-  notes Json?  // Truly custom/unknown fields only (as Json, not String!)
-  
-  // TEMPORARY: Check if old form data is still here
-  customField Json?  // Old form data - check if this exists!
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([eventId, contactId, audienceType])
-  @@index([eventId, currentStage])
-  @@index([eventId, contactId])
-  @@index([eventId, audienceType])
-  @@index([orgId])
-  @@index([contactId])
-}
+// DELETED - Legacy EventAttendee model (Contact-first architecture now)
+// All fields moved to Contact model directly
+// Contact.eventId determines event relationship
+// Contact.currentStage tracks event funnel position
 
 model FamilyProspect {
   id    String       @id @default(cuid())
