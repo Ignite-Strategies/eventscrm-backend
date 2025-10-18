@@ -57,8 +57,8 @@ model Organization {
   supporters      Supporter[]
   familyProspects FamilyProspect[]
   
-  // 🗺️ NEW: Org Member Journey tracking
-  memberJourneys  OrgMemberJourney[]
+  // 🗺️ NEW: Member journey tracking
+  memberJourneys  MemberJourney[]
   
   events          Event[]
   templates       Template[]
@@ -139,7 +139,7 @@ model Contact {
   // OTHER
   sequenceContacts SequenceContact[]
   emailEvents      EmailEvent[]
-  memberJourneys   OrgMemberJourney[]  // 🗺️ Org member journey tracking
+  memberJourneys   MemberJourney[]  // 🗺️ Member journey tracking
 
   firebaseId String? @unique
   photoURL   String?
@@ -194,17 +194,17 @@ model LeadershipRole {
 // Use Contact.orgId to determine org membership
 // Use OrgMemberJourney (below) for journey stage tracking
 
-// 🗺️ ORG MEMBER JOURNEY - Lifecycle tracking (separate from event stages)
+// 🗺️ MEMBER JOURNEY - 6 stages (3 active, 3 future)
 enum JourneyStage {
-  UNAWARE      // 👀 Never heard of you
-  CURIOUS      // 🤔 Aware, considering participation
-  ACTIVATED    // ⚡ Took first action (attended event, signed up)
-  ENGAGED      // 🔥 Participating repeatedly
-  CHAMPION     // 👑 Leading, multiplying, donating
-  ALUMNI       // 💤 Dormant (90+ days no activity)
+  UNAWARE      // 👀 (Future: Ad response tracking)
+  CURIOUS      // 🤔 (Future: Site visits, link clicks)
+  ACTIVATED    // ⚡ ACTIVE: Attending event (has eventId + attended = true)
+  ENGAGED      // 🔥 (Future: Multiple events, 2+ attendance)
+  CHAMPION     // 👑 ACTIVE: Leader, brought friend, or donated
+  ALUMNI       // 💤 (Future: 90+ days no activity)
 }
 
-model OrgMemberJourney {
+model MemberJourney {
   id             String       @id @default(cuid())
   contactId      String
   contact        Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
