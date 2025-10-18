@@ -1,8 +1,9 @@
-const express = require("express");
+import express from 'express';
+import { google } from 'googleapis';
+import { getPrismaClient } from '../config/database.js';
+
 const router = express.Router();
-const { google } = require("googleapis");
-const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 // Google OAuth2 Client Configuration
 const getOAuth2Client = () => {
@@ -212,5 +213,5 @@ router.delete("/accounts/:id", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
 

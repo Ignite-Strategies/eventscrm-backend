@@ -1,8 +1,9 @@
-const express = require("express");
+import express from 'express';
+import { getPrismaClient } from '../config/database.js';
+import { generateGoogleAdsCampaign } from '../services/aiCampaignGenerator.js';
+
 const router = express.Router();
-const { PrismaClient } = require("@prisma/client");
-const { generateGoogleAdsCampaign } = require("../services/aiCampaignGenerator");
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 
 // POST /api/googleads/campaign/generate - AI-generate campaign from persona
 router.post("/generate", async (req, res) => {
@@ -256,5 +257,5 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;
 
