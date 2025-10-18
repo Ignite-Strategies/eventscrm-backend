@@ -54,9 +54,11 @@ model Organization {
   primaryContacts Contact[] @relation("OrgPrimaryContact")
   
   // ⚠️ LEGACY (to be removed)
-  members         OrgMember[]
   supporters      Supporter[]
   familyProspects FamilyProspect[]
+  
+  // 🗺️ NEW: Org Member Journey tracking
+  memberJourneys  OrgMemberJourney[]
   
   events          Event[]
   templates       Template[]
@@ -155,7 +157,7 @@ model Engagement {
   id    String @id @default(cuid())
   value Int    @unique // 1=undetermined, 2=low, 3=medium, 4=high
   
-  orgMembers OrgMember[]
+  // DELETED - orgMembers relation (OrgMember model removed)
   
   createdAt DateTime @default(now())
   
@@ -187,36 +189,44 @@ model LeadershipRole {
 }
 
 
-model OrgMember {
-  id        String   @id @default(cuid())
-  contactId String?  // LEGACY - not used in new Contact-first model
+// DELETED - Legacy OrgMember model (Contact-first architecture now)
+// Use Contact.orgId to determine org membership
+// Use OrgMemberJourney (below) for journey stage tracking
 
-  orgId String?
-  org   Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+// 🗺️ ORG MEMBER JOURNEY - Lifecycle tracking (separate from event stages)
+enum JourneyStage {
+  UNAWARE      // 👀 Never heard of you
+  CURIOUS      // 🤔 Aware, considering participation
+  ACTIVATED    // ⚡ Took first action (attended event, signed up)
+  ENGAGED      // 🔥 Participating repeatedly
+  CHAMPION     // 👑 Leading, multiplying, donating
+  ALUMNI       // 💤 Dormant (90+ days no activity)
+}
 
-  // Org-specific fields ONLY (relationship to THIS org)
-  yearsWithOrganization Int?
-  leadershipRole        String? // Board, Committee, Staff, Volunteer Lead, etc.
-  originStory           String? // How they got involved with THIS org
-  notes                 String?
-  role                  String? // System role (for login access)
-  firebaseId            String? @unique
-  photoURL              String?
-  tags                  String[] @default([])
-  chapterresponsiblefor String? // Chapter/region/team responsible for (e.g., "Los Angeles", "Manhattan", "Product Team")
-
-  // Engagement level (relationship to THIS org)
-  engagementId String? 
-  engagement   Engagement? @relation(fields: [engagementId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([contactId, orgId]) // 🔥 One membership per Contact per Org
+model OrgMemberJourney {
+  id             String       @id @default(cuid())
+  contactId      String
+  contact        Contact      @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  orgId          String
+  org            Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  journeyStage   JourneyStage @default(UNAWARE)
+  
+  // Tracking
+  enteredStageAt DateTime     @default(now())
+  lastActivityAt DateTime     @default(now())
+  
+  // Metadata
+  notes          String?
+  tags           String[]     @default([])
+  
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  @@unique([contactId, orgId])  // One journey per contact per org
+  @@index([orgId, journeyStage])
   @@index([contactId])
-  @@index([firebaseId])
-  @@index([orgId])
-  @@index([engagementId])
+  @@index([lastActivityAt])
 }
 
 model Supporter {

@@ -13,11 +13,12 @@ import contactListRouter from './routes/contactListsRoute.js';
 import campaignRouter from './routes/campaignRoute.js';
 // import sequenceRouter from './routes/sequenceRoute.js'; // DEPRECATED
 import templateRouter from './routes/templatesRoute.js';
-import orgMemberFormRouter from './routes/orgMemberFormRoute.js';
-import orgMembersHydrateRouter from './routes/orgMembersHydrateRoute.js';
+// DELETED - Legacy OrgMember routes (Contact-first architecture now)
+// import orgMemberFormRouter from './routes/orgMemberFormRoute.js';
+// import orgMembersHydrateRouter from './routes/orgMembersHydrateRoute.js';
+// import orgMemberCreateRouter from './routes/orgMemberCreateRoute.js';
 import listHydrationRouter from './routes/listHydrationRoute.js'; // List + Campaign hydration
 import pipelineConfigRouter from './routes/pipelineConfigRoute.js'; // Pipeline config from database
-import orgMemberCreateRouter from './routes/orgMemberCreateRoute.js'; // NEW: Create OrgMember from Contact
 import formResponsesRouter from './routes/formResponsesRoute.js'; // NEW: Form responses by event
 import formCreatorSaverRouter from './routes/formCreatorSaverRoute.js'; // Form creation and management
 import formDashHydratorRouter from './routes/formDashHydratorRoute.js'; // Form listing and hydration
@@ -65,11 +66,12 @@ app.use('/api/contact-lists', contactListRouter);
 app.use('/api/campaigns', campaignRouter);
 // app.use('/api/sequences', sequenceRouter); // DEPRECATED
 app.use('/api/templates', templateRouter);
-app.use('/api/org-member-form', orgMemberFormRouter);
-app.use('/api/orgmembers', orgMembersHydrateRouter);  // ✅ Org Members Hydration
+// DELETED - Legacy OrgMember routes
+// app.use('/api/org-member-form', orgMemberFormRouter);
+// app.use('/api/orgmembers', orgMembersHydrateRouter);
+// app.use('/api/org-member-create', orgMemberCreateRouter);
 app.use('/api/list-hydration', listHydrationRouter);  // ✅ List + Campaign Hydration
 app.use('/api/pipeline-config', pipelineConfigRouter);
-app.use('/api/org-member-create', orgMemberCreateRouter);
 app.use('/api/form-responses', formResponsesRouter);
 app.use('/api/forms', formDashHydratorRouter);  // ✅ Form listing and hydration (GET)
 app.use('/api/forms/saver', formCreatorSaverRouter);  // ✅ Form creation and management (POST/PATCH/DELETE)
@@ -91,7 +93,8 @@ app.use('/api/forms/public', formsPublicHydrateRouter);  // ✅ Public forms for
 app.use('/api/personas', personasRouter);  // 🧩 THE HUMAN STACK - Personas
 app.use('/api/googleads', googleAdsOAuthRouter);  // 🔑 Google Ads OAuth
 app.use('/api/googleads/campaigns', googleAdsCampaignRouter);  // 📊 Google Ads Campaigns
-app.use('/api/org-member-pipeline', orgMemberPipelineRouter);  // 📊 Org Member Journey Pipeline
+// DELETED - Legacy orgMemberPipeline (will rebuild as OrgMemberJourney)
+// app.use('/api/org-member-pipeline', orgMemberPipelineRouter);
 
 // Health check
 app.get('/health', (req, res) => {
