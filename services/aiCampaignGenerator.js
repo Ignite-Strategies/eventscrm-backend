@@ -1,8 +1,21 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+// Lazy initialization - only create client when actually needed
+let openai = null;
+
+const getOpenAIClient = () => {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OPENAI_API_KEY not configured. Set environment variable to use AI features.');
+  }
+  
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+  }
+  
+  return openai;
+};
 
 /**
  * Generate Google Ads campaign using persona data and OpenAI
@@ -12,6 +25,9 @@ const openai = new OpenAI({
  */
 async function generateGoogleAdsCampaign(persona, options = {}) {
   try {
+    // Check if OpenAI is configured
+    const client = getOpenAIClient();
+    
     const { objective = "awareness", dailyBudget = 20, additionalContext = "" } = options;
 
     const prompt = `You are an expert Google Ads campaign strategist. Generate a highly targeted Google Ads campaign based on the following persona:
@@ -61,7 +77,7 @@ Return your response in valid JSON format with this exact structure:
 
     console.log("🤖 Calling OpenAI to generate campaign...");
 
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: "gpt-4",
       messages: [
         {
@@ -110,6 +126,8 @@ Return your response in valid JSON format with this exact structure:
  */
 async function generateChallenge(persona) {
   try {
+    const client = getOpenAIClient();
+    
     const prompt = `You are a community engagement expert. Create a compelling week-long challenge based on this persona:
 
 **Persona:** ${persona.personaName}
@@ -126,7 +144,7 @@ Generate a challenge in JSON format:
   "copyText": "string (social media post to announce it, with emojis)"
 }`;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: "gpt-4",
       messages: [
         { role: "system", content: "You are a community engagement expert. Return valid JSON." },
@@ -168,6 +186,8 @@ Generate a challenge in JSON format:
  */
 async function generateEmailCampaign(persona, emailType = "weekly_checkin") {
   try {
+    const client = getOpenAIClient();
+    
     const prompt = `Create a compelling email for this persona:
 
 **Persona:** ${persona.personaName}
@@ -185,7 +205,7 @@ Generate in JSON format:
   "ctaUrl": "string (placeholder URL)"
 }`;
 
-    const completion = await openai.chat.completions.create({
+    const completion = await client.chat.completions.create({
       model: "gpt-4",
       messages: [
         { role: "system", content: "You are an email copywriting expert. Return valid JSON." },
