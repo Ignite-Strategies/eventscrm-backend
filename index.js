@@ -40,7 +40,7 @@ import formsPublicHydrateRouter from './routes/formsPublicHydrateRoute.js'; // P
 import personasRouter from './routes/personasRoute.js'; // 🧩 THE HUMAN STACK - Personas
 import googleAdsOAuthRouter from './routes/googleAdsOAuthRoute.js'; // 🔑 Google Ads OAuth
 import googleAdsCampaignRouter from './routes/googleAdsCampaignRoute.js'; // 📊 Google Ads Campaigns
-import orgMemberPipelineRouter from './routes/orgMemberPipelineRoute.js'; // 📊 Org Member Journey Pipeline
+import memberJourneyRouter from './routes/memberJourneyRoute.js'; // 🗺️ Member Journey (6-stage lifecycle)
 
 dotenv.config();
 
@@ -93,8 +93,7 @@ app.use('/api/forms/public', formsPublicHydrateRouter);  // ✅ Public forms for
 app.use('/api/personas', personasRouter);  // 🧩 THE HUMAN STACK - Personas
 app.use('/api/googleads', googleAdsOAuthRouter);  // 🔑 Google Ads OAuth
 app.use('/api/googleads/campaigns', googleAdsCampaignRouter);  // 📊 Google Ads Campaigns
-// DELETED - Legacy orgMemberPipeline (will rebuild as OrgMemberJourney)
-// app.use('/api/org-member-pipeline', orgMemberPipelineRouter);
+app.use('/api/member-journey', memberJourneyRouter);  // 🗺️ Member Journey (6-stage lifecycle)
 
 // Health check
 app.get('/health', (req, res) => {
