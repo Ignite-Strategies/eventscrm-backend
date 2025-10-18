@@ -64,6 +64,9 @@ model Organization {
   admins          Admin[]
   campaigns       Campaign[]
   adCampaigns     AdCampaign[]
+  personas        Persona[]
+  googleAdAccounts GoogleAdAccount[]
+  googleAdCampaigns GoogleAdCampaign[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -323,6 +326,7 @@ model Event {
   publicForms     PublicForm[]
   eventForms      EventForm[]
   admins          Admin[]
+  engagementActions EngagementAction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -761,9 +765,209 @@ model AdCampaign {
   metaAdsId   String?  // Meta/Facebook campaign ID
   platform    String   @default("Manual") // Manual, Google, Meta
   
+  personaId   String?  // Link to persona used for this campaign
+  persona     Persona? @relation(fields: [personaId], references: [id])
+  
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
   @@index([orgId])
   @@index([status])
+  @@index([personaId])
+}
+
+// 🧩 THE HUMAN STACK - Persona Model
+model Persona {
+  id             String   @id @default(cuid())
+  orgId          String
+  org            Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  personaName    String   // e.g., "Disconnected Dad"
+  demographics   String   // Men 30-50, Arlington VA
+  painPoint      String   // Core emotional driver
+  desire         String   // Positive end-state
+  motivators     String?  // What energizes them
+  barriers       String?  // Why they haven't moved
+  tone           String   // How to speak to them
+  channels       String   // Where they hang out
+  primaryStage   String   // Where they typically enter (curious, unaware, etc.)
+  notes          String?  // Additional context
+  
+  adCampaigns    AdCampaign[]
+  googleAdCampaigns GoogleAdCampaign[]
+  engagementActions EngagementAction[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([orgId])
+  @@index([primaryStage])
+}
+
+// Track all engagement activities
+model EngagementAction {
+  id        String   @id @default(cuid())
+  orgId     String
+  userId    String?  // Admin who initiated action
+  
+  type      String   // "email", "challenge", "story", "google_ad", "facebook_ad", "eventbrite"
+  payload   String?  // JSON data about the action
+  
+  personaId String?  // Link to persona if used
+  persona   Persona? @relation(fields: [personaId], references: [id])
+  
+  eventId   String?  // Link to event if applicable
+  event     Event?   @relation(fields: [eventId], references: [id])
+  
+  status    String   @default("created") // created, sent, published, completed, failed
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([orgId])
+  @@index([type])
+  @@index([personaId])
+  @@index([eventId])
+  @@index([createdAt])
+}
+
+// 🔑 GOOGLE ADS INTEGRATION - OAuth & Campaign Management
+model GoogleAdAccount {
+  id                String    @id @default(cuid())
+  orgId             String
+  org               Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  displayName       String?   // "Ignite Strategies Ads" or user's label
+  googleCustomerId  String?   // e.g., "123-456-7890"
+  managerAccountId  String?   // MCC if acting as manager
+  developerToken    String?   // global dev token (can be env var later)
+  refreshToken      String?   // user-specific; used to fetch new access token
+  accessToken       String?   // optional; transient; can regenerate
+  tokenExpiry       DateTime?
+  connectedEmail    String?   // who authorized it
+  status            String    @default("active") // active, revoked, expired
+  
+  campaigns         GoogleAdCampaign[]
+  syncLogs          GoogleAdSyncLog[]
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([orgId])
+  @@index([status])
+  @@index([googleCustomerId])
+}
+
+// 📊 Campaign Table
+model GoogleAdCampaign {
+  id                String    @id @default(cuid())
+  orgId             String
+  org               Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  googleAdAccountId String?
+  googleAdAccount   GoogleAdAccount? @relation(fields: [googleAdAccountId], references: [id])
+  
+  personaId         String?   // Link to persona used for AI generation
+  persona           Persona?  @relation(fields: [personaId], references: [id])
+  
+  name              String
+  objective         String?   // awareness, clicks, conversions
+  dailyBudget       Float?    // in USD
+  startDate         DateTime?
+  endDate           DateTime?
+  status            String    @default("draft") // draft, active, paused, completed
+  
+  // Google Ads API IDs (populated when pushed to Google)
+  googleCampaignId  String?   // Google's campaign resource name
+  
+  // Analytics
+  impressions       Int       @default(0)
+  clicks            Int       @default(0)
+  conversions       Int       @default(0)
+  spend             Float     @default(0)
+  
+  adGroups          GoogleAdGroup[]
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([orgId])
+  @@index([googleAdAccountId])
+  @@index([personaId])
+  @@index([status])
+}
+
+// 🎯 AdGroup Table
+model GoogleAdGroup {
+  id                 String    @id @default(cuid())
+  campaignId         String
+  campaign           GoogleAdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  
+  name               String
+  keywords           String[]  // array of search terms
+  negativeKeywords   String[]  @default([])
+  placements         String[]  @default([]) // e.g. YouTube or site placements
+  
+  // Targeting
+  locations          String[]  @default([]) // geographic targeting
+  languages          String[]  @default(["en"])
+  ageRanges          String[]  @default([])
+  genders            String[]  @default([])
+  
+  // Google Ads API ID
+  googleAdGroupId    String?
+  
+  ads                GoogleAdCreative[]
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@index([campaignId])
+}
+
+// 🪄 AdCreative Table
+model GoogleAdCreative {
+  id                 String    @id @default(cuid())
+  adGroupId          String
+  adGroup            GoogleAdGroup @relation(fields: [adGroupId], references: [id], onDelete: Cascade)
+  
+  headline1          String?
+  headline2          String?
+  headline3          String?
+  description        String?
+  description2       String?
+  finalUrl           String?
+  displayUrl         String?
+  imageUrl           String?
+  callToAction       String?   // "Learn More", "Sign Up", etc.
+  
+  // Google Ads API ID
+  googleAdId         String?
+  
+  // Performance
+  impressions        Int       @default(0)
+  clicks             Int       @default(0)
+  conversions        Int       @default(0)
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@index([adGroupId])
+}
+
+// 🔁 Sync Log for debugging + refresh tracking
+model GoogleAdSyncLog {
+  id                String    @id @default(cuid())
+  googleAdAccountId String
+  googleAdAccount   GoogleAdAccount @relation(fields: [googleAdAccountId], references: [id], onDelete: Cascade)
+  
+  action            String    // "refresh_token", "fetch_campaigns", "create_campaign", etc.
+  success           Boolean
+  response          String?   // JSON response as text
+  errorMessage      String?
+  
+  createdAt         DateTime  @default(now())
+  
+  @@index([googleAdAccountId])
+  @@index([action])
+  @@index([createdAt])
 }

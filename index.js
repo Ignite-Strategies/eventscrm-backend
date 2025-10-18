@@ -34,6 +34,9 @@ import universalContactUploadRouter from './routes/universalContactUploadRoute.j
 import contactUnifiedRouter from './routes/contactUnifiedRoute.js'; // 🔥 UNIFIED CONTACT API - Everything Contact!
 import universalListRouter from './routes/universalListRoute.js'; // Universal list building
 import formsPublicHydrateRouter from './routes/formsPublicHydrateRoute.js'; // Public forms for external display
+import personasRouter from './routes/personasRoute.js'; // 🧩 THE HUMAN STACK - Personas
+import googleAdsOAuthRouter from './routes/googleAdsOAuthRoute.js'; // 🔑 Google Ads OAuth
+import googleAdsCampaignRouter from './routes/googleAdsCampaignRoute.js'; // 📊 Google Ads Campaigns
 
 dotenv.config();
 
@@ -80,6 +83,9 @@ app.use('/api/contacts/upload', universalContactUploadRouter);  // ✅ Universal
 app.use('/api/contacts', contactUnifiedRouter);  // 🔥 UNIFIED CONTACT API - Query, Get, Create, Update, Delete (NO orgId required!)
 app.use('/api/lists', universalListRouter);  // ✅ Universal list building
 app.use('/api/forms/public', formsPublicHydrateRouter);  // ✅ Public forms for external display
+app.use('/api/personas', personasRouter);  // 🧩 THE HUMAN STACK - Personas
+app.use('/api/googleads', googleAdsOAuthRouter);  // 🔑 Google Ads OAuth
+app.use('/api/googleads/campaigns', googleAdsCampaignRouter);  // 📊 Google Ads Campaigns
 
 // Health check
 app.get('/health', (req, res) => {
