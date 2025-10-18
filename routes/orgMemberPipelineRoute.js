@@ -18,12 +18,12 @@ router.get('/', async (req, res) => {
 
     console.log(`📊 Loading org member pipeline for org: ${orgId}`);
 
-    // Get all contacts for this org (who are org members)
+    // Get all contacts for this org
+    // ORG MEMBER = Contact with orgId (that's it!)
     const contacts = await prisma.contact.findMany({
       where: {
         containerId,
-        orgId,
-        isOrgMember: true  // Only count actual org members
+        orgId  // If they have orgId, they're an org member
       },
       select: {
         currentStage: true
