@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect Google Ads - Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+    }
+    
+    .logo {
+      font-size: 48px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    h1 {
+      font-size: 24px;
+      text-align: center;
+      margin-bottom: 10px;
+      color: #1a202c;
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: #718096;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+    }
+    
+    button:active {
+      transform: translateY(0);
+    }
+    
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .error {
+      background: #fed7d7;
+      color: #c53030;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    .hint {
+      background: #bee3f8;
+      color: #2c5282;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      text-align: center;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🔗</div>
+    <h1>Connect Google Ads</h1>
+    <p class="subtitle">Demo OAuth Flow</p>
+    
+    <div class="hint">
+      <strong>Demo Credentials:</strong><br>
+      Email: name@gmail.com<br>
+      Password: hardcodedpw
+    </div>
+    
+    <div id="error" class="error" style="display: none;"></div>
+    
+    <form id="authForm">
+      <div class="form-group">
+        <label for="email">Google Account Email</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email" 
+          placeholder="your.email@gmail.com"
+          required
+        />
+      </div>
+      
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          name="password" 
+          placeholder="Enter password"
+          required
+        />
+      </div>
+      
+      <button type="submit" id="submitBtn">
+        Connect Account
+      </button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('authForm');
+    const errorDiv = document.getElementById('error');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      
+      // Hide previous errors
+      errorDiv.style.display = 'none';
+      
+      // Show loading
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = 'Connecting<span class="loading"></span>';
+      
+      try {
+        console.log('🔐 Attempting fake OAuth...');
+        
+        const response = await fetch('http://localhost:4000/auth/fake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+          console.log('✅ Fake OAuth SUCCESS:', data.tokens);
+          
+          // Send tokens to parent window via postMessage
+          if (window.opener) {
+            window.opener.postMessage({
+              type: 'GOOGLE_ADS_AUTH_SUCCESS',
+              tokens: data.tokens
+            }, '*');
+            
+            console.log('📤 Tokens sent to parent window');
+            
+            // Show success briefly
+            submitBtn.innerHTML = '✓ Connected!';
+            submitBtn.style.background = '#48bb78';
+            
+            // Close popup after 1 second
+            setTimeout(() => {
+              window.close();
+            }, 1000);
+          } else {
+            errorDiv.textContent = 'Error: No parent window found';
+            errorDiv.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = 'Connect Account';
+          }
+        } else {
+          throw new Error(data.error);
+        }
+        
+      } catch (error) {
+        console.error('❌ Fake OAuth error:', error);
+        errorDiv.textContent = error.message || 'Authentication failed';
+        errorDiv.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Connect Account';
+      }
+    });
+  </script>
+</body>
+</html>
+
