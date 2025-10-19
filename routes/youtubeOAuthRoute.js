@@ -34,7 +34,7 @@ router.get('/auth/youtube', (req, res) => {
 // Handle OAuth callback
 router.post('/oauth', async (req, res) => {
   try {
-    const { code, containerId } = req.body;
+    const { code, containerId, orgId } = req.body;
     
     console.log('🔐 YouTube OAuth callback received:', { 
       code: code ? code.substring(0, 20) + '...' : 'missing',
@@ -125,7 +125,7 @@ router.post('/oauth', async (req, res) => {
           ${parseInt(channel.statistics.viewCount || '0')}, 
           ${parseInt(channel.statistics.videoCount || '0')}, 
           ${tokens.access_token}, ${tokens.refresh_token}, 
-          ${new Date(tokens.expiry_date)}, ${finalContainerId}, null
+          ${new Date(tokens.expiry_date)}, ${finalContainerId}, ${orgId || null}
         ) RETURNING id, "channelId", "title", "thumbnail"
       `;
       youtubeChannel = insertResult[0];
