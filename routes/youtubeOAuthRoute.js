@@ -1,6 +1,7 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { google } from 'googleapis';
+import { createId } from '@paralleldrive/cuid2';
 
 const router = express.Router();
 const prisma = new PrismaClient();
@@ -115,7 +116,7 @@ router.post('/oauth', async (req, res) => {
           "subscriberCount", "viewCount", "videoCount", 
           "accessToken", "refreshToken", "expiresAt", "containerId"
         ) VALUES (
-          gen_random_uuid(), ${channel.id}, ${channel.snippet.title}, ${channel.snippet.description}, 
+          ${createId()}, ${channel.id}, ${channel.snippet.title}, ${channel.snippet.description}, 
           ${channel.snippet.thumbnails?.default?.url}, 
           ${parseInt(channel.statistics.subscriberCount || '0')}, 
           ${parseInt(channel.statistics.viewCount || '0')}, 
