@@ -16,6 +16,7 @@ model Container {
   // Reverse relations
   organizations Organization[]
   admins        Admin[]
+  youtubeChannels YouTubeChannel[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -47,9 +48,11 @@ model Organization {
 
   googleAdsConfig String? // JSON: { refreshToken, customerId, connectedAt }
   metaConfig      String? // JSON: { accessToken, pageId, connectedAt }
+  youtubeConfig   String? // JSON: { accessToken, refreshToken, channelId, connectedAt }
 
   // ✅ NEW: Direct relations to Contact
   contacts        Contact[]
+  youtubeChannels YouTubeChannel[]
   
   // Reverse relation - contacts where this org is the primary
   primaryContacts Contact[] @relation("OrgPrimaryContact")
@@ -943,4 +946,86 @@ model GoogleAdSyncLog {
   @@index([googleAdAccountId])
   @@index([action])
   @@index([createdAt])
+}
+
+// 🎬 YOUTUBE INTEGRATION MODELS
+model YouTubeChannel {
+  id          String  @id @default(cuid())
+  channelId   String  @unique // YouTube channel ID
+  title       String
+  description String?
+  thumbnail   String?
+  subscriberCount Int?
+  viewCount   BigInt?
+  videoCount  Int?
+  
+  // Links
+  containerId String?
+  container   Container? @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  orgId       String?
+  org         Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  
+  // Tokens
+  accessToken  String
+  refreshToken String
+  expiresAt    DateTime
+  
+  // Relations
+  playlists    YouTubePlaylist[]
+  videos       YouTubeVideo[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([containerId])
+  @@index([orgId])
+}
+
+model YouTubePlaylist {
+  id          String  @id @default(cuid())
+  playlistId  String  @unique // YouTube playlist ID
+  title       String
+  description String?
+  thumbnail   String?
+  itemCount   Int?
+  
+  // Links
+  channelId   String
+  channel     YouTubeChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  videos      YouTubeVideo[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([channelId])
+}
+
+model YouTubeVideo {
+  id          String  @id @default(cuid())
+  videoId     String  @unique // YouTube video ID
+  title       String
+  description String?
+  thumbnail   String?
+  duration    String?
+  viewCount   BigInt?
+  likeCount   BigInt?
+  commentCount Int?
+  
+  // Links
+  channelId   String
+  channel     YouTubeChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  playlistId  String?
+  playlist    YouTubePlaylist? @relation(fields: [playlistId], references: [id], onDelete: SetNull)
+  
+  // Upload metadata
+  uploadedAt  DateTime?
+  privacyStatus String @default("public") // public, unlisted, private
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([channelId])
+  @@index([playlistId])
 }

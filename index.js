@@ -42,6 +42,10 @@ import personasRouter from './routes/personasRoute.js'; // 🧩 THE HUMAN STACK 
 import googleAdsOAuthRouter from './routes/googleAdsOAuthRoute.js'; // 🔑 Google Ads OAuth
 import googleAdsCampaignRouter from './routes/googleAdsCampaignRoute.js'; // 📊 Google Ads Campaigns
 import memberJourneyRouter from './routes/memberJourneyRoute.js'; // 🗺️ Member Journey (6-stage lifecycle)
+import youtubeOAuthRouter from './routes/youtubeOAuthRoute.js'; // 🔐 YouTube OAuth
+import youtubeChannelRouter from './routes/youtubeChannelRoute.js'; // 📺 YouTube Channel
+import youtubePlaylistsRouter from './routes/youtubePlaylistsRoute.js'; // 📋 YouTube Playlists
+import youtubeUploadRouter from './routes/youtubeUploadRoute.js'; // 🎬 YouTube Upload
 
 dotenv.config();
 
@@ -96,6 +100,10 @@ app.use('/api/personas', personasRouter);  // 🧩 THE HUMAN STACK - Personas
 app.use('/api/googleads', googleAdsOAuthRouter);  // 🔑 Google Ads OAuth
 app.use('/api/googleads/campaigns', googleAdsCampaignRouter);  // 📊 Google Ads Campaigns
 app.use('/api/member-journey', memberJourneyRouter);  // 🗺️ Member Journey (6-stage lifecycle)
+app.use('/api/youtube', youtubeOAuthRouter);  // 🔐 YouTube OAuth
+app.use('/api/youtube', youtubeChannelRouter);  // 📺 YouTube Channel
+app.use('/api/youtube', youtubePlaylistsRouter);  // 📋 YouTube Playlists
+app.use('/api/youtube', youtubeUploadRouter);  // 🎬 YouTube Upload
 
 // Health check
 app.get('/health', (req, res) => {
