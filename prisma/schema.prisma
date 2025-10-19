@@ -13,12 +13,9 @@ model Container {
   slug    String  @unique
   description String?
 
-  // Direct relations to Contact (no foreign key constraint)
-  // contacts Contact[]
-  
-  // Reference to primary contact (who owns this container)
-  // primaryContactId String?
-  // primaryContact   Contact? @relation("ContainerPrimaryContact", fields: [primaryContactId], references: [id])
+  // Reverse relations
+  organizations Organization[]
+  admins        Admin[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -30,6 +27,10 @@ model Organization {
   slug    String  @unique
   mission String?
   website String?
+
+  // 🔗 Container link
+  containerId String?
+  container   Container? @relation(fields: [containerId], references: [id], onDelete: Cascade)
 
   x         String?
   instagram String?
@@ -419,6 +420,7 @@ model Admin {
   
   // CONTEXT LINKS
   containerId String?
+  container   Container? @relation(fields: [containerId], references: [id], onDelete: Cascade)
   orgId       String?
   org         Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
   eventId     String?
