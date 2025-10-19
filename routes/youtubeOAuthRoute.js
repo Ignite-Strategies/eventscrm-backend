@@ -12,7 +12,7 @@ router.get('/auth/youtube', (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
     process.env.YOUTUBE_CLIENT_ID,
     process.env.YOUTUBE_CLIENT_SECRET,
-    process.env.YOUTUBE_REDIRECT_URI
+    process.env.YOUTUBE_REDIRECT_URI || "https://ignitestrategiescrm-frontend.vercel.app/youtubeoauth"
   );
 
   const scopes = [
@@ -47,7 +47,7 @@ router.post('/oauth', async (req, res) => {
     const oauth2Client = new google.auth.OAuth2(
       process.env.YOUTUBE_CLIENT_ID,
       process.env.YOUTUBE_CLIENT_SECRET,
-      process.env.YOUTUBE_REDIRECT_URI
+      process.env.YOUTUBE_REDIRECT_URI || "https://ignitestrategiescrm-frontend.vercel.app/youtubeoauth"
     );
 
     console.log('🔄 Exchanging authorization code for tokens...');
