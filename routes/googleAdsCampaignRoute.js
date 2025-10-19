@@ -1,9 +1,40 @@
 import express from 'express';
 import { getPrismaClient } from '../config/database.js';
 import { generateGoogleAdsCampaign } from '../services/aiCampaignGenerator.js';
+import { reverseEngineerSearches } from '../services/searchReverseEngineerService.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
+
+// POST /api/googleads/generate-searches - Reverse engineer searches from persona data
+router.post("/generate-searches", async (req, res) => {
+  try {
+    const { demographics, ageRange, location, painPoint, emotionalState, desire } = req.body;
+
+    if (!demographics || !painPoint || !desire) {
+      return res.status(400).json({ error: "demographics, painPoint, and desire are required" });
+    }
+
+    const result = await reverseEngineerSearches({
+      demographics,
+      ageRange: ageRange || "Not specified",
+      location: location || "Not specified",
+      painPoint,
+      emotionalState: emotionalState || "Not specified",
+      desire
+    });
+
+    if (!result.success) {
+      return res.status(500).json({ error: "Failed to generate searches", details: result.error });
+    }
+
+    console.log(`✅ Search reverse engineering complete`);
+    res.json(result.data);
+  } catch (error) {
+    console.error("❌ Error generating searches:", error);
+    res.status(500).json({ error: "Failed to generate searches" });
+  }
+});
 
 // POST /api/googleads/campaign/generate - AI-generate campaign from persona
 router.post("/generate", async (req, res) => {
