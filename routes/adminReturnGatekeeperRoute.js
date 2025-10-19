@@ -7,13 +7,18 @@ const prisma = getPrismaClient();
 /**
  * GET /api/welcome/:firebaseId
  * 
- * 🔥 UNIVERSAL HYDRATOR - Returns FULL objects, not just IDs!
- * Frontend caches these to localStorage for all pages to use
+ * 🛡️ ADMIN RETURN GATEKEEPER
+ * Called when user returns to app (Splash → Welcome)
+ * 
+ * Purpose:
+ * 1. Find Admin by firebaseId
+ * 2. Return full Admin/Org/Event objects
+ * 3. Frontend uses this to determine routing (containerId? orgId? firstName?)
  */
 router.get('/:firebaseId', async (req, res) => {
   try {
     const { firebaseId } = req.params;
-    console.log('🚀 UNIVERSAL HYDRATION for firebaseId:', firebaseId);
+    console.log('🛡️ GATEKEEPER: Checking Admin for firebaseId:', firebaseId);
 
     // Load Admin with org and event relations
     const admin = await prisma.admin.findFirst({
@@ -25,18 +30,19 @@ router.get('/:firebaseId', async (req, res) => {
     });
 
     if (!admin) {
-      console.log('❌ No admin found for firebaseId:', firebaseId);
+      console.log('❌ GATEKEEPER: No admin found for firebaseId:', firebaseId);
       return res.status(404).json({ error: 'Admin not found - please contact support' });
     }
 
-    console.log('✅ Admin found:', admin.id);
+    console.log('✅ GATEKEEPER: Admin found:', admin.id);
 
     // Return FULL objects + IDs for backwards compatibility
-    const welcomeData = {
+    const gatekeeperData = {
       // IDs (for backwards compatibility)
       adminId: admin.id,
       orgId: admin.orgId || null,
       eventId: admin.eventId || null,
+      containerId: admin.containerId || null,
       
       // FULL OBJECTS (for caching)
       admin: {
@@ -46,7 +52,10 @@ router.get('/:firebaseId', async (req, res) => {
         firstName: admin.firstName,
         lastName: admin.lastName,
         phone: admin.phone,
-        photoURL: admin.photoURL
+        photoURL: admin.photoURL,
+        containerId: admin.containerId,
+        role: admin.role,
+        status: admin.status
       },
       org: admin.org ? {
         id: admin.org.id,
@@ -69,18 +78,20 @@ router.get('/:firebaseId', async (req, res) => {
       memberName: admin.firstName || admin.email?.split('@')[0] || null
     };
 
-    console.log('✅ UNIVERSAL HYDRATION complete:', {
-      adminId: welcomeData.adminId,
-      orgName: welcomeData.org?.name,
-      eventName: welcomeData.event?.name
+    console.log('✅ GATEKEEPER complete:', {
+      adminId: gatekeeperData.adminId,
+      containerId: gatekeeperData.containerId,
+      orgId: gatekeeperData.orgId,
+      hasProfile: !!admin.firstName
     });
     
-    res.json(welcomeData);
+    res.json(gatekeeperData);
 
   } catch (error) {
-    console.error('❌ Welcome hydration error:', error);
-    res.status(500).json({ error: 'Hydration failed' });
+    console.error('❌ Gatekeeper error:', error);
+    res.status(500).json({ error: 'Gatekeeper check failed' });
   }
 });
 
 export default router;
+

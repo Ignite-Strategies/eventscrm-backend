@@ -27,7 +27,7 @@ import testEmailRouter from './routes/testEmailRoute.js'; // Test email sending 
 // import enterpriseEmailRouter from './routes/enterpriseEmailRoute.js'; // DELETED - too confusing with Gmail // Enterprise email sending (SendGrid production)
 import personalEmailRouter from './routes/personalEmailRoute.js'; // Personal email sending (Gmail OAuth)
 import enterpriseGmailRouter from './routes/enterpriseGmailRoute.js'; // Enterprise Gmail sending (Gmail OAuth campaigns)
-import welcomeHydrationRouter from './routes/welcomeHydrationRoute.js'; // Welcome hydration for Firebase users
+import adminReturnGatekeeperRouter from './routes/adminReturnGatekeeperRoute.js'; // Admin gatekeeper - checks status and hydrates data
 import adminUserAuthRouter from './routes/adminUserAuthRoute.js'; // Admin/User authentication (Firebase)
 import adminRouter from './routes/adminRoute.js'; // Admin CRUD (profile updates, team management)
 import stageMovementRouter from './routes/stageMovementRoute.js'; // Stage movement automation
@@ -81,7 +81,7 @@ app.use('/api/test-email', testEmailRouter);
 // app.use('/api/enterprise-email', enterpriseEmailRouter); // DELETED - too confusing with Gmail
 app.use('/api/email/personal', personalEmailRouter);  // Personal email sending (Gmail OAuth)
 app.use('/api/enterprise-gmail', enterpriseGmailRouter);  // Enterprise Gmail sending (Gmail OAuth campaigns)
-app.use('/api/welcome', welcomeHydrationRouter);  // ✅ Welcome hydration (Firebase → Admin check)
+app.use('/api/welcome', adminReturnGatekeeperRouter);  // ✅ Admin gatekeeper - checks containerId/orgId and returns full data
 app.use('/api/auth', adminUserAuthRouter);  // ✅ Admin authentication (findOrCreate)
 app.use('/api/admin', adminRouter);  // ✅ Admin CRUD (GET, POST, PATCH, DELETE)
 app.use('/api/stage-movement', stageMovementRouter);  // ✅ Stage movement automation
