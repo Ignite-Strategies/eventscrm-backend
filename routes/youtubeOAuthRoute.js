@@ -117,7 +117,7 @@ router.post('/oauth', async (req, res) => {
         INSERT INTO "YouTubeChannel" (
           "id", "channelId", "title", "description", "thumbnail", 
           "subscriberCount", "viewCount", "videoCount", 
-          "accessToken", "refreshToken", "expiresAt", "containerId"
+          "accessToken", "refreshToken", "expiresAt", "containerId", "orgId"
         ) VALUES (
           ${createId()}, ${channel.id}, ${channel.snippet.title}, ${channel.snippet.description}, 
           ${channel.snippet.thumbnails?.default?.url}, 
@@ -125,7 +125,7 @@ router.post('/oauth', async (req, res) => {
           ${parseInt(channel.statistics.viewCount || '0')}, 
           ${parseInt(channel.statistics.videoCount || '0')}, 
           ${tokens.access_token}, ${tokens.refresh_token}, 
-          ${new Date(tokens.expiry_date)}, ${finalContainerId}
+          ${new Date(tokens.expiry_date)}, ${finalContainerId}, null
         ) RETURNING id, "channelId", "title", "thumbnail"
       `;
       youtubeChannel = insertResult[0];
