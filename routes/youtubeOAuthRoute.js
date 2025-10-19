@@ -58,7 +58,7 @@ router.post('/oauth', async (req, res) => {
     }
 
     // Store or update channel in database using Prisma
-    const containerId = req.body.containerId || 'default';
+    const finalContainerId = containerId || 'default';
     
     const youtubeChannel = await prisma.youtubeChannel.upsert({
       where: { channelId: channel.id },
@@ -72,7 +72,7 @@ router.post('/oauth', async (req, res) => {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
         expiresAt: new Date(tokens.expiry_date),
-        containerId: containerId
+        containerId: finalContainerId
       },
       create: {
         channelId: channel.id,
@@ -85,7 +85,7 @@ router.post('/oauth', async (req, res) => {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
         expiresAt: new Date(tokens.expiry_date),
-        containerId: containerId
+        containerId: finalContainerId
       }
     });
 
