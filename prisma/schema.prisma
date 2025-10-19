@@ -409,22 +409,30 @@ model EventForm {
 
 model Admin {
   id        String        @id @default(cuid())
-  orgId     String?
-  org       Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  eventId   String?
-  event     Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  
+  // 🔥 UNIVERSAL PERSONHOOD (flattened from AdminProfile)
+  email     String?
+  firstName String?
+  lastName  String?
+  phone     String?
+  photoURL  String?
+  
+  // CONTEXT LINKS
+  containerId String?
+  orgId       String?
+  org         Organization? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  eventId     String?
+  event       Event?        @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   firebaseId String? @unique
 
+  // ROLE & STATUS
   role        String
   permissions Json?
-  isActive    Boolean @default(true)
+  status      String @default("active") // active, deactivated, suspended
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  // Relation to profile (future)
-  profile AdminProfile?
   
   // File uploads
   attachments CampaignAttachment[]
@@ -433,26 +441,11 @@ model Admin {
   @@index([orgId])
   @@index([eventId])
   @@index([firebaseId])
-  @@index([isActive])
-}
-
-// FUTURE: Admin Profile - Personal info separate from auth/permissions
-model AdminProfile {
-  id        String   @id @default(cuid())
-  adminId   String   @unique
-  admin     Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
-  
-  email     String   @unique
-  firstName String?
-  lastName  String?
-  phone     String?
-  photoURL  String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  @@index([status])
   @@index([email])
 }
+
+// DELETED: AdminProfile - Merged into Admin model (personhood fields are now direct on Admin)
 
 // DELETED - Legacy EventAttendee model (Contact-first architecture now)
 // All fields moved to Contact model directly

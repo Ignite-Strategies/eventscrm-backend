@@ -28,4 +28,32 @@ router.get('/contact/:contactId', async (req, res) => {
   }
 });
 
+// PATCH /api/admin/:adminId - Update admin profile
+router.patch('/:adminId', async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const { email, firstName, lastName, phone, photoURL } = req.body;
+    
+    console.log(`📝 Updating admin profile: ${adminId}`);
+    
+    const updatedAdmin = await prisma.admin.update({
+      where: { id: adminId },
+      data: {
+        email: email || undefined,
+        firstName: firstName || undefined,
+        lastName: lastName || undefined,
+        phone: phone || undefined,
+        photoURL: photoURL || undefined
+      }
+    });
+    
+    console.log('✅ Admin profile updated:', updatedAdmin.id);
+    res.json(updatedAdmin);
+    
+  } catch (error) {
+    console.error('❌ Update admin error:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 export default router;

@@ -43,7 +43,10 @@ router.get('/:firebaseId', async (req, res) => {
         id: admin.id,
         firebaseId: admin.firebaseId,
         email: admin.email,
-        name: admin.name
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        phone: admin.phone,
+        photoURL: admin.photoURL
       },
       org: admin.org ? {
         id: admin.org.id,
@@ -63,7 +66,7 @@ router.get('/:firebaseId', async (req, res) => {
       
       // Legacy fields for display
       orgName: admin.org?.name || null,
-      memberName: admin.name || null
+      memberName: admin.firstName || admin.email?.split('@')[0] || null
     };
 
     console.log('✅ UNIVERSAL HYDRATION complete:', {
