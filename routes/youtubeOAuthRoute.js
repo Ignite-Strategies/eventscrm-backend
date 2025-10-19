@@ -35,14 +35,21 @@ router.post('/oauth', async (req, res) => {
   try {
     const { code, containerId } = req.body;
     
+    console.log('🔐 YouTube OAuth callback received:', { 
+      code: code ? code.substring(0, 20) + '...' : 'missing',
+      containerId: containerId || 'default'
+    });
+    
     const oauth2Client = new google.auth.OAuth2(
       process.env.YOUTUBE_CLIENT_ID,
       process.env.YOUTUBE_CLIENT_SECRET,
       process.env.YOUTUBE_REDIRECT_URI
     );
 
+    console.log('🔄 Exchanging authorization code for tokens...');
     // Exchange code for tokens
     const { tokens } = await oauth2Client.getToken(code);
+    console.log('✅ Tokens received successfully');
     oauth2Client.setCredentials(tokens);
 
     // Get channel info
