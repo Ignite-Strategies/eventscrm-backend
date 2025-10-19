@@ -64,7 +64,7 @@ router.post('/oauth', async (req, res) => {
     });
     
     // Exchange code for tokens
-    const { tokens } = await oauth2Client.getToken(code);
+    const { tokens } = await oauth2Client.getTokenAsync(code);
     console.log('✅ Tokens received successfully');
     oauth2Client.setCredentials(tokens);
 
