@@ -57,6 +57,12 @@ router.post('/oauth', async (req, res) => {
       redirectUri: process.env.YOUTUBE_REDIRECT_URI
     });
     
+    // Test Prisma client
+    console.log('🔧 Prisma client test:', {
+      hasYouTubeChannel: !!prisma.youtubeChannel,
+      prismaKeys: Object.keys(prisma).filter(key => key.includes('youtube') || key.includes('YouTube'))
+    });
+    
     // Exchange code for tokens
     const { tokens } = await oauth2Client.getToken(code);
     console.log('✅ Tokens received successfully');
