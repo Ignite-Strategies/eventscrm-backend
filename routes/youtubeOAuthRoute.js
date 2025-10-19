@@ -40,6 +40,10 @@ router.post('/oauth', async (req, res) => {
       containerId: containerId || 'default'
     });
     
+    if (!code) {
+      throw new Error('No authorization code provided');
+    }
+    
     const oauth2Client = new google.auth.OAuth2(
       process.env.YOUTUBE_CLIENT_ID,
       process.env.YOUTUBE_CLIENT_SECRET,
@@ -47,6 +51,12 @@ router.post('/oauth', async (req, res) => {
     );
 
     console.log('🔄 Exchanging authorization code for tokens...');
+    console.log('🔧 OAuth2Client config:', {
+      clientId: process.env.YOUTUBE_CLIENT_ID ? 'set' : 'missing',
+      clientSecret: process.env.YOUTUBE_CLIENT_SECRET ? 'set' : 'missing',
+      redirectUri: process.env.YOUTUBE_REDIRECT_URI
+    });
+    
     // Exchange code for tokens
     const { tokens } = await oauth2Client.getToken(code);
     console.log('✅ Tokens received successfully');
