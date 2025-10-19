@@ -85,11 +85,14 @@ router.post('/oauth', async (req, res) => {
     const finalContainerId = containerId || 'default';
     
     // First try to find existing channel
+    console.log('🔍 Checking for existing channel:', channel.id);
     let youtubeChannel = await prisma.$queryRaw`
       SELECT id, "channelId", "title", "thumbnail" 
       FROM "YouTubeChannel" 
       WHERE "channelId" = ${channel.id}
     `;
+    
+    console.log('🔍 Existing channel found:', youtubeChannel.length > 0);
     
     if (youtubeChannel.length > 0) {
       // Update existing channel
