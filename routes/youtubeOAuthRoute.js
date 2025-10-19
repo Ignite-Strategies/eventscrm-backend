@@ -57,54 +57,37 @@ router.post('/oauth', async (req, res) => {
       throw new Error('No YouTube channel found');
     }
 
-    // Store or update channel in database using raw SQL
+    // Store or update channel in database using Prisma
     const containerId = req.body.containerId || 'default';
     
-    const upsertQuery = `
-      INSERT INTO youtube_accounts (
-        container_id, org_id, google_user_id, channel_id, channel_title, 
-        channel_description, channel_thumbnail_url, subscriber_count, 
-        view_count, video_count, access_token, refresh_token, 
-        token_scope, token_type, token_expiry, connected_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, NOW()
-      )
-      ON CONFLICT (channel_id) 
-      DO UPDATE SET
-        channel_title = EXCLUDED.channel_title,
-        channel_description = EXCLUDED.channel_description,
-        channel_thumbnail_url = EXCLUDED.channel_thumbnail_url,
-        subscriber_count = EXCLUDED.subscriber_count,
-        view_count = EXCLUDED.view_count,
-        video_count = EXCLUDED.video_count,
-        access_token = EXCLUDED.access_token,
-        refresh_token = EXCLUDED.refresh_token,
-        token_scope = EXCLUDED.token_scope,
-        token_type = EXCLUDED.token_type,
-        token_expiry = EXCLUDED.token_expiry,
-        updated_at = NOW()
-      RETURNING id, channel_id, channel_title, channel_thumbnail_url
-    `;
-    
-    const result = await prisma.$queryRawUnsafe(upsertQuery, [
-      containerId,
-      null, // org_id - will be set later
-      channel.snippet.title, // google_user_id placeholder
-      channel.id,
-      channel.snippet.title,
-      channel.snippet.description,
-      channel.snippet.thumbnails?.default?.url,
-      parseInt(channel.statistics.subscriberCount || '0'),
-      parseInt(channel.statistics.viewCount || '0'),
-      parseInt(channel.statistics.videoCount || '0'),
-      tokens.access_token,
-      tokens.refresh_token,
-      tokens.scope,
-      tokens.token_type,
-      new Date(tokens.expiry_date)
-    ]);
-    
-    const youtubeChannel = result[0];
+    const youtubeChannel = await prisma.youtubeChannel.upsert({
+      where: { channelId: channel.id },
+      update: {
+        title: channel.snippet.title,
+        description: channel.snippet.description,
+        thumbnail: channel.snippet.thumbnails?.default?.url,
+        subscriberCount: parseInt(channel.statistics.subscriberCount || '0'),
+        viewCount: BigInt(channel.statistics.viewCount || '0'),
+        videoCount: parseInt(channel.statistics.videoCount || '0'),
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt: new Date(tokens.expiry_date),
+        containerId: containerId
+      },
+      create: {
+        channelId: channel.id,
+        title: channel.snippet.title,
+        description: channel.snippet.description,
+        thumbnail: channel.snippet.thumbnails?.default?.url,
+        subscriberCount: parseInt(channel.statistics.subscriberCount || '0'),
+        viewCount: BigInt(channel.statistics.viewCount || '0'),
+        videoCount: parseInt(channel.statistics.videoCount || '0'),
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt: new Date(tokens.expiry_date),
+        containerId: containerId
+      }
+    });
 
     res.json({
       success: true,
@@ -115,9 +98,9 @@ router.post('/oauth', async (req, res) => {
       },
       channel: {
         id: youtubeChannel.id,
-        channelId: youtubeChannel.channel_id,
-        title: youtubeChannel.channel_title,
-        thumbnail: youtubeChannel.channel_thumbnail_url
+        channelId: youtubeChannel.channelId,
+        title: youtubeChannel.title,
+        thumbnail: youtubeChannel.thumbnail
       }
     });
 
