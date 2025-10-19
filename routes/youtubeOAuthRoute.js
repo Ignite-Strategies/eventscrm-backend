@@ -111,11 +111,11 @@ router.post('/oauth', async (req, res) => {
       // Insert new channel
       const insertResult = await prisma.$queryRaw`
         INSERT INTO "YouTubeChannel" (
-          "channelId", "title", "description", "thumbnail", 
+          "id", "channelId", "title", "description", "thumbnail", 
           "subscriberCount", "viewCount", "videoCount", 
           "accessToken", "refreshToken", "expiresAt", "containerId"
         ) VALUES (
-          ${channel.id}, ${channel.snippet.title}, ${channel.snippet.description}, 
+          gen_random_uuid(), ${channel.id}, ${channel.snippet.title}, ${channel.snippet.description}, 
           ${channel.snippet.thumbnails?.default?.url}, 
           ${parseInt(channel.statistics.subscriberCount || '0')}, 
           ${parseInt(channel.statistics.viewCount || '0')}, 
