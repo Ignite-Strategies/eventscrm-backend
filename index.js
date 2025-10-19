@@ -29,6 +29,7 @@ import personalEmailRouter from './routes/personalEmailRoute.js'; // Personal em
 import enterpriseGmailRouter from './routes/enterpriseGmailRoute.js'; // Enterprise Gmail sending (Gmail OAuth campaigns)
 import welcomeHydrationRouter from './routes/welcomeHydrationRoute.js'; // Welcome hydration for Firebase users
 import adminUserAuthRouter from './routes/adminUserAuthRoute.js'; // Admin/User authentication (Firebase)
+import adminRouter from './routes/adminRoute.js'; // Admin CRUD (profile updates, team management)
 import stageMovementRouter from './routes/stageMovementRoute.js'; // Stage movement automation
 import googleAdsRouter from './routes/googleAdsRoute.js'; // Google Ads API integration
 import fileUploadRouter from './routes/fileUploadRoute.js'; // File upload for campaign attachments
@@ -82,6 +83,7 @@ app.use('/api/email/personal', personalEmailRouter);  // Personal email sending 
 app.use('/api/enterprise-gmail', enterpriseGmailRouter);  // Enterprise Gmail sending (Gmail OAuth campaigns)
 app.use('/api/welcome', welcomeHydrationRouter);  // ✅ Welcome hydration (Firebase → Admin check)
 app.use('/api/auth', adminUserAuthRouter);  // ✅ Admin authentication (findOrCreate)
+app.use('/api/admin', adminRouter);  // ✅ Admin CRUD (GET, POST, PATCH, DELETE)
 app.use('/api/stage-movement', stageMovementRouter);  // ✅ Stage movement automation
 app.use('/api/google-ads', googleAdsRouter);  // ✅ Google Ads API integration
 app.use('/api/file-upload', fileUploadRouter);  // 📎 File upload for campaign attachments
