@@ -294,10 +294,7 @@ async function createOrUpdateContact(mappedData, context, prisma) {
         
         // Pipeline tracking
         audienceType,
-        currentStage,
-        
-        // Form tracking
-        submittedFormId
+        currentStage
       }
     });
     
