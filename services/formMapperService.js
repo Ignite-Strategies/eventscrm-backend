@@ -285,8 +285,8 @@ async function createOrUpdateContact(mappedData, context, prisma) {
         containerId,
         
         // Relationships  
-        ...(orgId && { orgId }),
-        ...(eventId && { eventId }),
+        // ...(orgId && { orgId }),  // Temporarily disabled - Prisma client issue
+        // ...(eventId && { eventId }),  // Temporarily disabled - Prisma client issue
         
         // Event-specific data
         spouseOrOther: eventAttendee.spouseOrOther || 'solo',
