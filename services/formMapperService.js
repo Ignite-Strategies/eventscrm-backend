@@ -202,9 +202,6 @@ function getMappedFields(model) {
  * @returns {Object} Created/updated contact
  */
 async function createOrUpdateContact(mappedData, context, prisma) {
-  const { customAlphabet } = await import('nanoid');
-  const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 10);
-  
   const {
     containerId,
     orgId,
@@ -215,9 +212,6 @@ async function createOrUpdateContact(mappedData, context, prisma) {
   } = context;
   
   const { contact, eventAttendee } = mappedData;
-  
-  // Generate unique contactId for Contact-First Architecture
-  const contactId = `contact_${nanoid()}`;
   
   // Extract personhood data
   const {
@@ -274,13 +268,11 @@ async function createOrUpdateContact(mappedData, context, prisma) {
     return updatedContact;
     
   } else {
-    // CREATE new contact with unique contactId
-    console.log('🆕 Creating new contact with ID:', contactId);
+    // CREATE new contact (Prisma auto-generates ID!)
+    console.log('🆕 Creating new contact');
     
     const newContact = await prisma.contact.create({
       data: {
-        // Contact-First Architecture: Unique contactId
-        id: contactId,
         
         // Personhood
         firstName,
