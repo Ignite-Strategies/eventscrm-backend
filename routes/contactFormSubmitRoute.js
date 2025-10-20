@@ -17,6 +17,7 @@ router.post('/submit', async (req, res) => {
     
     console.log('📝 Form submission received for eventId:', eventId);
     console.log('📋 Submission data:', formData);
+    console.log('🔍 Request body context:', { eventId, containerId, orgId, audienceType, targetStage });
     
     // Get the PublicForm by eventId (not slug!)
     const publicForm = await prisma.publicForm.findFirst({
