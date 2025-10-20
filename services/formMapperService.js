@@ -1,8 +1,11 @@
 /**
- * Field Mapping Service
+ * Form Mapper Service
  * 
- * Centralized service for mapping form fields to database columns
- * Handles field name variations, value transformations, and data types
+ * THE ONE SERVICE that handles everything:
+ * - Maps form fields to database columns
+ * - Creates unique contactId for Contact-First Architecture
+ * - Handles tenant isolation with containerId
+ * - Creates/updates contacts directly
  */
 
 /**
@@ -191,8 +194,128 @@ function getMappedFields(model) {
   return Object.values(FIELD_MAPPINGS[model] || {});
 }
 
+/**
+ * Create or update contact with Contact-First Architecture
+ * @param {Object} mappedData - Mapped form data
+ * @param {Object} context - Context data (containerId, orgId, eventId, etc.)
+ * @param {Object} prisma - Prisma client
+ * @returns {Object} Created/updated contact
+ */
+async function createOrUpdateContact(mappedData, context, prisma) {
+  const { customAlphabet } = await import('nanoid');
+  const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 10);
+  
+  const {
+    containerId,
+    orgId,
+    eventId,
+    audienceType,
+    currentStage,
+    submittedFormId
+  } = context;
+  
+  const { contact, eventAttendee } = mappedData;
+  
+  // Generate unique contactId for Contact-First Architecture
+  const contactId = `contact_${nanoid()}`;
+  
+  // Extract personhood data
+  const {
+    firstName = '',
+    lastName = '',
+    email = '',
+    phone = '',
+    goesBy = ''
+  } = contact;
+  
+  if (!email) {
+    throw new Error('Email is required for contact creation');
+  }
+  
+  // Normalize email
+  const normalizedEmail = email.toLowerCase().trim();
+  
+  // Check if contact exists in this container (tenant isolation!)
+  const existingContact = await prisma.contact.findFirst({
+    where: {
+      email: normalizedEmail,
+      containerId: containerId
+    }
+  });
+  
+  if (existingContact) {
+    // UPDATE existing contact in this container
+    console.log('🔄 Updating existing contact:', existingContact.id);
+    
+    const updatedContact = await prisma.contact.update({
+      where: { id: existingContact.id },
+      data: {
+        // Update personhood if provided
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+        ...(phone && { phone }),
+        ...(goesBy && { goesBy }),
+        
+        // Update relationships
+        orgId,
+        eventId,
+        spouseOrOther: eventAttendee.spouseOrOther || 'solo',
+        howManyInParty: eventAttendee.howManyInParty || 1,
+        
+        // Update pipeline tracking
+        audienceType,
+        currentStage,
+        
+        // Form tracking
+        submittedFormId
+      }
+    });
+    
+    return updatedContact;
+    
+  } else {
+    // CREATE new contact with unique contactId
+    console.log('🆕 Creating new contact with ID:', contactId);
+    
+    const newContact = await prisma.contact.create({
+      data: {
+        // Contact-First Architecture: Unique contactId
+        id: contactId,
+        
+        // Personhood
+        firstName,
+        lastName,
+        email: normalizedEmail,
+        phone,
+        goesBy,
+        
+        // Tenant isolation
+        containerId,
+        
+        // Relationships
+        orgId,
+        eventId,
+        
+        // Event-specific data
+        spouseOrOther: eventAttendee.spouseOrOther || 'solo',
+        howManyInParty: eventAttendee.howManyInParty || 1,
+        
+        // Pipeline tracking
+        audienceType,
+        currentStage,
+        
+        // Form tracking
+        submittedFormId
+      }
+    });
+    
+    return newContact;
+  }
+}
+
 export {
   mapFormFields,
+  createOrUpdateContact,
   getMappedFields,
   FIELD_MAPPINGS,
   VALUE_TRANSFORMATIONS
