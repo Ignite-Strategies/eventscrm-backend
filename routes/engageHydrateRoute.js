@@ -1,7 +1,8 @@
 import express from 'express';
-import prisma from '../config/prisma.js';
+import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();
+const prisma = getPrismaClient();
 
 // POST /api/engage/hydrate - Hydrate all engagement tool connections
 router.post('/hydrate', async (req, res) => {
