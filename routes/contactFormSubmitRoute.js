@@ -18,10 +18,20 @@ router.post('/submit', async (req, res) => {
     console.log('📝 Form submission received for:', slug);
     console.log('📋 Submission data:', formData);
     
-    // Get the PublicForm
+    // Get the PublicForm with org and container context
     const publicForm = await prisma.publicForm.findUnique({
       where: { slug },
-      include: { event: true }
+      include: { 
+        event: {
+          include: {
+            org: {
+              include: {
+                container: true
+              }
+            }
+          }
+        }
+      }
     });
     
     if (!publicForm) {
@@ -56,6 +66,9 @@ router.post('/submit', async (req, res) => {
       mappedStage = 'rsvped';
     }
     
+    // Get containerId from org hierarchy
+    const containerId = publicForm.event?.org?.containerId || null;
+    
     // 🔥 CREATE/UPDATE CONTACT DIRECTLY - NO JUNCTION TABLES!
     const contact = await prisma.contact.upsert({
       where: { email },
@@ -68,6 +81,7 @@ router.post('/submit', async (req, res) => {
         
         // Update org relationship
         ...(orgId && { orgId }),
+        ...(containerId && { containerId }),
         ...(audienceType === 'org_members' && { isOrgMember: true }),
         
         // Update pipeline tracking
@@ -93,6 +107,7 @@ router.post('/submit', async (req, res) => {
         
         // Org relationship
         orgId,
+        containerId,
         isOrgMember: audienceType === 'org_members',
         
         // Pipeline tracking
