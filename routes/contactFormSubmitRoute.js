@@ -1,6 +1,6 @@
 import express from 'express';
 import { getPrismaClient } from '../config/database.js';
-import { mapFormFields } from '../services/fieldMappingService.js';
+import { mapFormFields } from '../services/formMapperService.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -13,14 +13,14 @@ const prisma = getPrismaClient();
  */
 router.post('/submit', async (req, res) => {
   try {
-    const { slug, orgId, eventId, pipelineId, audienceType, targetStage, formData } = req.body;
+    const { eventId, containerId, orgId, pipelineId, audienceType, targetStage, formData } = req.body;
     
-    console.log('📝 Form submission received for:', slug);
+    console.log('📝 Form submission received for eventId:', eventId);
     console.log('📋 Submission data:', formData);
     
-    // Get the PublicForm with org and container context
-    const publicForm = await prisma.publicForm.findUnique({
-      where: { slug },
+    // Get the PublicForm by eventId (not slug!)
+    const publicForm = await prisma.publicForm.findFirst({
+      where: { eventId },
       include: { 
         event: {
           include: {
@@ -66,8 +66,8 @@ router.post('/submit', async (req, res) => {
       mappedStage = 'rsvped';
     }
     
-    // Get containerId from org hierarchy
-    const containerId = publicForm.event?.org?.containerId || null;
+    // Use containerId from request, or fallback to org hierarchy
+    const finalContainerId = containerId || publicForm.event?.org?.containerId || null;
     
     // 🔥 CREATE/UPDATE CONTACT DIRECTLY - NO JUNCTION TABLES!
     const contact = await prisma.contact.upsert({
@@ -81,8 +81,7 @@ router.post('/submit', async (req, res) => {
         
         // Update org relationship
         ...(orgId && { orgId }),
-        ...(containerId && { containerId }),
-        ...(audienceType === 'org_members' && { isOrgMember: true }),
+        ...(finalContainerId && { containerId: finalContainerId }),
         
         // Update pipeline tracking
         ...(pipelineId && { pipelineId }),
@@ -107,8 +106,7 @@ router.post('/submit', async (req, res) => {
         
         // Org relationship
         orgId,
-        containerId,
-        isOrgMember: audienceType === 'org_members',
+        containerId: finalContainerId,
         
         // Pipeline tracking
         pipelineId,

@@ -5,19 +5,19 @@ const router = express.Router();
 const prisma = getPrismaClient();
 
 /**
- * GET /forms/public/:slug - Get public form for external display
+ * GET /forms/public/event/:eventId - Get public form for external display
  * No auth required - this is for public form rendering
  * JUST RETURNS WHAT'S IN THE DATABASE - NO PARSING, NO SERVICES
  */
-router.get('/:slug', async (req, res) => {
+router.get('/event/:eventId', async (req, res) => {
   try {
-    const { slug } = req.params;
+    const { eventId } = req.params;
     
-    console.log('🔍 Loading public form for slug:', slug);
+    console.log('🔍 Loading public form for eventId:', eventId);
     
-    // Get PublicForm - it has everything we need!
-    const publicForm = await prisma.publicForm.findUnique({
-      where: { slug }
+    // Get PublicForm by eventId - more reliable than slug!
+    const publicForm = await prisma.publicForm.findFirst({
+      where: { eventId }
     });
     
     if (!publicForm) {
@@ -49,8 +49,9 @@ router.get('/:slug', async (req, res) => {
       title: publicForm.title,
       description: publicForm.description,
       fields: allFields, // Standard + Custom
-      orgId: publicForm.orgId,           // ← From PublicForm
-      eventId: publicForm.eventId,       // ← From PublicForm
+      containerId: publicForm.containerId,   // ← From PublicForm (tenant isolation)
+      orgId: publicForm.orgId,               // ← From PublicForm
+      eventId: publicForm.eventId,           // ← From PublicForm
       audienceType: publicForm.audienceType, // ← From PublicForm
       targetStage: publicForm.targetStage    // ← From PublicForm (maps to currentStage)
     });

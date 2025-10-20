@@ -385,6 +385,8 @@ model PublicForm {
 
   isActive        Boolean @default(true)
   submissionCount Int     @default(0)
+  
+  createdBy       String?  // Admin/Contact ID who created this form
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
