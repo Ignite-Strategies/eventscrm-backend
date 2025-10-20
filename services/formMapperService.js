@@ -284,9 +284,9 @@ async function createOrUpdateContact(mappedData, context, prisma) {
         // Tenant isolation
         containerId,
         
-        // Relationships
-        orgId,
-        eventId,
+        // Relationships  
+        ...(orgId && { orgId }),
+        ...(eventId && { eventId }),
         
         // Event-specific data
         spouseOrOther: eventAttendee.spouseOrOther || 'solo',
