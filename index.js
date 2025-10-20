@@ -46,6 +46,7 @@ import youtubeOAuthRouter from './routes/youtubeOAuthRoute.js'; // 🔐 YouTube 
 import youtubeChannelRouter from './routes/youtubeChannelRoute.js'; // 📺 YouTube Channel
 import youtubePlaylistsRouter from './routes/youtubePlaylistsRoute.js'; // 📋 YouTube Playlists
 import youtubeUploadRouter from './routes/youtubeUploadRoute.js'; // 🎬 YouTube Upload
+import engageHydrateRouter from './routes/engageHydrateRoute.js'; // 💧 Engage Hydration
 
 dotenv.config();
 
@@ -104,6 +105,7 @@ app.use('/api/youtube', youtubeOAuthRouter);  // 🔐 YouTube OAuth
 app.use('/api/youtube', youtubeChannelRouter);  // 📺 YouTube Channel
 app.use('/api/youtube', youtubePlaylistsRouter);  // 📋 YouTube Playlists
 app.use('/api/youtube', youtubeUploadRouter);  // 🎬 YouTube Upload
+app.use('/api/engage', engageHydrateRouter);  // 💧 Engage Hydration
 
 // Health check
 app.get('/health', (req, res) => {
