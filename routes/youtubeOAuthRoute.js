@@ -82,7 +82,7 @@ router.post('/oauth', async (req, res) => {
     }
 
     // Store or update channel in database using raw SQL (Prisma client issues)
-    const finalContainerId = containerId || 'default';
+    const finalContainerId = containerId || process.env.DEFAULT_CONTAINER_ID || 'cmgu7w02h0000ceaqt7iz6bf9';
     
     // First try to find existing channel
     console.log('🔍 Checking for existing channel:', channel.id);
