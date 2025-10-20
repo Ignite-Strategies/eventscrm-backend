@@ -357,11 +357,15 @@ model Event {
 
 model PublicForm {
   id      String @id @default(cuid())
+  
+  // Tenant isolation
+  containerId String?  // Start nullable, we'll backfill
+  
   orgId   String
   eventId String
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  slug        String  @unique
+  slug        String  @unique  // TODO: Change to @@unique([slug, containerId]) after backfill
   title       String
   description String?
 
@@ -388,6 +392,7 @@ model PublicForm {
   @@index([eventId])
   @@index([orgId])
   @@index([audienceType])
+  @@index([containerId])
 }
 
 model EventForm {
