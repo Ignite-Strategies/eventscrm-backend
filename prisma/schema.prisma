@@ -229,7 +229,7 @@ model MemberJourney {
   
   // Metadata
   notes          String?
-  tags           String[]     @default([])
+  // DELETED: tags (no config, no spec, vibe code)
   
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
@@ -557,7 +557,7 @@ model ContactList {
   lastUsed      DateTime?
   isActive      Boolean   @default(true)
   createdBy     String?
-  tags          String[]
+  // DELETED: tags (no config, no spec, vibe code)
 
   contacts  Contact[]
   campaigns Campaign[]
