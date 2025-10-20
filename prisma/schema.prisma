@@ -105,11 +105,12 @@ model Contact {
   chapterResponsibleFor String?
   yearsWithOrganization Int?
   leadershipRole        String?
-  engagementValue       Int?
-  orgTags               String[] @default([])
   originStory           String?  // How they got involved with THIS org
-  notes                 String?  // General notes about this contact
-  tags                  String?  // Comma-separated tags
+  
+  // DELETED: engagementValue (replaced by MemberJourney.journeyStage)
+  // DELETED: orgTags (not used)
+  // DELETED: notes (not used - forms modularized)
+  // DELETED: tags (not used)
   
   // FOREIGN KEYS (that's it!)
   orgId      String?
