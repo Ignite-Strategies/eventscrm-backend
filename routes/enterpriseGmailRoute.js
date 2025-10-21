@@ -2,7 +2,7 @@ import express from "express";
 import { getPrismaClient } from "../config/database.js";
 import ContactListService from "../services/contactListService.js";
 import { GmailService } from "../services/personalEmailService.js";
-import verifyGmailToken from "../middleware/verifyGmailToken.js";
+import GmailTokenService from "../services/gmailTokenService.js";
 import StageMovementService from "../services/stageMovementService.js";
 import FileUploadService from "../services/fileUploadService.js";
 
@@ -13,22 +13,18 @@ const prisma = getPrismaClient();
  * POST /enterprise-gmail/send-sequence
  * Send a configured sequence via Gmail API with 4-second delays
  */
-router.post("/send-sequence", verifyGmailToken, async (req, res) => {
+router.post("/send-sequence", async (req, res) => {
   console.log('🎯 /send-sequence route called');
   
   try {
-    const { sequenceId, contacts, delaySeconds = 4 } = req.body;
-    const gmailAccessToken = req.gmailAccessToken; // From Gmail OAuth middleware
+    const { sequenceId, contacts, delaySeconds = 4, orgId, adminId } = req.body;
     
     console.log('📨 Request body:', { 
       sequenceId, 
       contactCount: contacts?.length,
-      delaySeconds 
-    });
-    console.log('🔑 Gmail token from middleware:', {
-      exists: !!gmailAccessToken,
-      tokenStart: gmailAccessToken?.substring(0, 20) + '...',
-      tokenLength: gmailAccessToken?.length
+      delaySeconds,
+      orgId,
+      adminId
     });
     
     if (!sequenceId || !contacts || !Array.isArray(contacts)) {
@@ -36,9 +32,23 @@ router.post("/send-sequence", verifyGmailToken, async (req, res) => {
       return res.status(400).json({ error: "sequenceId and contacts array are required" });
     }
     
-    if (!gmailAccessToken) {
-      console.error('❌ No Gmail token available');
-      return res.status(401).json({ error: "Gmail authentication required" });
+    if (!orgId || !adminId) {
+      console.error('❌ Missing orgId or adminId');
+      return res.status(400).json({ error: "orgId and adminId are required" });
+    }
+    
+    // Get valid Gmail token from database (auto-refreshes if needed)
+    console.log('🔑 Fetching Gmail token from database...');
+    let gmailAccessToken;
+    try {
+      gmailAccessToken = await GmailTokenService.getValidToken(orgId, adminId);
+      console.log('✅ Got valid Gmail token');
+    } catch (error) {
+      console.error('❌ Failed to get Gmail token:', error.message);
+      return res.status(401).json({ 
+        error: "Gmail not connected. Please connect Gmail on the Campaign Home page.",
+        needsAuth: true
+      });
     }
     
     // 1. Get sequence details
@@ -187,21 +197,41 @@ router.post("/send-sequence", verifyGmailToken, async (req, res) => {
  * POST /enterprise-gmail/send-campaign
  * Send a campaign via Gmail API
  */
-router.post("/send-campaign", verifyGmailToken, async (req, res) => {
+router.post("/send-campaign", async (req, res) => {
   console.log('🎯 /send-campaign route called');
   
   try {
-    const { campaignId, subject, message, contactListId, attachments = [] } = req.body;
-    const gmailAccessToken = req.gmailAccessToken;
+    const { campaignId, subject, message, contactListId, attachments = [], orgId, adminId } = req.body;
     
-    console.log('📨 Campaign request:', { campaignId, subject, contactListId, attachmentCount: attachments.length });
+    console.log('📨 Campaign request:', { 
+      campaignId, 
+      subject, 
+      contactListId, 
+      attachmentCount: attachments.length,
+      orgId,
+      adminId
+    });
     
     if (!campaignId || !subject || !message || !contactListId) {
       return res.status(400).json({ error: "campaignId, subject, message, and contactListId are required" });
     }
     
-    if (!gmailAccessToken) {
-      return res.status(401).json({ error: "Gmail authentication required" });
+    if (!orgId || !adminId) {
+      return res.status(400).json({ error: "orgId and adminId are required" });
+    }
+    
+    // Get valid Gmail token from database (auto-refreshes if needed)
+    console.log('🔑 Fetching Gmail token from database...');
+    let gmailAccessToken;
+    try {
+      gmailAccessToken = await GmailTokenService.getValidToken(orgId, adminId);
+      console.log('✅ Got valid Gmail token');
+    } catch (error) {
+      console.error('❌ Failed to get Gmail token:', error.message);
+      return res.status(401).json({ 
+        error: "Gmail not connected. Please connect Gmail on the Campaign Home page.",
+        needsAuth: true
+      });
     }
     
     // Get contacts from the contact list

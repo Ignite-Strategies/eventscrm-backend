@@ -1,243 +1,266 @@
 import express from 'express';
-import { google } from 'googleapis';
 import { getPrismaClient } from '../config/database.js';
+import { google } from 'googleapis';
+import { createId } from '@paralleldrive/cuid2';
 
 const router = express.Router();
 const prisma = getPrismaClient();
 
-// Google OAuth2 Client Configuration for Gmail
-const getOAuth2Client = () => {
-  return new google.auth.OAuth2(
+// 🔐 GMAIL OAUTH ROUTES (Direct Google OAuth - NOT Firebase!)
+
+/**
+ * GET /gmail-oauth/auth
+ * Redirect user to Google OAuth with Gmail scope
+ * Requires: orgId and adminId as query params
+ */
+router.get('/auth', (req, res) => {
+  const { orgId, adminId } = req.query;
+  
+  console.log('🔐 Gmail OAuth: Initiating flow', { orgId, adminId });
+  
+  if (!orgId || !adminId) {
+    return res.status(400).json({ error: 'orgId and adminId are required' });
+  }
+  
+  const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_URI_GMAIL || "https://eventscrm-backend.onrender.com/api/gmail/oauth/callback"
+    process.env.GMAIL_REDIRECT_URI || "https://ignitestrategiescrm-frontend.vercel.app/gmailoauth"
   );
-};
 
-// POST /api/gmail/oauth/connect - Start Gmail OAuth flow
-router.post("/connect", async (req, res) => {
-  try {
-    const { orgId, adminId } = req.body;
+  const scopes = [
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/userinfo.email'  // To get user's email address
+  ];
 
-    if (!orgId || !adminId) {
-      return res.status(400).json({ error: "orgId and adminId are required" });
-    }
+  // Generate OAuth URL with state parameter to preserve orgId/adminId
+  const state = Buffer.from(JSON.stringify({ orgId, adminId })).toString('base64');
+  
+  const authUrl = oauth2Client.generateAuthUrl({
+    access_type: 'offline',  // ← CRITICAL! Gets refresh token
+    scope: scopes,
+    prompt: 'consent',       // Force consent screen to ensure refresh token
+    state: state             // Pass orgId/adminId through OAuth flow
+  });
 
-    const oauth2Client = getOAuth2Client();
-
-    // Generate OAuth URL with Gmail sending scope
-    const authUrl = oauth2Client.generateAuthUrl({
-      access_type: "offline", // ← This gets us the refresh token!
-      prompt: 'consent', // Force consent to get refresh token every time
-      scope: [
-        "https://www.googleapis.com/auth/gmail.send", // Send emails
-        "https://www.googleapis.com/auth/userinfo.email" // Get user email
-      ],
-      state: JSON.stringify({ orgId, adminId }) // Pass both through state
-    });
-
-    console.log(`🔗 Generated Gmail OAuth URL for org: ${orgId}, admin: ${adminId}`);
-    res.json({ authUrl });
-  } catch (error) {
-    console.error("❌ Error generating Gmail OAuth URL:", error);
-    res.status(500).json({ error: "Failed to generate OAuth URL" });
-  }
+  console.log('🔐 Redirecting to Google OAuth...');
+  res.redirect(authUrl);
 });
 
-// GET /api/gmail/oauth/callback - Handle OAuth callback
-router.get("/callback", async (req, res) => {
+/**
+ * POST /gmail-oauth/callback
+ * Exchange authorization code for tokens and store in database
+ * Called by frontend after Google redirects back
+ */
+router.post('/callback', async (req, res) => {
   try {
-    const { code, state } = req.query;
+    const { code, state } = req.body;
     
-    if (!code || !state) {
-      return res.status(400).send("Missing authorization code or state");
+    console.log('🔐 Gmail OAuth callback received:', { 
+      code: code ? code.substring(0, 20) + '...' : 'missing',
+      state: state ? 'present' : 'missing'
+    });
+    
+    if (!code) {
+      throw new Error('No authorization code provided');
     }
+    
+    // Decode state to get orgId/adminId
+    let orgId, adminId;
+    if (state) {
+      try {
+        const decoded = JSON.parse(Buffer.from(state, 'base64').toString());
+        orgId = decoded.orgId;
+        adminId = decoded.adminId;
+      } catch (e) {
+        console.error('❌ Failed to decode state:', e);
+      }
+    }
+    
+    // Fallback to request body if state decode fails
+    if (!orgId || !adminId) {
+      orgId = req.body.orgId;
+      adminId = req.body.adminId;
+    }
+    
+    if (!orgId || !adminId) {
+      throw new Error('orgId and adminId are required');
+    }
+    
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET,
+      process.env.GMAIL_REDIRECT_URI || "https://ignitestrategiescrm-frontend.vercel.app/gmailoauth"
+    );
 
-    const { orgId, adminId } = JSON.parse(state);
-
-    const oauth2Client = getOAuth2Client();
-
+    console.log('🔄 Exchanging authorization code for tokens...');
+    console.log('🔧 OAuth2Client config:', {
+      clientId: process.env.GOOGLE_CLIENT_ID ? 'set' : 'missing',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ? 'set' : 'missing',
+      redirectUri: process.env.GMAIL_REDIRECT_URI
+    });
+    
     // Exchange code for tokens
     const { tokens } = await oauth2Client.getToken(code);
-    oauth2Client.setCredentials(tokens);
-
-    console.log('🎫 Tokens received:', {
+    console.log('✅ Tokens received:', {
       hasAccessToken: !!tokens.access_token,
       hasRefreshToken: !!tokens.refresh_token,
-      expiryDate: tokens.expiry_date
+      expiresIn: tokens.expiry_date ? new Date(tokens.expiry_date) : 'unknown'
     });
+    
+    if (!tokens.refresh_token) {
+      console.warn('⚠️ No refresh token received! User may have already authorized this app.');
+    }
+    
+    oauth2Client.setCredentials(tokens);
 
-    // Get user info to store connected email
-    const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+    // Get user's email address
+    const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
     const userInfo = await oauth2.userinfo.get();
+    const email = userInfo.data.email;
+    
+    console.log('✅ Gmail account:', email);
 
-    // Store the Gmail connection in the database
-    const gmailConnection = await prisma.gmailConnection.create({
-      data: {
+    // Store or update Gmail connection in database
+    console.log('💾 Storing Gmail connection for:', { orgId, adminId, email });
+    
+    // Check if connection already exists
+    const existing = await prisma.gmailConnection.findFirst({
+      where: {
         orgId,
-        adminId,
-        email: userInfo.data.email,
-        refreshToken: tokens.refresh_token,
-        accessToken: tokens.access_token,
-        tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
-        status: "active"
+        adminId
       }
     });
+    
+    if (existing) {
+      // Update existing connection
+      console.log('🔄 Updating existing Gmail connection:', existing.id);
+      await prisma.gmailConnection.update({
+        where: { id: existing.id },
+        data: {
+          email,
+          refreshToken: tokens.refresh_token || existing.refreshToken, // Keep old if no new one
+          accessToken: tokens.access_token,
+          tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+          status: 'active',
+          updatedAt: new Date()
+        }
+      });
+    } else {
+      // Create new connection
+      console.log('✨ Creating new Gmail connection');
+      
+      if (!tokens.refresh_token) {
+        throw new Error('No refresh token received. Please revoke app access and try again.');
+      }
+      
+      await prisma.gmailConnection.create({
+        data: {
+          id: createId(),
+          orgId,
+          adminId,
+          email,
+          refreshToken: tokens.refresh_token,
+          accessToken: tokens.access_token,
+          tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+          status: 'active'
+        }
+      });
+    }
 
-    console.log(`✅ Gmail connected: ${gmailConnection.id} for ${userInfo.data.email}`);
+    console.log('✅ Gmail connection stored successfully!');
 
-    // Redirect to success page in frontend
-    res.redirect(`https://your-frontend-url.com/settings?gmailConnected=true`);
+    res.json({
+      success: true,
+      email,
+      message: 'Gmail connected successfully! You can now send emails.'
+    });
+
   } catch (error) {
-    console.error("❌ Error in Gmail OAuth callback:", error);
-    res.status(500).send("Gmail OAuth callback failed");
+    console.error('❌ Gmail OAuth error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
   }
 });
 
-// GET /api/gmail/oauth/status - Check if Gmail is connected for org
-router.get("/status", async (req, res) => {
+/**
+ * GET /gmail-oauth/status
+ * Check if Gmail is connected for this org/admin
+ */
+router.get('/status', async (req, res) => {
   try {
-    const { orgId } = req.query;
-
-    if (!orgId) {
-      return res.status(400).json({ error: "orgId is required" });
+    const { orgId, adminId } = req.query;
+    
+    if (!orgId || !adminId) {
+      return res.status(400).json({ error: 'orgId and adminId are required' });
     }
-
+    
     const connection = await prisma.gmailConnection.findFirst({
-      where: { 
+      where: {
         orgId,
-        status: "active"
+        adminId,
+        status: 'active'
       },
       select: {
         id: true,
         email: true,
-        tokenExpiry: true,
-        createdAt: true
+        status: true,
+        createdAt: true,
+        updatedAt: true
       }
     });
-
-    res.json({ 
-      connected: !!connection,
-      connection: connection || null
-    });
-  } catch (error) {
-    console.error("❌ Error checking Gmail status:", error);
-    res.status(500).json({ error: "Failed to check Gmail status" });
-  }
-});
-
-// POST /api/gmail/oauth/refresh-token - Refresh Gmail access token
-router.post("/refresh-token", async (req, res) => {
-  try {
-    const { orgId } = req.body;
-
-    const connection = await prisma.gmailConnection.findFirst({
-      where: { 
-        orgId,
-        status: "active"
-      }
-    });
-
-    if (!connection || !connection.refreshToken) {
-      return res.status(404).json({ error: "Gmail connection not found or no refresh token" });
-    }
-
-    const oauth2Client = getOAuth2Client();
-    oauth2Client.setCredentials({
-      refresh_token: connection.refreshToken
-    });
-
-    // Refresh the token
-    const { credentials } = await oauth2Client.refreshAccessToken();
-
-    // Update database with new access token
-    await prisma.gmailConnection.update({
-      where: { id: connection.id },
-      data: {
-        accessToken: credentials.access_token,
-        tokenExpiry: credentials.expiry_date ? new Date(credentials.expiry_date) : null
-      }
-    });
-
-    console.log(`✅ Gmail token refreshed for connection: ${connection.id}`);
-    res.json({ 
-      success: true, 
-      accessToken: credentials.access_token,
-      expiresAt: credentials.expiry_date
-    });
-  } catch (error) {
-    console.error("❌ Error refreshing Gmail token:", error);
-    res.status(500).json({ error: "Failed to refresh token" });
-  }
-});
-
-// Helper function to get valid Gmail access token (auto-refresh if needed)
-export async function getValidGmailToken(orgId) {
-  const connection = await prisma.gmailConnection.findFirst({
-    where: { 
-      orgId,
-      status: "active"
-    }
-  });
-
-  if (!connection) {
-    throw new Error('No Gmail connection found for this org');
-  }
-
-  // Check if token is expired or about to expire (5 min buffer)
-  const now = new Date();
-  const expiryBuffer = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutes from now
-
-  if (connection.tokenExpiry && connection.tokenExpiry < expiryBuffer) {
-    console.log('🔄 Token expired or expiring soon, refreshing...');
     
-    const oauth2Client = getOAuth2Client();
-    oauth2Client.setCredentials({
-      refresh_token: connection.refreshToken
-    });
+    if (connection) {
+      res.json({
+        connected: true,
+        email: connection.email,
+        connectedAt: connection.createdAt
+      });
+    } else {
+      res.json({
+        connected: false
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error checking Gmail status:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
-    const { credentials } = await oauth2Client.refreshAccessToken();
-
-    // Update database
-    await prisma.gmailConnection.update({
-      where: { id: connection.id },
+/**
+ * DELETE /gmail-oauth/disconnect
+ * Disconnect Gmail for this org/admin
+ */
+router.delete('/disconnect', async (req, res) => {
+  try {
+    const { orgId, adminId } = req.body;
+    
+    if (!orgId || !adminId) {
+      return res.status(400).json({ error: 'orgId and adminId are required' });
+    }
+    
+    await prisma.gmailConnection.updateMany({
+      where: {
+        orgId,
+        adminId
+      },
       data: {
-        accessToken: credentials.access_token,
-        tokenExpiry: credentials.expiry_date ? new Date(credentials.expiry_date) : null
+        status: 'disconnected',
+        updatedAt: new Date()
       }
     });
-
-    console.log('✅ Token auto-refreshed');
-    return credentials.access_token;
-  }
-
-  return connection.accessToken;
-}
-
-// DELETE /api/gmail/oauth/disconnect - Disconnect Gmail
-router.delete("/disconnect", async (req, res) => {
-  try {
-    const { orgId } = req.query;
-
-    const connection = await prisma.gmailConnection.findFirst({
-      where: { orgId, status: "active" }
+    
+    res.json({
+      success: true,
+      message: 'Gmail disconnected successfully'
     });
-
-    if (!connection) {
-      return res.status(404).json({ error: "Gmail connection not found" });
-    }
-
-    // Mark as disconnected
-    await prisma.gmailConnection.update({
-      where: { id: connection.id },
-      data: { status: "disconnected" }
-    });
-
-    console.log(`✅ Gmail disconnected for org: ${orgId}`);
-    res.json({ message: "Gmail disconnected successfully" });
+    
   } catch (error) {
-    console.error("❌ Error disconnecting Gmail:", error);
-    res.status(500).json({ error: "Failed to disconnect Gmail" });
+    console.error('Error disconnecting Gmail:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
