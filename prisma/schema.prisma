@@ -17,6 +17,7 @@ model Container {
   organizations Organization[]
   admins        Admin[]
   youtubeChannels YouTubeChannel[]
+  googleOAuthConnections GoogleOAuthConnection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1049,15 +1050,19 @@ model YouTubeVideo {
 model GoogleOAuthConnection {
   id           String    @id @default(cuid())
   
-  // WHO owns this
+  // META: WHO owns this (org/container level)
   orgId        String
   org          Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   containerId  String?
   container    Container? @relation(fields: [containerId], references: [id], onDelete: Cascade)
   
+  // PERSONHOOD: WHO authenticated (which admin's personal Google account)
+  adminId      String?
+  admin        Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  
   // WHAT service
   service      String    // "gmail" | "youtube" | "ads"
-  email        String    // Google account email
+  email        String    // Google account email (from adminId's personal account)
   
   // 🔥 TOKENS (universal - work with ANY Google API)
   accessToken  String
