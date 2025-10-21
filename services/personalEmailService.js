@@ -7,7 +7,6 @@ export class GmailService {
     console.log('🔧 GmailService env check:', {
       hasClientId: !!process.env.GOOGLE_CLIENT_ID,
       hasSecret: !!process.env.GOOGLE_CLIENT_SECRET,
-      hasRedirect: !!process.env.GOOGLE_REDIRECT_URI,
       clientIdStart: process.env.GOOGLE_CLIENT_ID?.substring(0, 20),
       accessTokenStart: accessToken?.substring(0, 20),
       accessTokenLength: accessToken?.length
@@ -16,7 +15,7 @@ export class GmailService {
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GOOGLE_REDIRECT_URI
+      "https://app.engage-smart.com/oauth/callback" // Hardcoded (not secret)
     );
     
     // Set the access token with Gmail sending scope
