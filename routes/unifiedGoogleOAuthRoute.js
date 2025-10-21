@@ -17,12 +17,12 @@ const prisma = getPrismaClient();
  * GET /api/google-oauth/auth?service=gmail&orgId=xxx&adminId=xxx
  */
 router.get('/auth', (req, res) => {
-  const { service, orgId, adminId } = req.query;
+  const { service, orgId, adminId, containerId } = req.query;
   
   // Validate required parameters
-  if (!service || !orgId || !adminId) {
+  if (!service || !orgId || !adminId || !containerId) {
     return res.status(400).json({ 
-      error: 'service, orgId, and adminId are required',
+      error: 'service, orgId, adminId, and containerId are required',
       validServices: ['gmail', 'youtube', 'ads']
     });
   }
@@ -53,7 +53,8 @@ router.get('/auth', (req, res) => {
   const state = Buffer.from(JSON.stringify({ 
     service, 
     orgId, 
-    adminId 
+    adminId,
+    containerId 
   })).toString('base64');
   
   const authUrl = oauth2Client.generateAuthUrl({
@@ -92,10 +93,10 @@ router.post('/callback', async (req, res) => {
       throw new Error('Invalid state parameter');
     }
     
-    const { service, orgId, adminId } = stateData;
+    const { service, orgId, adminId, containerId } = stateData;
     
-    if (!service || !orgId || !adminId) {
-      throw new Error('Missing service, orgId, or adminId in state');
+    if (!service || !orgId || !adminId || !containerId) {
+      throw new Error('Missing service, orgId, adminId, or containerId in state');
     }
     
     console.log(`🔄 Processing ${service.toUpperCase()} OAuth callback for org: ${orgId}`);
@@ -122,15 +123,15 @@ router.post('/callback', async (req, res) => {
     // Route to appropriate service handler
     switch (service.toLowerCase()) {
       case 'gmail':
-        await handleGmailCallback(orgId, adminId, userEmail, tokens);
+        await handleGmailCallback(orgId, adminId, containerId, userEmail, tokens);
         break;
         
       case 'youtube':
-        await handleYouTubeCallback(orgId, adminId, userEmail, tokens);
+        await handleYouTubeCallback(orgId, adminId, containerId, userEmail, tokens);
         break;
         
       case 'ads':
-        await handleGoogleAdsCallback(orgId, adminId, userEmail, tokens);
+        await handleGoogleAdsCallback(orgId, adminId, containerId, userEmail, tokens);
         break;
         
       default:
@@ -156,11 +157,10 @@ router.post('/callback', async (req, res) => {
 /**
  * 📧 Handle Gmail OAuth callback
  */
-async function handleGmailCallback(orgId, adminId, userEmail, tokens) {
+async function handleGmailCallback(orgId, adminId, containerId, userEmail, tokens) {
   console.log(`📧 Storing Gmail tokens for ${userEmail}`);
   
-  // Use default containerId for org-level connections
-  const containerId = 'default';
+  console.log(`📧 Using containerId: ${containerId} for org: ${orgId}`);
   
   // Check if connection already exists for this org/service
   const existingConnection = await prisma.googleOAuthConnection.findFirst({
