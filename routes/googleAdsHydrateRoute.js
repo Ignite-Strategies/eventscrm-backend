@@ -25,8 +25,16 @@ router.get('/:accountId', async (req, res) => {
       }
     });
     
+    console.log('🔍 Found Google Ads account in database:', googleAdAccount);
+    
     if (!googleAdAccount) {
+      console.log('❌ Google Ads account not found in database for ID:', accountId);
       return res.status(404).json({ error: 'Google Ads account not found' });
+    }
+    
+    if (!googleAdAccount.googleOAuthConnection) {
+      console.log('❌ No OAuth connection found for account:', accountId);
+      return res.status(404).json({ error: 'OAuth connection not found' });
     }
     
     // Initialize Google Ads API client
