@@ -120,18 +120,19 @@ router.post('/callback', async (req, res) => {
     
     console.log(`👤 User email: ${userEmail}`);
     
-    // Route to appropriate service handler
+    // Route to appropriate service handler and get connection ID
+    let connectionId;
     switch (service.toLowerCase()) {
       case 'gmail':
-        await handleGmailCallback(orgId, adminId, containerId, userEmail, tokens);
+        connectionId = await handleGmailCallback(orgId, adminId, containerId, userEmail, tokens);
         break;
         
       case 'youtube':
-        await handleYouTubeCallback(orgId, adminId, containerId, userEmail, tokens);
+        connectionId = await handleYouTubeCallback(orgId, adminId, containerId, userEmail, tokens);
         break;
         
       case 'ads':
-        await handleGoogleAdsCallback(orgId, adminId, containerId, userEmail, tokens);
+        connectionId = await handleGoogleAdsCallback(orgId, adminId, containerId, userEmail, tokens);
         break;
         
       default:
@@ -142,6 +143,7 @@ router.post('/callback', async (req, res) => {
       success: true,
       service: service,
       email: userEmail,
+      connectionId: connectionId,
       message: `${service.toUpperCase()} connected successfully!`
     });
     
@@ -170,14 +172,13 @@ async function handleGmailCallback(orgId, adminId, containerId, userEmail, token
     }
   });
   
+  let connectionId;
+  
   if (existingConnection) {
-    // Update existing connection
+    // Update existing connection - only update tokens, not relationships
     await prisma.googleOAuthConnection.update({
       where: { id: existingConnection.id },
       data: {
-        orgId: orgId,
-        containerId: containerId,
-        adminId: adminId,
         email: userEmail,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
@@ -186,9 +187,11 @@ async function handleGmailCallback(orgId, adminId, containerId, userEmail, token
         updatedAt: new Date()
       }
     });
+    connectionId = existingConnection.id;
+    console.log(`✅ Gmail tokens updated for existing connection: ${connectionId}`);
   } else {
-    // Create new connection
-    await prisma.googleOAuthConnection.create({
+    // Create new connection with all relationship fields
+    const newConnection = await prisma.googleOAuthConnection.create({
       data: {
         id: createId(),
         orgId: orgId,
@@ -202,9 +205,11 @@ async function handleGmailCallback(orgId, adminId, containerId, userEmail, token
         status: 'active'
       }
     });
+    connectionId = newConnection.id;
+    console.log(`✅ Gmail connection created: ${connectionId}`);
   }
   
-  console.log(`✅ Gmail tokens stored in GoogleOAuthConnection`);
+  return connectionId;
 }
 
 /**
@@ -242,14 +247,13 @@ async function handleYouTubeCallback(orgId, adminId, containerId, userEmail, tok
     }
   });
   
+  let connectionId;
+  
   if (existingConnection) {
-    // Update existing connection
+    // Update existing connection - only update tokens and channel data, not relationships
     await prisma.googleOAuthConnection.update({
       where: { id: existingConnection.id },
       data: {
-        orgId: orgId,
-        containerId: containerId,
-        adminId: adminId,
         email: userEmail,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
@@ -260,9 +264,11 @@ async function handleYouTubeCallback(orgId, adminId, containerId, userEmail, tok
         updatedAt: new Date()
       }
     });
+    connectionId = existingConnection.id;
+    console.log(`✅ YouTube tokens updated for existing connection: ${connectionId}`);
   } else {
-    // Create new connection
-    await prisma.googleOAuthConnection.create({
+    // Create new connection with all relationship fields
+    const newConnection = await prisma.googleOAuthConnection.create({
       data: {
         id: createId(),
         orgId: orgId,
@@ -278,9 +284,11 @@ async function handleYouTubeCallback(orgId, adminId, containerId, userEmail, tok
         status: 'active'
       }
     });
+    connectionId = newConnection.id;
+    console.log(`✅ YouTube connection created: ${connectionId}`);
   }
   
-  console.log(`✅ YouTube tokens + channel data stored in GoogleOAuthConnection`);
+  return connectionId;
 }
 
 /**
@@ -299,14 +307,13 @@ async function handleGoogleAdsCallback(orgId, adminId, containerId, userEmail, t
     }
   });
   
+  let connectionId;
+  
   if (existingConnection) {
-    // Update existing connection
+    // Update existing connection - only update tokens, not relationships
     await prisma.googleOAuthConnection.update({
       where: { id: existingConnection.id },
       data: {
-        orgId: orgId,
-        containerId: containerId,
-        adminId: adminId,
         email: userEmail,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
@@ -315,9 +322,11 @@ async function handleGoogleAdsCallback(orgId, adminId, containerId, userEmail, t
         updatedAt: new Date()
       }
     });
+    connectionId = existingConnection.id;
+    console.log(`✅ Google Ads tokens updated for existing connection: ${connectionId}`);
   } else {
-    // Create new connection
-    await prisma.googleOAuthConnection.create({
+    // Create new connection with all relationship fields
+    const newConnection = await prisma.googleOAuthConnection.create({
       data: {
         id: createId(),
         orgId: orgId,
@@ -331,9 +340,11 @@ async function handleGoogleAdsCallback(orgId, adminId, containerId, userEmail, t
         status: 'active'
       }
     });
+    connectionId = newConnection.id;
+    console.log(`✅ Google Ads connection created: ${connectionId}`);
   }
   
-  console.log(`✅ Google Ads tokens stored in GoogleOAuthConnection`);
+  return connectionId;
 }
 
 /**
