@@ -159,39 +159,47 @@ router.post('/callback', async (req, res) => {
 async function handleGmailCallback(orgId, adminId, userEmail, tokens) {
   console.log(`📧 Storing Gmail tokens for ${userEmail}`);
   
-  // Use null for containerId to avoid foreign key constraint issues
-  const containerId = null;
+  // Use default containerId for org-level connections
+  const containerId = 'default';
   
-  // Store in universal GoogleOAuthConnection
-  await prisma.googleOAuthConnection.upsert({
+  // Check if connection already exists for this org/service
+  const existingConnection = await prisma.googleOAuthConnection.findFirst({
     where: {
-      orgId_containerId_service: {
-        orgId: orgId,
-        containerId: containerId,
-        service: 'gmail'
-      }
-    },
-    update: {
-      email: userEmail,
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      expiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
-      status: 'active',
-      updatedAt: new Date()
-    },
-    create: {
-      id: createId(),
       orgId: orgId,
-      containerId: containerId,
-      adminId: adminId,
-      service: 'gmail',
-      email: userEmail,
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      expiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
-      status: 'active'
+      service: 'gmail'
     }
   });
+  
+  if (existingConnection) {
+    // Update existing connection
+    await prisma.googleOAuthConnection.update({
+      where: { id: existingConnection.id },
+      data: {
+        email: userEmail,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+        status: 'active',
+        updatedAt: new Date()
+      }
+    });
+  } else {
+    // Create new connection
+    await prisma.googleOAuthConnection.create({
+      data: {
+        id: createId(),
+        orgId: orgId,
+        containerId: containerId,
+        adminId: adminId,
+        service: 'gmail',
+        email: userEmail,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+        status: 'active'
+      }
+    });
+  }
   
   console.log(`✅ Gmail tokens stored in GoogleOAuthConnection`);
 }
