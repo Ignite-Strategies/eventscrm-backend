@@ -159,7 +159,8 @@ router.post('/callback', async (req, res) => {
 async function handleGmailCallback(orgId, adminId, userEmail, tokens) {
   console.log(`📧 Storing Gmail tokens for ${userEmail}`);
   
-  const containerId = process.env.DEFAULT_CONTAINER_ID || 'default';
+  // Use null for containerId to avoid foreign key constraint issues
+  const containerId = null;
   
   // Store in universal GoogleOAuthConnection
   await prisma.googleOAuthConnection.upsert({
@@ -182,6 +183,7 @@ async function handleGmailCallback(orgId, adminId, userEmail, tokens) {
       id: createId(),
       orgId: orgId,
       containerId: containerId,
+      adminId: adminId,
       service: 'gmail',
       email: userEmail,
       accessToken: tokens.access_token,
@@ -200,7 +202,7 @@ async function handleGmailCallback(orgId, adminId, userEmail, tokens) {
 async function handleYouTubeCallback(orgId, adminId, userEmail, tokens) {
   console.log(`📺 Storing YouTube tokens + channel data for ${userEmail}`);
   
-  const containerId = process.env.DEFAULT_CONTAINER_ID || 'default';
+  const containerId = null;
   
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -244,6 +246,7 @@ async function handleYouTubeCallback(orgId, adminId, userEmail, tokens) {
       id: createId(),
       orgId: orgId,
       containerId: containerId,
+      adminId: adminId,
       service: 'youtube',
       email: userEmail,
       accessToken: tokens.access_token,
@@ -264,7 +267,7 @@ async function handleYouTubeCallback(orgId, adminId, userEmail, tokens) {
 async function handleGoogleAdsCallback(orgId, adminId, userEmail, tokens) {
   console.log(`📊 Storing Google Ads tokens for ${userEmail}`);
   
-  const containerId = process.env.DEFAULT_CONTAINER_ID || 'default';
+  const containerId = null;
   
   // Store in universal GoogleOAuthConnection
   await prisma.googleOAuthConnection.upsert({
@@ -287,6 +290,7 @@ async function handleGoogleAdsCallback(orgId, adminId, userEmail, tokens) {
       id: createId(),
       orgId: orgId,
       containerId: containerId,
+      adminId: adminId,
       service: 'ads',
       email: userEmail,
       accessToken: tokens.access_token,
@@ -313,7 +317,7 @@ router.get('/status', async (req, res) => {
       });
     }
     
-    const containerId = process.env.DEFAULT_CONTAINER_ID || 'default';
+    const containerId = null;
     
     // Check universal GoogleOAuthConnection table
     const connection = await prisma.googleOAuthConnection.findFirst({
