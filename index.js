@@ -49,6 +49,7 @@ import youtubeUploadRouter from './routes/youtubeUploadRoute.js'; // 🎬 YouTub
 import unifiedGoogleOAuthRouter from './routes/unifiedGoogleOAuthRoute.js'; // 🧭 Unified Google OAuth (ALL services!)
 import googleAuthCheckerHydratorRouter from './routes/googleAuthCheckerHydratorRoute.js'; // 🔍 Google Auth Checker & Hydrator
 import googleAdsAccountSelectionRouter from './routes/googleAdsAccountSelectionRoute.js'; // 📊 Google Ads Account Selection
+import googleAdsHydrateRouter from './routes/googleAdsHydrateRoute.js'; // 📊 Google Ads Account Hydration
 import engageHydrateRouter from './routes/engageHydrateRoute.js'; // 💧 Engage Hydration
 import eventbriteOAuthRouter from './routes/eventbriteOAuthRoute.js'; // 🎟️ Eventbrite OAuth
 import eventbriteEventsRouter from './routes/eventbriteEventsRoute.js'; // 🎟️ Eventbrite Events & Attendees
@@ -113,6 +114,7 @@ app.use('/api/youtube', youtubeUploadRouter);  // 🎬 YouTube Upload
 app.use('/api/google-oauth', unifiedGoogleOAuthRouter);  // 🧭 Unified Google OAuth (ALL services!)
 app.use('/api/google-auth-hydrator', googleAuthCheckerHydratorRouter);  // 🔍 Google Auth Checker & Hydrator
 app.use('/api/google-ads-account-selection', googleAdsAccountSelectionRouter);  // 📊 Google Ads Account Selection
+app.use('/api/google-ads-hydrate', googleAdsHydrateRouter);  // 📊 Google Ads Account Hydration
 app.use('/api/engage', engageHydrateRouter);  // 💧 Engage Hydration
 app.use('/api/eventbrite-oauth', eventbriteOAuthRouter);  // 🎟️ Eventbrite OAuth
 app.use('/api/eventbrite', eventbriteEventsRouter);  // 🎟️ Eventbrite Events & Attendees
