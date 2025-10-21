@@ -6,6 +6,127 @@ const router = express.Router();
 const prisma = getPrismaClient();
 
 /**
+ * GET /api/google-ads-hydrate/account
+ * 
+ * PURE HYDRATION - Just returns account data from database
+ * NO Google API calls whatsoever!
+ * 
+ * Query params:
+ * - orgId: The organization ID (required)
+ * - accountId: Specific account ID (optional, returns first account if not provided)
+ */
+router.get('/account', async (req, res) => {
+  try {
+    const { orgId, accountId } = req.query;
+    
+    if (!orgId) {
+      return res.status(400).json({ error: 'orgId is required' });
+    }
+    
+    console.log('📊 Hydrating Google Ads account from database (NO API calls)');
+    console.log('   orgId:', orgId);
+    console.log('   accountId:', accountId);
+    
+    // Get account from database only
+    let googleAdAccount;
+    
+    if (accountId) {
+      // Get specific account
+      googleAdAccount = await prisma.googleAdAccount.findUnique({
+        where: { id: accountId },
+        select: {
+          id: true,
+          customerId: true,
+          accountName: true,
+          currency: true,
+          timezone: true,
+          status: true,
+          createdAt: true,
+          googleOAuthConnection: {
+            select: {
+              id: true,
+              email: true,
+              status: true
+            }
+          }
+        }
+      });
+    } else {
+      // Get first active account for org
+      const accounts = await prisma.googleAdAccount.findMany({
+        where: { 
+          orgId: orgId,
+          status: 'active'
+        },
+        select: {
+          id: true,
+          customerId: true,
+          accountName: true,
+          currency: true,
+          timezone: true,
+          status: true,
+          createdAt: true,
+          googleOAuthConnection: {
+            select: {
+              id: true,
+              email: true,
+              status: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 1
+      });
+      
+      googleAdAccount = accounts[0] || null;
+    }
+    
+    if (!googleAdAccount) {
+      console.log('❌ No Google Ads account found in database');
+      return res.status(404).json({ 
+        error: 'No Google Ads account found',
+        needsSetup: true 
+      });
+    }
+    
+    // Return pure database data - NO API CALLS!
+    const response = {
+      account: {
+        id: googleAdAccount.id,
+        customerId: googleAdAccount.customerId,
+        name: googleAdAccount.accountName || 'Google Ads Account',
+        currency: googleAdAccount.currency || 'USD',
+        timezone: googleAdAccount.timezone || 'UTC',
+        status: googleAdAccount.status,
+        connectionEmail: googleAdAccount.googleOAuthConnection?.email,
+        connectionStatus: googleAdAccount.googleOAuthConnection?.status
+      },
+      // Empty arrays - will be populated when user navigates to specific pages
+      campaigns: [],
+      totals: {
+        impressions: 0,
+        clicks: 0,
+        spend: 0,
+        conversions: 0,
+        campaignCount: 0
+      }
+    };
+    
+    console.log('✅ Account hydrated from database (no API calls):', response.account.name);
+    res.json(response);
+    
+  } catch (error) {
+    console.error('❌ Error hydrating account from database:', error);
+    res.status(500).json({ 
+      error: 'Failed to hydrate account',
+      details: error.message 
+    });
+  }
+});
+
+/**
  * GET /api/google-ads-hydrate/:accountId
  * 
  * Hydrates Google Ads account data using the saved credentials
