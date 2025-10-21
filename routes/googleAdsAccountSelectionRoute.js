@@ -60,9 +60,8 @@ router.get('/list', async (req, res) => {
     }
     
     // Call Google Ads API to list accessible customers
-    // Note: This uses the Google Ads API, not googleapis library
-    // We'll need to make a direct HTTP request
-    const response = await fetch('https://googleads.googleapis.com/v14/customers:listAccessibleCustomers', {
+    // Note: This uses the Google Ads REST API
+    const response = await fetch('https://googleads.googleapis.com/v17/customers:listAccessibleCustomers', {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${credentials.access_token}`,
@@ -90,7 +89,7 @@ router.get('/list', async (req, res) => {
       
       // Fetch customer details
       const detailsResponse = await fetch(
-        `https://googleads.googleapis.com/v14/${resourceName}?fields=customer.id,customer.descriptive_name,customer.currency_code,customer.time_zone`,
+        `https://googleads.googleapis.com/v17/${resourceName}?fields=customer.id,customer.descriptive_name,customer.currency_code,customer.time_zone`,
         {
           method: 'GET',
           headers: {
