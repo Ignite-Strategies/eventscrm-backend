@@ -72,7 +72,7 @@ router.get("/callback", async (req, res) => {
         tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
         connectedEmail: userInfo.data.email,
         status: "active",
-        developerToken: process.env.GOOGLE_DEVELOPER_TOKEN
+        developerToken: process.env.GOOGLE_ADS_DEVELOPER_TOKEN
       }
     });
 

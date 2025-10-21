@@ -1074,6 +1074,7 @@ model GoogleOAuthConnection {
   channelName  String?   // YouTube channel name
   customerId   String?   // Google Ads customer ID
   accountName  String?   // Google Ads account name
+  developerToken String? // Google Ads developer token (not secret)
   
   status       String @default("active") // "active" | "revoked"
   createdAt    DateTime @default(now())
