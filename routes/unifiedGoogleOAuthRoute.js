@@ -194,37 +194,63 @@ async function handleGmailCallback(orgId, adminId, userEmail, tokens) {
  * 📺 Handle YouTube OAuth callback
  */
 async function handleYouTubeCallback(orgId, adminId, userEmail, tokens) {
-  console.log(`📺 Storing YouTube connection for ${userEmail}`);
+  console.log(`📺 Storing YouTube tokens for ${userEmail}`);
   
-  // Store in YouTubeConnection table (assuming it exists)
-  await prisma.youtubeConnection.upsert({
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    "https://app.engage-smart.com/oauth/callback"
+  );
+  oauth2Client.setCredentials(tokens);
+  
+  // Get channel info from YouTube API
+  const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+  const channelResponse = await youtube.channels.list({
+    part: 'snippet,statistics',
+    mine: true
+  });
+  
+  const channel = channelResponse.data.items[0];
+  if (!channel) {
+    throw new Error('No YouTube channel found for this account');
+  }
+  
+  // Store in existing YouTubeChannel table (with tokens!)
+  await prisma.youTubeChannel.upsert({
     where: {
-      orgId_adminId: {
-        orgId: orgId,
-        adminId: adminId
-      }
+      channelId: channel.id
     },
     update: {
-      email: userEmail,
-      refreshToken: tokens.refresh_token,
+      title: channel.snippet.title,
+      description: channel.snippet.description,
+      thumbnail: channel.snippet.thumbnails?.default?.url,
+      subscriberCount: parseInt(channel.statistics.subscriberCount || '0'),
+      viewCount: BigInt(channel.statistics.viewCount || '0'),
+      videoCount: parseInt(channel.statistics.videoCount || '0'),
       accessToken: tokens.access_token,
-      tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
-      status: 'active',
+      refreshToken: tokens.refresh_token || undefined, // Keep old if no new one
+      expiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      orgId: orgId,
       updatedAt: new Date()
     },
     create: {
       id: createId(),
-      orgId: orgId,
-      adminId: adminId,
-      email: userEmail,
-      refreshToken: tokens.refresh_token,
+      channelId: channel.id,
+      title: channel.snippet.title,
+      description: channel.snippet.description,
+      thumbnail: channel.snippet.thumbnails?.default?.url,
+      subscriberCount: parseInt(channel.statistics.subscriberCount || '0'),
+      viewCount: BigInt(channel.statistics.viewCount || '0'),
+      videoCount: parseInt(channel.statistics.videoCount || '0'),
       accessToken: tokens.access_token,
-      tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
-      status: 'active'
+      refreshToken: tokens.refresh_token,
+      expiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      orgId: orgId,
+      containerId: process.env.DEFAULT_CONTAINER_ID || 'default'
     }
   });
   
-  console.log(`✅ YouTube connection stored for ${userEmail}`);
+  console.log(`✅ YouTube channel stored: ${channel.snippet.title}`);
 }
 
 /**
