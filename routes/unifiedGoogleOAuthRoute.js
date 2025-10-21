@@ -175,6 +175,9 @@ async function handleGmailCallback(orgId, adminId, containerId, userEmail, token
     await prisma.googleOAuthConnection.update({
       where: { id: existingConnection.id },
       data: {
+        orgId: orgId,
+        containerId: containerId,
+        adminId: adminId,
         email: userEmail,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
@@ -244,6 +247,9 @@ async function handleYouTubeCallback(orgId, adminId, containerId, userEmail, tok
     await prisma.googleOAuthConnection.update({
       where: { id: existingConnection.id },
       data: {
+        orgId: orgId,
+        containerId: containerId,
+        adminId: adminId,
         email: userEmail,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
@@ -298,6 +304,9 @@ async function handleGoogleAdsCallback(orgId, adminId, containerId, userEmail, t
     await prisma.googleOAuthConnection.update({
       where: { id: existingConnection.id },
       data: {
+        orgId: orgId,
+        containerId: containerId,
+        adminId: adminId,
         email: userEmail,
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
