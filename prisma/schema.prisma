@@ -73,6 +73,7 @@ model Organization {
   personas        Persona[]
   googleAdAccounts GoogleAdAccount[]
   googleAdCampaigns GoogleAdCampaign[]
+  gmailConnections GmailConnection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -449,6 +450,9 @@ model Admin {
   
   // File uploads
   attachments CampaignAttachment[]
+  
+  // Gmail connections
+  gmailConnections GmailConnection[]
 
   @@unique([orgId, eventId])
   @@index([orgId])
@@ -1036,4 +1040,33 @@ model YouTubeVideo {
   
   @@index([channelId])
   @@index([playlistId])
+}
+
+// 📧 GMAIL CONNECTION MODEL
+model GmailConnection {
+  id           String    @id @default(cuid())
+  
+  // Links
+  orgId        String
+  org          Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  adminId      String
+  admin        Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  // Gmail account info
+  email        String
+  
+  // OAuth tokens
+  refreshToken String    // ← PERSISTENT! Never expires!
+  accessToken  String    // ← Expires every hour
+  tokenExpiry  DateTime?
+  
+  // Status
+  status       String @default("active") // active, disconnected, revoked
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  
+  @@index([orgId])
+  @@index([adminId])
+  @@index([status])
 }
