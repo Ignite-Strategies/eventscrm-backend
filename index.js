@@ -43,11 +43,9 @@ import personasRouter from './routes/personasRoute.js'; // 🧩 THE HUMAN STACK 
 import googleAdsOAuthRouter from './routes/googleAdsOAuthRoute.js'; // 🔑 Google Ads OAuth
 import googleAdsCampaignRouter from './routes/googleAdsCampaignRoute.js'; // 📊 Google Ads Campaigns
 import memberJourneyRouter from './routes/memberJourneyRoute.js'; // 🗺️ Member Journey (6-stage lifecycle)
-import youtubeOAuthRouter from './routes/youtubeOAuthRoute.js'; // 🔐 YouTube OAuth
 import youtubeChannelRouter from './routes/youtubeChannelRoute.js'; // 📺 YouTube Channel
 import youtubePlaylistsRouter from './routes/youtubePlaylistsRoute.js'; // 📋 YouTube Playlists
 import youtubeUploadRouter from './routes/youtubeUploadRoute.js'; // 🎬 YouTube Upload
-import gmailOAuthRouter from './routes/gmailOAuthRoute.js'; // 📧 Gmail OAuth (persistent tokens!) - DEPRECATED
 import unifiedGoogleOAuthRouter from './routes/unifiedGoogleOAuthRoute.js'; // 🧭 Unified Google OAuth (ALL services!)
 import engageHydrateRouter from './routes/engageHydrateRoute.js'; // 💧 Engage Hydration
 
@@ -105,11 +103,9 @@ app.use('/api/personas', personasRouter);  // 🧩 THE HUMAN STACK - Personas
 app.use('/api/googleads', googleAdsOAuthRouter);  // 🔑 Google Ads OAuth
 app.use('/api/googleads/campaigns', googleAdsCampaignRouter);  // 📊 Google Ads Campaigns
 app.use('/api/member-journey', memberJourneyRouter);  // 🗺️ Member Journey (6-stage lifecycle)
-app.use('/api/youtube', youtubeOAuthRouter);  // 🔐 YouTube OAuth
 app.use('/api/youtube', youtubeChannelRouter);  // 📺 YouTube Channel
 app.use('/api/youtube', youtubePlaylistsRouter);  // 📋 YouTube Playlists
 app.use('/api/youtube', youtubeUploadRouter);  // 🎬 YouTube Upload
-app.use('/api/gmail-oauth', gmailOAuthRouter);  // 📧 Gmail OAuth (persistent tokens!) - DEPRECATED
 app.use('/api/google-oauth', unifiedGoogleOAuthRouter);  // 🧭 Unified Google OAuth (ALL services!)
 app.use('/api/engage', engageHydrateRouter);  // 💧 Engage Hydration
 

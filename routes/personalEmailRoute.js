@@ -1,16 +1,30 @@
 import express from "express";
-import verifyGmailToken from "../middleware/verifyGmailToken.js";
 import { GmailService } from "../services/personalEmailService.js";
+import GmailTokenService from "../services/gmailTokenService.js";
 import { getPrismaClient } from '../config/database.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
 
 // POST /email/send - Send single email
-router.post("/send", verifyGmailToken, async (req, res) => {
+router.post("/send", async (req, res) => {
   try {
-    const { to, subject, body, templateId, variables } = req.body;
-    const gmailAccessToken = req.gmailAccessToken; // From Gmail token
+    const { to, subject, body, templateId, variables, orgId, adminId } = req.body;
+    
+    if (!orgId || !adminId) {
+      return res.status(400).json({ error: "orgId and adminId are required" });
+    }
+    
+    // Get valid Gmail token from database (auto-refreshes if needed)
+    let gmailAccessToken;
+    try {
+      gmailAccessToken = await GmailTokenService.getValidToken(orgId, adminId);
+    } catch (error) {
+      return res.status(401).json({ 
+        error: "Gmail not connected. Please connect Gmail first.",
+        needsAuth: true
+      });
+    }
 
     if (!to || !subject || !body) {
       return res.status(400).json({ 
@@ -77,9 +91,24 @@ router.post("/send", verifyGmailToken, async (req, res) => {
 });
 
 // POST /email/send-bulk - Send bulk emails (campaign)
-router.post("/send-bulk", verifyGmailToken, async (req, res) => {
+router.post("/send-bulk", async (req, res) => {
   try {
-    const { recipients, subject, body, templateId, variables } = req.body;
+    const { recipients, subject, body, templateId, variables, orgId, adminId } = req.body;
+    
+    if (!orgId || !adminId) {
+      return res.status(400).json({ error: "orgId and adminId are required" });
+    }
+    
+    // Get valid Gmail token from database (auto-refreshes if needed)
+    let gmailAccessToken;
+    try {
+      gmailAccessToken = await GmailTokenService.getValidToken(orgId, adminId);
+    } catch (error) {
+      return res.status(401).json({ 
+        error: "Gmail not connected. Please connect Gmail first.",
+        needsAuth: true
+      });
+    }
 
     if (!recipients || !Array.isArray(recipients) || recipients.length === 0) {
       return res.status(400).json({ 
@@ -155,7 +184,7 @@ router.post("/send-bulk", verifyGmailToken, async (req, res) => {
 });
 
 // GET /email/templates - Get available templates for email composition
-router.get("/templates", verifyGmailToken, async (req, res) => {
+router.get("/templates", async (req, res) => {
   try {
     const { orgId } = req.query;
     
