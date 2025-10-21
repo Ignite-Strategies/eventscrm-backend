@@ -157,44 +157,50 @@ router.post('/callback', async (req, res) => {
  * 📧 Handle Gmail OAuth callback
  */
 async function handleGmailCallback(orgId, adminId, userEmail, tokens) {
-  console.log(`📧 Storing Gmail connection for ${userEmail}`);
+  console.log(`📧 Storing Gmail tokens for ${userEmail}`);
   
-  // Store in GmailConnection table
-  await prisma.gmailConnection.upsert({
+  const containerId = process.env.DEFAULT_CONTAINER_ID || 'default';
+  
+  // Store in universal GoogleOAuthConnection
+  await prisma.googleOAuthConnection.upsert({
     where: {
-      orgId_adminId: {
+      orgId_containerId_service: {
         orgId: orgId,
-        adminId: adminId
+        containerId: containerId,
+        service: 'gmail'
       }
     },
     update: {
       email: userEmail,
-      refreshToken: tokens.refresh_token,
       accessToken: tokens.access_token,
-      tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      refreshToken: tokens.refresh_token,
+      expiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
       status: 'active',
       updatedAt: new Date()
     },
     create: {
       id: createId(),
       orgId: orgId,
-      adminId: adminId,
+      containerId: containerId,
+      service: 'gmail',
       email: userEmail,
-      refreshToken: tokens.refresh_token,
       accessToken: tokens.access_token,
-      tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      refreshToken: tokens.refresh_token,
+      expiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
       status: 'active'
     }
   });
   
-  console.log(`✅ Gmail connection stored for ${userEmail}`);
+  console.log(`✅ Gmail tokens stored in GoogleOAuthConnection`);
 }
 
 /**
  * 📺 Handle YouTube OAuth callback
  */
 async function handleYouTubeCallback(orgId, adminId, userEmail, tokens) {
-  console.log(`📺 Storing YouTube tokens for ${userEmail}`);
+  console.log(`📺 Storing YouTube tokens + channel data for ${userEmail}`);
+  
+  const containerId = process.env.DEFAULT_CONTAINER_ID || 'default';
   
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -206,7 +212,7 @@ async function handleYouTubeCallback(orgId, adminId, userEmail, tokens) {
   // Get channel info from YouTube API
   const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
   const channelResponse = await youtube.channels.list({
-    part: 'snippet,statistics',
+    part: 'snippet',
     mine: true
   });
   
@@ -215,79 +221,82 @@ async function handleYouTubeCallback(orgId, adminId, userEmail, tokens) {
     throw new Error('No YouTube channel found for this account');
   }
   
-  // Store in existing YouTubeChannel table (with tokens!)
-  await prisma.youTubeChannel.upsert({
+  // Store EVERYTHING in universal GoogleOAuthConnection
+  await prisma.googleOAuthConnection.upsert({
     where: {
-      channelId: channel.id
-    },
-    update: {
-      title: channel.snippet.title,
-      description: channel.snippet.description,
-      thumbnail: channel.snippet.thumbnails?.default?.url,
-      subscriberCount: parseInt(channel.statistics.subscriberCount || '0'),
-      viewCount: BigInt(channel.statistics.viewCount || '0'),
-      videoCount: parseInt(channel.statistics.videoCount || '0'),
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token || undefined, // Keep old if no new one
-      expiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
-      orgId: orgId,
-      updatedAt: new Date()
-    },
-    create: {
-      id: createId(),
-      channelId: channel.id,
-      title: channel.snippet.title,
-      description: channel.snippet.description,
-      thumbnail: channel.snippet.thumbnails?.default?.url,
-      subscriberCount: parseInt(channel.statistics.subscriberCount || '0'),
-      viewCount: BigInt(channel.statistics.viewCount || '0'),
-      videoCount: parseInt(channel.statistics.videoCount || '0'),
-      accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
-      expiresAt: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
-      orgId: orgId,
-      containerId: process.env.DEFAULT_CONTAINER_ID || 'default'
-    }
-  });
-  
-  console.log(`✅ YouTube channel stored: ${channel.snippet.title}`);
-}
-
-/**
- * 📊 Handle Google Ads OAuth callback
- */
-async function handleGoogleAdsCallback(orgId, adminId, userEmail, tokens) {
-  console.log(`📊 Storing Google Ads connection for ${userEmail}`);
-  
-  // Store in GoogleAdsConnection table (assuming it exists)
-  await prisma.googleAdsConnection.upsert({
-    where: {
-      orgId_adminId: {
+      orgId_containerId_service: {
         orgId: orgId,
-        adminId: adminId
+        containerId: containerId,
+        service: 'youtube'
       }
     },
     update: {
       email: userEmail,
-      refreshToken: tokens.refresh_token,
       accessToken: tokens.access_token,
-      tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      refreshToken: tokens.refresh_token,
+      expiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      channelId: channel.id,
+      channelName: channel.snippet.title,
       status: 'active',
       updatedAt: new Date()
     },
     create: {
       id: createId(),
       orgId: orgId,
-      adminId: adminId,
+      containerId: containerId,
+      service: 'youtube',
       email: userEmail,
-      refreshToken: tokens.refresh_token,
       accessToken: tokens.access_token,
-      tokenExpiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      refreshToken: tokens.refresh_token,
+      expiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      channelId: channel.id,
+      channelName: channel.snippet.title,
       status: 'active'
     }
   });
   
-  console.log(`✅ Google Ads connection stored for ${userEmail}`);
+  console.log(`✅ YouTube tokens + channel data stored in GoogleOAuthConnection`);
+}
+
+/**
+ * 📊 Handle Google Ads OAuth callback
+ */
+async function handleGoogleAdsCallback(orgId, adminId, userEmail, tokens) {
+  console.log(`📊 Storing Google Ads tokens for ${userEmail}`);
+  
+  const containerId = process.env.DEFAULT_CONTAINER_ID || 'default';
+  
+  // Store in universal GoogleOAuthConnection
+  await prisma.googleOAuthConnection.upsert({
+    where: {
+      orgId_containerId_service: {
+        orgId: orgId,
+        containerId: containerId,
+        service: 'ads'
+      }
+    },
+    update: {
+      email: userEmail,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      expiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      status: 'active',
+      updatedAt: new Date()
+    },
+    create: {
+      id: createId(),
+      orgId: orgId,
+      containerId: containerId,
+      service: 'ads',
+      email: userEmail,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      expiry: tokens.expiry_date ? new Date(tokens.expiry_date) : null,
+      status: 'active'
+    }
+  });
+  
+  console.log(`✅ Google Ads tokens stored in GoogleOAuthConnection`);
 }
 
 /**

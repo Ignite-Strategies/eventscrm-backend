@@ -1042,42 +1042,42 @@ model YouTubeVideo {
   @@index([playlistId])
 }
 
-// 🔥 UNIVERSAL GOOGLE OAUTH CONNECTION
-// THE KEY INSIGHT: Tokens are universal! Scopes determine what they can do!
-// One Google account can connect multiple services with different scopes.
+// 🔥 UNIVERSAL GOOGLE OAUTH - ONE MODEL TO RULE THEM ALL
+// Stores tokens + service-specific data in ONE place
 model GoogleOAuthConnection {
   id           String    @id @default(cuid())
   
-  // Links (Universal Personhood pattern!)
+  // WHO owns this
   orgId        String
   org          Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
-  adminId      String
-  admin        Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  containerId  String?
+  container    Container? @relation(fields: [containerId], references: [id], onDelete: Cascade)
   
-  // Service identifier (for UX - "Is Gmail connected?")
-  service      String    // "gmail" | "youtube" | "ads" | "drive"
+  // WHAT service
+  service      String    // "gmail" | "youtube" | "ads"
+  email        String    // Google account email
   
-  // Google account
-  email        String
-  
-  // 🔥 UNIVERSAL OAuth tokens - work with ANY Google API you have scopes for!
+  // 🔥 TOKENS (universal - work with ANY Google API)
   accessToken  String
   refreshToken String
-  tokenExpiry  DateTime?
-  scopes       Json      // ["gmail.send", "youtube.upload"] - What this token can do
+  expiry       DateTime?
+  
+  // SERVICE-SPECIFIC DATA (null if not applicable)
+  channelId    String?   // YouTube channel ID
+  channelName  String?   // YouTube channel name
+  customerId   String?   // Google Ads customer ID
+  accountName  String?   // Google Ads account name
+  
   status       String @default("active") // "active" | "revoked"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   
-  // Service-specific metadata (optional)
-  metadata     Json?     // { channelId, customerId, etc }
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // One service connection per org/admin combo
-  @@unique([orgId, adminId, service])
+  // One service per org/container combo
+  @@unique([orgId, containerId, service])
   @@index([orgId])
-  @@index([adminId])
+  @@index([containerId])
   @@index([service])
+  @@index([email])
 }
 
 // 📧 GMAIL CONNECTION MODEL (DEPRECATED - Being migrated to GoogleOAuthConnection)
