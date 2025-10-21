@@ -39,8 +39,8 @@ router.get('/auth', (req, res) => {
   console.log(`🚀 Initiating ${service.toUpperCase()} OAuth for org: ${orgId}, admin: ${adminId}`);
   
   const oauth2Client = new google.auth.OAuth2(
-    "YOUR_CLIENT_ID_HERE.apps.googleusercontent.com",
-    "YOUR_CLIENT_SECRET_HERE",
+    process.env.GOOGLE_CLIENT_ID || process.env.YOUTUBE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET || process.env.YOUTUBE_CLIENT_SECRET,
     "https://app.engage-smart.com/oauth/callback"
   );
 
