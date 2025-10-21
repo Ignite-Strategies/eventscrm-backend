@@ -72,51 +72,29 @@ router.get('/list', async (req, res) => {
       refresh_token: connection.refreshToken
     });
     
-    // List accessible customers
-    const customerResourceNames = await customer.listAccessibleCustomers();
-    console.log('✅ Accessible customers:', customerResourceNames);
-    
-    const accounts = [];
-    
-    // Fetch details for each customer
-    for (const resourceName of customerResourceNames) {
-      try {
-        const customerId = resourceName.split('/')[1]; // Extract ID from "customers/123456789"
-        
-        // Get customer details
-        const customerClient = client.Customer({
-          customer_id: customerId,
-          refresh_token: connection.refreshToken
-        });
-        
-        const [customerData] = await customerClient.query(`
-          SELECT
-            customer.id,
-            customer.descriptive_name,
-            customer.currency_code,
-            customer.time_zone
-          FROM customer
-          WHERE customer.id = ${customerId}
-        `);
-        
-        accounts.push({
-          customerId: customerId,
-          accountName: customerData.customer.descriptive_name || `Account ${customerId}`,
-          currency: customerData.customer.currency_code || 'USD',
-          timezone: customerData.customer.time_zone || 'UTC'
-        });
-      } catch (err) {
-        console.error(`⚠️ Could not fetch details for ${resourceName}:`, err.message);
-        // Still add the account with just the ID
-        const customerId = resourceName.split('/')[1];
-        accounts.push({
-          customerId: customerId,
-          accountName: `Account ${customerId}`,
-          currency: 'USD',
-          timezone: 'UTC'
-        });
+    // Get Google Ads accounts from OUR database, not Google's API
+    const googleAdsAccounts = await prisma.googleAdAccount.findMany({
+      where: {
+        googleOAuthConnectionId: connectionId
+      },
+      select: {
+        id: true,
+        customerId: true,
+        accountName: true,
+        currency: true,
+        timezone: true
       }
-    }
+    });
+    
+    console.log('✅ Google Ads accounts from database:', googleAdsAccounts);
+    
+    const accounts = googleAdsAccounts.map(account => ({
+      id: account.id,
+      customerId: account.customerId,
+      accountName: account.accountName,
+      currency: account.currency,
+      timezone: account.timezone
+    }));
     
     console.log(`✅ Found ${accounts.length} Google Ads accounts`);
     res.json({ accounts });
