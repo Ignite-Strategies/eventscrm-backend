@@ -18,6 +18,7 @@ model Container {
   admins        Admin[]
   youtubeChannels YouTubeChannel[]
   googleOAuthConnections GoogleOAuthConnection[]
+  eventbriteOAuthConnections EventbriteOAuthConnection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -76,6 +77,7 @@ model Organization {
   googleAdCampaigns GoogleAdCampaign[]
   gmailConnections GmailConnection[]
   googleOAuthConnections GoogleOAuthConnection[]
+  eventbriteOAuthConnections EventbriteOAuthConnection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -156,6 +158,10 @@ model Contact {
   firebaseId String? @unique
   photoURL   String?
   
+  // 🎟️ EVENTBRITE TRACKING
+  eventbriteAttendeeId String? @unique // Eventbrite attendee ID (for deduplication)
+  eventbriteOrderId    String?         // Eventbrite order ID
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -165,6 +171,7 @@ model Contact {
   @@index([firebaseId])
   @@index([prospectId])
   @@index([eventId, audienceType, currentStage])
+  @@index([eventbriteAttendeeId])
 }
 
 model Engagement {
@@ -456,6 +463,7 @@ model Admin {
   // Gmail connections
   gmailConnections GmailConnection[]
   googleOAuthConnections GoogleOAuthConnection[]
+  eventbriteOAuthConnections EventbriteOAuthConnection[]
 
   @@unique([orgId, eventId])
   @@index([orgId])
@@ -822,31 +830,40 @@ model EngagementAction {
   @@index([createdAt])
 }
 
-// 🔑 GOOGLE ADS INTEGRATION - OAuth & Campaign Management
+// 📊 GOOGLE ADS ACCOUNT - IDENTITY ONLY (auth comes from GoogleOAuthConnection)
 model GoogleAdAccount {
-  id                String    @id @default(cuid())
-  orgId             String
-  org               Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  id                     String    @id @default(cuid())
   
-  displayName       String?   // "Ignite Strategies Ads" or user's label
-  googleCustomerId  String?   // e.g., "123-456-7890"
-  managerAccountId  String?   // MCC if acting as manager
-  developerToken    String?   // global dev token (can be env var later)
-  refreshToken      String?   // user-specific; used to fetch new access token
-  accessToken       String?   // optional; transient; can regenerate
-  tokenExpiry       DateTime?
-  connectedEmail    String?   // who authorized it
-  status            String    @default("active") // active, revoked, expired
+  // Link to auth
+  googleOAuthConnectionId String
+  googleOAuthConnection   GoogleOAuthConnection @relation(fields: [googleOAuthConnectionId], references: [id], onDelete: Cascade)
   
-  campaigns         GoogleAdCampaign[]
-  syncLogs          GoogleAdSyncLog[]
+  // Org link (denormalized for easy queries)
+  orgId                  String
+  org                    Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
   
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  // IDENTITY - which Google Ads account this represents
+  customerId             String    @unique // e.g., "123-456-7890" - THE KEY!
+  accountName            String?   // "F3 Capital Ads"
+  managerAccountId       String?   // MCC if acting as manager
+  currency               String?   // USD, EUR, etc.
+  timezone               String?   // Account timezone
   
+  // Developer token (not auth, but needed for API calls)
+  developerToken         String?   // Can be env var or stored here
+  
+  // Relations
+  campaigns              GoogleAdCampaign[]
+  syncLogs               GoogleAdSyncLog[]
+  
+  status                 String    @default("active") // active, revoked, expired
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  
+  @@index([googleOAuthConnectionId])
   @@index([orgId])
   @@index([status])
-  @@index([googleCustomerId])
+  @@index([customerId])
 }
 
 // 📊 Campaign Table
@@ -1045,8 +1062,7 @@ model YouTubeVideo {
   @@index([playlistId])
 }
 
-// 🔥 UNIVERSAL GOOGLE OAUTH - ONE MODEL TO RULE THEM ALL
-// Stores tokens + service-specific data in ONE place
+// 🔥 UNIVERSAL GOOGLE OAUTH - AUTH ONLY (NO SERVICE-SPECIFIC DATA)
 model GoogleOAuthConnection {
   id           String    @id @default(cuid())
   
@@ -1068,13 +1084,10 @@ model GoogleOAuthConnection {
   accessToken  String
   refreshToken String
   expiry       DateTime?
+  scopes       String[]  @default([]) // Which scopes were granted
   
-  // SERVICE-SPECIFIC DATA (null if not applicable)
-  channelId    String?   // YouTube channel ID
-  channelName  String?   // YouTube channel name
-  customerId   String?   // Google Ads customer ID
-  accountName  String?   // Google Ads account name
-  developerToken String? // Google Ads developer token (not secret)
+  // Reverse relations to service-specific identity tables
+  googleAdAccounts GoogleAdAccount[]  // Link to Google Ads account identity
   
   status       String @default("active") // "active" | "revoked"
   createdAt    DateTime @default(now())
@@ -1115,4 +1128,43 @@ model GmailConnection {
   @@index([orgId])
   @@index([adminId])
   @@index([status])
+}
+
+// 🎟️ EVENTBRITE OAUTH CONNECTION - Similar pattern to GoogleOAuthConnection
+model EventbriteOAuthConnection {
+  id           String    @id @default(cuid())
+  
+  // META: WHO owns this (org/container level)
+  orgId        String
+  org          Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  containerId  String?
+  container    Container? @relation(fields: [containerId], references: [id], onDelete: Cascade)
+  
+  // PERSONHOOD: WHO authenticated (which admin connected)
+  adminId      String?
+  admin        Admin? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  
+  // Eventbrite account info
+  email        String    // Eventbrite account email
+  eventbriteUserId String? // Eventbrite user ID
+  
+  // 🔥 TOKENS
+  accessToken  String    // Eventbrite personal OAuth token (doesn't expire by default)
+  refreshToken String?   // Eventbrite may provide refresh token (rarely used)
+  expiry       DateTime? // Token expiry (most Eventbrite tokens don't expire)
+  
+  // EVENTBRITE-SPECIFIC DATA
+  organizationId String? // Eventbrite organization ID (if they have one)
+  organizationName String? // Eventbrite organization name
+  
+  status       String @default("active") // "active" | "revoked"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // One Eventbrite connection per org
+  @@unique([orgId, containerId])
+  @@index([orgId])
+  @@index([containerId])
+  @@index([email])
+  @@index([eventbriteUserId])
 }
