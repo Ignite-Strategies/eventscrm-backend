@@ -129,8 +129,11 @@ router.get('/account', async (req, res) => {
 /**
  * GET /api/google-ads-hydrate/:accountId
  * 
- * Hydrates Google Ads account data using the saved credentials
- * Returns account overview, campaigns, and performance metrics
+ * 🔥 CALLS GOOGLE ADS API 🔥
+ * Fetches LIVE campaign data from Google Ads
+ * Use this for campaigns page to get real-time data
+ * 
+ * This is separate from /account which is DB-only hydration
  */
 router.get('/:accountId', async (req, res) => {
   try {
