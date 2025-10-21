@@ -36,6 +36,26 @@ router.get('/:firebaseId', async (req, res) => {
 
     console.log('✅ GATEKEEPER: Admin found:', admin.id);
 
+    // Fetch Google OAuth connections for this admin/org
+    const googleOAuthConnections = await prisma.googleOAuthConnection.findMany({
+      where: {
+        orgId: admin.orgId,
+        adminId: admin.id,
+        status: 'active'
+      }
+    });
+
+    // Extract connection IDs by service
+    const gmailConnectionId = googleOAuthConnections.find(c => c.service === 'gmail')?.id || null;
+    const youtubeConnectionId = googleOAuthConnections.find(c => c.service === 'youtube')?.id || null;
+    const googleAdsConnectionId = googleOAuthConnections.find(c => c.service === 'ads')?.id || null;
+
+    console.log('🔍 GATEKEEPER: Found Google OAuth connections:', {
+      gmail: gmailConnectionId,
+      youtube: youtubeConnectionId,
+      googleAds: googleAdsConnectionId
+    });
+
     // Return FULL objects + IDs for backwards compatibility
     const gatekeeperData = {
       // IDs (for backwards compatibility)
@@ -43,6 +63,11 @@ router.get('/:firebaseId', async (req, res) => {
       orgId: admin.orgId || null,
       eventId: admin.eventId || null,
       containerId: admin.containerId || null,
+      
+      // Google OAuth Connection IDs
+      gmailConnectionId,
+      youtubeConnectionId,
+      googleAdsConnectionId,
       
       // FULL OBJECTS (for caching)
       admin: {
