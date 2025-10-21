@@ -8,7 +8,7 @@ import { getPrismaClient } from '../config/database.js';
 import { google } from 'googleapis';
 import { createId } from '@paralleldrive/cuid2';
 import { getScopesForService } from '../config/oauthScopes.js';
-import { CONTAINER_CONFIG } from '../config/container-config.js';
+import { MASTER_KEYS_CONFIG } from '../config/masterKeysConfig.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -378,7 +378,7 @@ router.get('/status', async (req, res) => {
       console.log('🔍 No connection found with provided values, trying config values...');
       connection = await prisma.googleOAuthConnection.findFirst({
         where: { 
-          orgId: CONTAINER_CONFIG.ORG_ID,
+          orgId: MASTER_KEYS_CONFIG.ORG_ID,
           service: service.toLowerCase(),
           status: 'active'
         }
