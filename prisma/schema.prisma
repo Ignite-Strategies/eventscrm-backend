@@ -1042,7 +1042,45 @@ model YouTubeVideo {
   @@index([playlistId])
 }
 
-// 📧 GMAIL CONNECTION MODEL
+// 🔥 UNIVERSAL GOOGLE OAUTH CONNECTION
+// THE KEY INSIGHT: Tokens are universal! Scopes determine what they can do!
+// One Google account can connect multiple services with different scopes.
+model GoogleOAuthConnection {
+  id           String    @id @default(cuid())
+  
+  // Links (Universal Personhood pattern!)
+  orgId        String
+  org          Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  adminId      String
+  admin        Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  
+  // Service identifier (for UX - "Is Gmail connected?")
+  service      String    // "gmail" | "youtube" | "ads" | "drive"
+  
+  // Google account
+  email        String
+  
+  // 🔥 UNIVERSAL OAuth tokens - work with ANY Google API you have scopes for!
+  accessToken  String
+  refreshToken String
+  tokenExpiry  DateTime?
+  scopes       Json      // ["gmail.send", "youtube.upload"] - What this token can do
+  status       String @default("active") // "active" | "revoked"
+  
+  // Service-specific metadata (optional)
+  metadata     Json?     // { channelId, customerId, etc }
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // One service connection per org/admin combo
+  @@unique([orgId, adminId, service])
+  @@index([orgId])
+  @@index([adminId])
+  @@index([service])
+}
+
+// 📧 GMAIL CONNECTION MODEL (DEPRECATED - Being migrated to GoogleOAuthConnection)
 model GmailConnection {
   id           String    @id @default(cuid())
   
