@@ -1,5 +1,6 @@
 import express from 'express';
 import { google } from 'googleapis';
+import { GoogleAdsApi } from 'google-ads-api';
 import { getPrismaClient } from '../config/database.js';
 import { createId } from '@paralleldrive/cuid2';
 
@@ -59,57 +60,55 @@ router.get('/list', async (req, res) => {
       console.log('✅ Access token refreshed');
     }
     
-    // Call Google Ads API to list accessible customers
-    // Note: This uses the Google Ads REST API
-    const response = await fetch('https://googleads.googleapis.com/v17/customers:listAccessibleCustomers', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${credentials.access_token}`,
-        'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN || '0sxeRFk29XaMRNU3sVbVLA',
-        'Content-Type': 'application/json'
-      }
+    // Initialize Google Ads API client
+    const client = new GoogleAdsApi({
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      developer_token: process.env.GOOGLE_ADS_DEVELOPER_TOKEN || '0sxeRFk29XaMRNU3sVbVLA'
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('❌ Google Ads API error:', errorText);
-      throw new Error(`Google Ads API error: ${response.status} - ${errorText}`);
-    }
+    // Create customer with refresh token
+    const customer = client.Customer({
+      refresh_token: connection.refreshToken
+    });
     
-    const data = await response.json();
-    console.log('✅ Accessible customers:', data);
+    // List accessible customers
+    const customerResourceNames = await customer.listAccessibleCustomers();
+    console.log('✅ Accessible customers:', customerResourceNames);
     
-    // The API returns customer IDs in format "customers/123456789"
-    // We need to fetch details for each customer
-    const customerIds = data.resourceNames || [];
     const accounts = [];
     
-    for (const resourceName of customerIds) {
-      const customerId = resourceName.split('/')[1]; // Extract ID from "customers/123456789"
-      
-      // Fetch customer details
-      const detailsResponse = await fetch(
-        `https://googleads.googleapis.com/v17/${resourceName}?fields=customer.id,customer.descriptive_name,customer.currency_code,customer.time_zone`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${credentials.access_token}`,
-            'developer-token': process.env.GOOGLE_ADS_DEVELOPER_TOKEN || '0sxeRFk29XaMRNU3sVbVLA',
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      
-      if (detailsResponse.ok) {
-        const customerData = await detailsResponse.json();
+    // Fetch details for each customer
+    for (const resourceName of customerResourceNames) {
+      try {
+        const customerId = resourceName.split('/')[1]; // Extract ID from "customers/123456789"
+        
+        // Get customer details
+        const customerClient = client.Customer({
+          customer_id: customerId,
+          refresh_token: connection.refreshToken
+        });
+        
+        const [customerData] = await customerClient.query(`
+          SELECT
+            customer.id,
+            customer.descriptive_name,
+            customer.currency_code,
+            customer.time_zone
+          FROM customer
+          WHERE customer.id = ${customerId}
+        `);
+        
         accounts.push({
           customerId: customerId,
-          accountName: customerData.customer?.descriptiveName || `Account ${customerId}`,
-          currency: customerData.customer?.currencyCode || 'USD',
-          timezone: customerData.customer?.timeZone || 'UTC'
+          accountName: customerData.customer.descriptive_name || `Account ${customerId}`,
+          currency: customerData.customer.currency_code || 'USD',
+          timezone: customerData.customer.time_zone || 'UTC'
         });
-      } else {
-        // If we can't fetch details, just add the ID
+      } catch (err) {
+        console.error(`⚠️ Could not fetch details for ${resourceName}:`, err.message);
+        // Still add the account with just the ID
+        const customerId = resourceName.split('/')[1];
         accounts.push({
           customerId: customerId,
           accountName: `Account ${customerId}`,
