@@ -313,39 +313,30 @@ router.get('/status', async (req, res) => {
       });
     }
     
-    let connection;
+    const containerId = process.env.DEFAULT_CONTAINER_ID || 'default';
     
-    switch (service.toLowerCase()) {
-      case 'gmail':
-        connection = await prisma.gmailConnection.findFirst({
-          where: { orgId, adminId, status: 'active' }
-        });
-        break;
-        
-      case 'youtube':
-        connection = await prisma.youtubeConnection.findFirst({
-          where: { orgId, adminId, status: 'active' }
-        });
-        break;
-        
-      case 'ads':
-        connection = await prisma.googleAdsConnection.findFirst({
-          where: { orgId, adminId, status: 'active' }
-        });
-        break;
-        
-      default:
-        return res.status(400).json({ 
-          error: `Unsupported service: ${service}` 
-        });
-    }
+    // Check universal GoogleOAuthConnection table
+    const connection = await prisma.googleOAuthConnection.findFirst({
+      where: { 
+        orgId: orgId,
+        containerId: containerId,
+        service: service.toLowerCase(),
+        status: 'active'
+      }
+    });
     
     if (connection) {
       res.json({
         connected: true,
         service: service,
         email: connection.email,
-        status: connection.status
+        status: connection.status,
+        connectedAt: connection.createdAt,
+        // Service-specific data
+        channelId: connection.channelId,
+        channelName: connection.channelName,
+        customerId: connection.customerId,
+        accountName: connection.accountName
       });
     } else {
       res.json({
