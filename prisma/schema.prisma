@@ -74,6 +74,7 @@ model Organization {
   googleAdAccounts GoogleAdAccount[]
   googleAdCampaigns GoogleAdCampaign[]
   gmailConnections GmailConnection[]
+  googleOAuthConnections GoogleOAuthConnection[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -453,6 +454,7 @@ model Admin {
   
   // Gmail connections
   gmailConnections GmailConnection[]
+  googleOAuthConnections GoogleOAuthConnection[]
 
   @@unique([orgId, eventId])
   @@index([orgId])
