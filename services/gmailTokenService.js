@@ -24,11 +24,12 @@ class GmailTokenService {
   static async getValidToken(orgId, adminId) {
     console.log('🔑 GmailTokenService: Getting valid token for', { orgId, adminId });
     
-    // Find Gmail connection for this org/admin
-    const connection = await prisma.gmailConnection.findFirst({
+    // Find Gmail connection in the new GoogleOAuthConnection table
+    const connection = await prisma.googleOAuthConnection.findFirst({
       where: {
         orgId,
         adminId,
+        service: 'gmail',
         status: 'active'
       }
     });
@@ -41,17 +42,19 @@ class GmailTokenService {
       id: connection.id,
       email: connection.email,
       hasRefreshToken: !!connection.refreshToken,
-      tokenExpiry: connection.tokenExpiry
+      tokenExpiry: connection.expiry
     });
     
     // Check if access token is still valid (with 5-minute buffer)
     const now = new Date();
-    const expiryWithBuffer = new Date(connection.tokenExpiry);
-    expiryWithBuffer.setMinutes(expiryWithBuffer.getMinutes() - 5);
-    
-    if (connection.accessToken && now < expiryWithBuffer) {
-      console.log('✅ Access token still valid, using cached token');
-      return connection.accessToken;
+    if (connection.expiry) {
+      const expiryWithBuffer = new Date(connection.expiry);
+      expiryWithBuffer.setMinutes(expiryWithBuffer.getMinutes() - 5);
+      
+      if (connection.accessToken && now < expiryWithBuffer) {
+        console.log('✅ Access token still valid, using cached token');
+        return connection.accessToken;
+      }
     }
     
     console.log('🔄 Access token expired or missing, refreshing...');
@@ -99,11 +102,11 @@ class GmailTokenService {
       });
       
       // Update database with new access token
-      await prisma.gmailConnection.update({
+      await prisma.googleOAuthConnection.update({
         where: { id: connectionId },
         data: {
           accessToken: credentials.access_token,
-          tokenExpiry: credentials.expiry_date ? new Date(credentials.expiry_date) : null,
+          expiry: credentials.expiry_date ? new Date(credentials.expiry_date) : null,
           updatedAt: new Date()
         }
       });

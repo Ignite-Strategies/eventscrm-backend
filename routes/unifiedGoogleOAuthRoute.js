@@ -8,6 +8,7 @@ import { getPrismaClient } from '../config/database.js';
 import { google } from 'googleapis';
 import { createId } from '@paralleldrive/cuid2';
 import { getScopesForService } from '../config/oauthScopes.js';
+import { CONTAINER_CONFIG } from '../config/container-config.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -361,17 +362,38 @@ router.get('/status', async (req, res) => {
       });
     }
     
-    const containerId = null;
+    console.log(`🔍 Checking ${service} status for org: ${orgId}, admin: ${adminId}`);
     
-    // Check universal GoogleOAuthConnection table
-    const connection = await prisma.googleOAuthConnection.findFirst({
+    // Check with provided values first
+    let connection = await prisma.googleOAuthConnection.findFirst({
       where: { 
         orgId: orgId,
-        containerId: containerId,
         service: service.toLowerCase(),
         status: 'active'
       }
     });
+    
+    // If no connection found with provided values, try with config values for debugging
+    if (!connection && service.toLowerCase() === 'gmail') {
+      console.log('🔍 No connection found with provided values, trying config values...');
+      connection = await prisma.googleOAuthConnection.findFirst({
+        where: { 
+          orgId: CONTAINER_CONFIG.ORG_ID,
+          service: service.toLowerCase(),
+          status: 'active'
+        }
+      });
+    }
+    
+    console.log(`🔍 Found connection:`, connection ? {
+      id: connection.id,
+      email: connection.email,
+      service: connection.service,
+      status: connection.status,
+      orgId: connection.orgId,
+      adminId: connection.adminId,
+      containerId: connection.containerId
+    } : 'No connection found');
     
     if (connection) {
       res.json({
