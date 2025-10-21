@@ -32,14 +32,16 @@ model GoogleOAuthConnection {
   adminId      String
   admin        Admin @relation(...)
   
-  // Service Type
+  // Service Type (for UI/UX - "Is Gmail connected?")
   service      String    // "gmail" | "youtube" | "ads" | "drive"
   
-  // Universal OAuth Tokens (Like Universal Personhood!)
+  // 🔥 THE KEY INSIGHT: TOKENS ARE UNIVERSAL!
+  // The ONLY difference is the SCOPES requested during OAuth!
   email        String
-  accessToken  String
-  refreshToken String
+  accessToken  String     // ← Works with ANY Google API you have scopes for!
+  refreshToken String     // ← Same token, any service!
   tokenExpiry  DateTime?
+  scopes       Json       // ← ["gmail.send", "youtube.upload"] - What this token can do
   status       String @default("active") // "active" | "revoked"
   
   // Service-specific metadata (JSON)
@@ -56,6 +58,32 @@ model GoogleOAuthConnection {
   @@index([service])
 }
 ```
+
+### 💡 THE BREAKTHROUGH INSIGHT (12:15 AM)
+
+**Tokens are universal! Scopes are the differentiator!**
+
+```javascript
+// Gmail OAuth
+const scopes = ['https://www.googleapis.com/auth/gmail.send'];
+// Returns: { access_token, refresh_token }
+
+// YouTube OAuth  
+const scopes = ['https://www.googleapis.com/auth/youtube.upload'];
+// Returns: { access_token, refresh_token } ← SAME FORMAT!
+
+// The token doesn't care about "service" - it just has permissions!
+```
+
+**This means:**
+- One Google account can have ONE set of tokens
+- With multiple scopes: `["gmail.send", "youtube.upload", "adwords"]`
+- Works with ALL services simultaneously!
+
+**We separate by "service" only for:**
+1. **UX** - "Is Gmail connected?" vs "Is YouTube connected?"
+2. **Revocation** - Disconnect one service without affecting others
+3. **Multiple Accounts** - Different Google emails per service
 
 ---
 
