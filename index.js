@@ -47,7 +47,8 @@ import youtubeOAuthRouter from './routes/youtubeOAuthRoute.js'; // 🔐 YouTube 
 import youtubeChannelRouter from './routes/youtubeChannelRoute.js'; // 📺 YouTube Channel
 import youtubePlaylistsRouter from './routes/youtubePlaylistsRoute.js'; // 📋 YouTube Playlists
 import youtubeUploadRouter from './routes/youtubeUploadRoute.js'; // 🎬 YouTube Upload
-import gmailOAuthRouter from './routes/gmailOAuthRoute.js'; // 📧 Gmail OAuth (persistent tokens!)
+import gmailOAuthRouter from './routes/gmailOAuthRoute.js'; // 📧 Gmail OAuth (persistent tokens!) - DEPRECATED
+import unifiedGoogleOAuthRouter from './routes/unifiedGoogleOAuthRoute.js'; // 🧭 Unified Google OAuth (ALL services!)
 import engageHydrateRouter from './routes/engageHydrateRoute.js'; // 💧 Engage Hydration
 
 dotenv.config();
@@ -108,7 +109,8 @@ app.use('/api/youtube', youtubeOAuthRouter);  // 🔐 YouTube OAuth
 app.use('/api/youtube', youtubeChannelRouter);  // 📺 YouTube Channel
 app.use('/api/youtube', youtubePlaylistsRouter);  // 📋 YouTube Playlists
 app.use('/api/youtube', youtubeUploadRouter);  // 🎬 YouTube Upload
-app.use('/api/gmail-oauth', gmailOAuthRouter);  // 📧 Gmail OAuth (persistent tokens!)
+app.use('/api/gmail-oauth', gmailOAuthRouter);  // 📧 Gmail OAuth (persistent tokens!) - DEPRECATED
+app.use('/api/google-oauth', unifiedGoogleOAuthRouter);  // 🧭 Unified Google OAuth (ALL services!)
 app.use('/api/engage', engageHydrateRouter);  // 💧 Engage Hydration
 
 // Health check

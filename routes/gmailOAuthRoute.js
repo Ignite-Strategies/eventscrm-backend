@@ -2,6 +2,7 @@ import express from 'express';
 import { getPrismaClient } from '../config/database.js';
 import { google } from 'googleapis';
 import { createId } from '@paralleldrive/cuid2';
+import { getScopesForService } from '../config/oauthScopes.js';
 
 const router = express.Router();
 const prisma = getPrismaClient();
@@ -25,13 +26,10 @@ router.get('/auth', (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GMAIL_REDIRECT_URI || "https://ignitestrategiescrm-frontend.vercel.app/gmailoauth"
+"https://app.engage-smart.com/oauth/callback"
   );
 
-  const scopes = [
-    'https://www.googleapis.com/auth/gmail.send',
-    'https://www.googleapis.com/auth/userinfo.email'  // To get user's email address
-  ];
+  const scopes = getScopesForService('GMAIL');
 
   // Generate OAuth URL with state parameter to preserve orgId/adminId
   const state = Buffer.from(JSON.stringify({ orgId, adminId })).toString('base64');
@@ -90,7 +88,7 @@ router.post('/callback', async (req, res) => {
     const oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
-      process.env.GMAIL_REDIRECT_URI || "https://ignitestrategiescrm-frontend.vercel.app/gmailoauth"
+  "https://app.engage-smart.com/oauth/callback"
     );
 
     console.log('🔄 Exchanging authorization code for tokens...');

@@ -11,16 +11,12 @@ const prisma = new PrismaClient();
 // Redirect to Google OAuth
 router.get('/auth/youtube', (req, res) => {
   const oauth2Client = new google.auth.OAuth2(
-    process.env.YOUTUBE_CLIENT_ID,
-    process.env.YOUTUBE_CLIENT_SECRET,
-    process.env.YOUTUBE_REDIRECT_URI || "https://ignitestrategiescrm-frontend.vercel.app/youtubeoauth"
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+"https://app.engage-smart.com/oauth/callback"
   );
 
-  const scopes = [
-    'https://www.googleapis.com/auth/youtube.upload',
-    'https://www.googleapis.com/auth/youtube',
-    'https://www.googleapis.com/auth/youtube.readonly'
-  ];
+  const scopes = getScopesForService('YOUTUBE');
 
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
