@@ -2,6 +2,9 @@ import { spawn } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
+// Keep reference for server process
+let serverProcess = null;
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const projectRoot = join(__dirname, '..');
@@ -82,7 +85,26 @@ async function startup() {
     console.log('\n✅ Setup complete! Starting server...\n');
 
     // Step 6: Start the server (this will run indefinitely)
-    await runCommand('node', ['index.js']);
+    // Don't await - let it run in the background
+    const serverProcess = spawn('node', ['index.js'], {
+      cwd: projectRoot,
+      stdio: 'inherit',
+      shell: true
+    });
+
+    // Handle server process events
+    serverProcess.on('close', (code) => {
+      if (code !== 0) {
+        console.error(`\n❌ Server exited with code ${code}`);
+        console.log('💡 Tip: If this is due to database connection, resume the database service and restart the app.');
+      }
+      process.exit(code || 1);
+    });
+
+    serverProcess.on('error', (error) => {
+      console.error('❌ Failed to start server:', error);
+      process.exit(1);
+    });
 
   } catch (error) {
     console.error('❌ Startup failed:', error);

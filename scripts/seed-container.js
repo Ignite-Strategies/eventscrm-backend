@@ -39,9 +39,18 @@ async function seedContainer() {
 
   } catch (error) {
     console.error('❌ Error seeding container:', error);
+    // Don't throw if it's a connection error - allow graceful degradation
+    if (error.code === 'P1001' || error.message?.includes("Can't reach database server")) {
+      console.warn('⚠️  Database not available. Container seeding skipped.');
+      return null;
+    }
     throw error;
   } finally {
-    await prisma.$disconnect();
+    try {
+      await prisma.$disconnect();
+    } catch (err) {
+      // Ignore disconnect errors if connection failed
+    }
   }
 }
 
