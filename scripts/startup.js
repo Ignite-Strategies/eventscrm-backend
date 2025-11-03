@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { PrismaClient } from '@prisma/client';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,19 +24,20 @@ async function testDatabaseConnection(maxRetries = 5, delayMs = 2000) {
   const host = hostMatch ? hostMatch[1] : 'unknown';
   console.log(`🌐 Database host: ${host}`);
 
+  const prisma = new PrismaClient();
+  
   for (let i = 0; i < maxRetries; i++) {
     try {
       console.log(`🔄 Attempt ${i + 1}/${maxRetries}...`);
-      execSync('npx prisma db execute --stdin', {
-        cwd: projectRoot,
-        input: 'SELECT 1;',
-        stdio: 'pipe'
-      });
+      await prisma.$connect();
+      await prisma.$queryRaw`SELECT 1`;
       console.log('✅ Database connection successful!');
+      await prisma.$disconnect();
       return true;
     } catch (error) {
       if (i === maxRetries - 1) {
         console.error(`❌ Database connection failed after ${maxRetries} attempts`);
+        await prisma.$disconnect().catch(() => {});
         throw error;
       }
       console.log(`⏳ Retrying in ${delayMs}ms...`);
