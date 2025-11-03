@@ -19,10 +19,8 @@ export async function connectDatabase() {
     console.log('✅ PostgreSQL connected via Prisma');
     console.log('📊 Database: ignite_crm');
   } catch (err) {
-    console.error('❌ PostgreSQL connection error:', err.message || err);
-    console.warn('⚠️  Server will start without database connection. Database operations will fail until connection is restored.');
-    // Don't exit - allow server to start and retry connection later
-    // The app will need the database to function, but at least it won't crash on startup
+    console.error('❌ PostgreSQL connection error:', err);
+    process.exit(1);
   }
 }
 

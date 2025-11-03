@@ -9,7 +9,6 @@
     "postinstall": "npx prisma generate",
     "dev": "nodemon index.js",
     "start": "node scripts/startup.js",
-    "start:server": "node index.js",
     "migrate": "npx prisma migrate deploy",
     "db:push": "npx prisma db push --force-reset",
     "db:seed": "node scripts/seedDatabase.js",
